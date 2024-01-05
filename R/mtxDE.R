@@ -68,6 +68,12 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID, padj="fdr"){
         mod.sum$feature <- col
         mod.summaries <- rbind(mod.summaries, mod.sum)
     }
-    mod.summaries$q <- p.adjust(mod.summaries$p.value, method=padj)
+    mod.summaries <- as.data.frame(mod.summaries)
+    # adjust p value only for non-intercept terms
+    mod.summaries[mod.summaries$term!="(Intercept)",
+                  "q"] <- p.adjust(mod.summaries[mod.summaries$term!="(Intercept)",
+                                                "p.value"],
+                                   method=padj)
+
     return(mod.summaries)
 }
