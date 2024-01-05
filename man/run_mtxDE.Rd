@@ -4,7 +4,7 @@
 \alias{run_mtxDE}
 \title{Run differential expression analysis for metatranscriptomics data}
 \usage{
-run_mtxDE(formula, feature.table, metadata, sampleID)
+run_mtxDE(formula, feature.table, metadata, sampleID, padj = "fdr")
 }
 \arguments{
 \item{formula}{the right hand side of the regression formula to be used for each feature}
@@ -14,6 +14,8 @@ run_mtxDE(formula, feature.table, metadata, sampleID)
 \item{metadata}{The metadata dataframe, where rows are samples and columns are features}
 
 \item{sampleID}{The name of the column in metadata with sample IDs, which should be used to merge metadata with the feature table's rownames}
+
+\item{padj}{p value adustment method. Options can be checked using 'p.adjust.methods'}
 }
 \value{
 a dataframe with differential expression results
