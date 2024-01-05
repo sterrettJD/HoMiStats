@@ -18,6 +18,22 @@ run_single_beta_regression <- function(formula, data){
     return(mod)
 }
 
+#' Check for 1 in feature.table
+#' @description The zero-inflated beta regression can't handle values of 1. This checks for them and raises an error if they exist.
+#' @param feature.table A dataframe, where rows are samples, and columns are genes/features. Row names should be sample IDs.
+#' @return Nothing
+#' @export
+#'
+check_for_ones <- function(feature.table){
+    rows.with.ones <- which(feature.table == 1, arr.ind = T)[,1]
+    unique.rows.with.ones <- unique(rows.with.ones)
+    unique.rownames.with.ones <- rownames(feature.table)[unique.rows.with.ones]
+    if(length(unique.rownames.with.ones) > 0){
+        stop(paste("The following rows contains a value of one which the zero-inflated beta regression cannot handle:",
+                   unique.rownames.with.ones))
+    }
+}
+
 #' Run differential expression analysis for metatranscriptomics data
 #' @description Regresses each feature using the formula provided and returns the statistical summary for each feature
 #' @param formula the right hand side of the regression formula to be used for each feature
@@ -29,7 +45,10 @@ run_single_beta_regression <- function(formula, data){
 #' @export
 #' @importFrom broom.mixed tidy
 #'
-run_mtxDE <- function(formula, feature.table, metadata, sampleID, padj){
+run_mtxDE <- function(formula, feature.table, metadata, sampleID, padj="fdr"){
+    # Check for values of one, which the beta regression can't handle
+    check_for_ones(feature.table)
+
     # merge the feature table and metadata based on the rownames
     formula <- paste0(" ~ ", formula)
     metadata.vars <- c(all.vars(as.formula(formula)), sampleID)
