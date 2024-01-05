@@ -1,1 +1,4 @@
 exportPattern("^[[:alpha:]]+")
+import(gamlss)
+import(gamlss.dist)
+importFrom(broom.mixed, tidy)
