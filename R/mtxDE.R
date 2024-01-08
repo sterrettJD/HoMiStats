@@ -14,7 +14,9 @@ library(gamlss)
 run_single_beta_regression <- function(formula, data){
     mod <- gamlss::gamlss(as.formula(formula),
                         data=data,
-                        family=gamlss.dist::BEZI)
+                        family=gamlss.dist::BEZI,
+                        trace=FALSE # decreases verbosity
+                        )
     return(mod)
 }
 
