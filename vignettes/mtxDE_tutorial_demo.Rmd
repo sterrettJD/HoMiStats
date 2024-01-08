@@ -1,0 +1,89 @@
+---
+title: "mtxDE Tutorial and Demonstration"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{my-vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(HoMiStats)
+library(ggplot2)
+library(tidyverse)
+```
+
+# Simulate datasets
+```{r}
+# Set params
+set.seed(42)
+N <- 5000
+
+# make the metadata var (effect size is zero)
+treated <- c(rep(0, N/2), rep(1, N/2))
+metadata <- data.frame(sampleID=1:N, treated=treated)
+
+zero.props <- seq(from=0, to=0.99, by=0.01)
+d <- matrix(nrow=N, ncol=100)
+i <- 1
+const.dat <- rnbinom(n=N, size=10, prob=0.1)
+
+for(zero.prop in zero.props){
+    d[,i] <- const.dat
+    is.zero <- rbinom(n=N, size=1, prob=zero.prop)
+    d[which(is.zero==1), i] <- 0
+
+    i <- i + 1
+}
+
+# relative abundance
+d <- d/rowSums(d)
+colnames(d) <- paste0("nochange_zeroes_", zero.props)
+
+
+# This isn't realistic for relative abundances, as this dataframe no longer
+# rowsums to 1, but it's not really meant for that to be the case.
+# Will be considering each feature separately
+d.upreg <- d
+d.upreg[treated==1,] <- d.upreg[treated==1,] + 0.1
+colnames(d.upreg) <- paste0("upregulated_zeroes_", zero.props)
+
+d.downreg <- d
+d.downreg[treated==0,] <- d.downreg[treated==0,] + 0.1
+colnames(d.downreg) <- paste0("downregulated_zeroes_", zero.props)
+```
+
+# Run mtxDE
+```{r}
+results <- run_mtxDE("treated",
+                     feature.table=as.data.frame(cbind(d, d.upreg, d.downreg)),
+                     metadata=metadata, sampleID="sampleID")
+
+
+results$changing <- str_split(results$feature, pattern="_") %>%
+                        sapply(FUN=function(x) x[1])
+results$percent_zero <- str_split(results$feature, pattern="_") %>%
+                        sapply(FUN=function(x) as.numeric(x[3]))
+
+
+ggplot(results,
+       mapping=aes(x=percent_zero, y=estimate)) +
+    geom_point() +
+    facet_wrap(changing~parameter*term, scales="free_y", ncol=4)
+
+ggplot(results %>% filter(term=="treated"),
+       mapping=aes(x=changing, y=q)) +
+    geom_jitter() +
+    geom_hline(yintercept=0.05)
+
+
+boxplot(d.upreg[,1] ~ treated)
+
+```
