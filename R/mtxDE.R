@@ -60,6 +60,16 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID, padj="fdr"){
                                  "estimate", "std.error",
                                  "statistic", "p.value",
                                  "feature")
+
+    n_iter <- ncol(feature.table)
+    i <- 0
+    # Initializes progress bar
+    pb <- txtProgressBar(min = 0,
+                         max = n_iter,
+                         style = 3,
+                         width = 50,   # Progress bar width. Defaults to getOption("width")
+                         char = "=")
+
     # Loop through each column and run the beta regression
     for(col in colnames(feature.table)){
         mod <- run_single_beta_regression(paste0(col, formula),
@@ -67,7 +77,14 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID, padj="fdr"){
         mod.sum <- broom.mixed::tidy(mod)
         mod.sum$feature <- col
         mod.summaries <- rbind(mod.summaries, mod.sum)
+
+        # progress bar things
+        setTxtProgressBar(pb, i)
+        i <- i + 1
     }
+
+    close(pb) #close the progress bar
+
     mod.summaries <- as.data.frame(mod.summaries)
     # adjust p value only for non-intercept terms
     mod.summaries[mod.summaries$term!="(Intercept)",
