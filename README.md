@@ -2,6 +2,11 @@
 
 Statstics tools for host-microbiome dual transcriptomics
 
+  <!-- badges: start -->
+  [![R-CMD-check](https://github.com/sterrettJD/CauDA/actions/workflows/r.yml/badge.svg)](https://github.com/sterrettJD/CauDA/actions/workflows/r.yml)
+  <!-- badges: end -->
+
+
 # Installation
 
 `devtools::install_github("sterrettJD/HoMiStats")`
