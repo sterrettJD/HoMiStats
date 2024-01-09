@@ -1,12 +1,14 @@
 #' Transform feature table for analysis
 #' @description transforms feature table for differential expression or co-occurrence analysis
 #' @param feature.table A dataframe, where rows are samples, and columns are genes/features. Row names should be sample IDs.
+#' @param transformation Method for transforming the feature.table. String options include NOT YET IMPLEMENTED, or transformation can be a function used for transforming data
 #' @return The transformed table
 #' @export
 #' @importFrom dplyr mutate_all
 #'
-transform_feature_table <- function(feature.table, method){
-    mutate_all(feature.table, method)
+transform_feature_table <- function(feature.table, transformation){
+
+    mutate_all(feature.table, transformation)
 }
 
 #' Make sure data are proportional within a row
@@ -25,4 +27,3 @@ check_proportional <- function(feature.table, tolerance=1e-3){
                    rownames.not.prop))
     }
 }
-
