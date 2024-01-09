@@ -30,7 +30,7 @@ jobs:
           extra-packages: any::rcmdcheck, any::remotes, any::pandoc, any::gh
 
       - name: Install pandoc
-        run: Rscript -e 'pandoc::pandoc_install()'
+        uses: r-lib/actions/setup-pandoc@v2
 
       - name: Tests
         uses: r-lib/actions/check-r-package@v2
