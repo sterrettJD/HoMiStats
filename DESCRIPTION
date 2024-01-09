@@ -11,3 +11,7 @@ Imports: gamlss, gamlss.dist, broom.mixed
 License: MIT
 Encoding: UTF-8
 LazyData: true
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
