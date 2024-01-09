@@ -51,6 +51,7 @@ colnames(d) <- paste0("nochange_zeroes_", zero.props)
 # This isn't realistic for relative abundances, as this dataframe no longer
 # rowsums to 1, but it's not really meant for that to be the case.
 # Will be considering each feature separately
+# These features - either all treated or controls samples  get increased by 0.1
 d.upreg <- d
 d.upreg[treated==1,] <- d.upreg[treated==1,] + 0.1
 colnames(d.upreg) <- paste0("upregulated_zeroes_", zero.props)
@@ -58,17 +59,38 @@ colnames(d.upreg) <- paste0("upregulated_zeroes_", zero.props)
 d.downreg <- d
 d.downreg[treated==0,] <- d.downreg[treated==0,] + 0.1
 colnames(d.downreg) <- paste0("downregulated_zeroes_", zero.props)
+
+# these features, only nonzero treated/controls get increased
+# biologically, think "if the gene is present, its expression is increased"
+d.partupreg <- d
+d.partupreg[treated==1,] <- d.partupreg[treated==1,] + 0.1
+d.partupreg[d==0] <- 0
+colnames(d.partupreg) <- paste0("partiallyupregulated_zeroes_", zero.props)
+
+d.partdownreg <- d
+d.partdownreg[treated==0,] <- d.partdownreg[treated==0,] + 0.1
+d.partdownreg[d==0] <- 0
+colnames(d.partdownreg) <- paste0("partiallydownregulated_zeroes_", zero.props)
 ```
 
 # Run mtxDE
 ```{r}
 results <- run_mtxDE("treated",
-                     feature.table=as.data.frame(cbind(d, d.upreg, d.downreg)),
+                     feature.table=as.data.frame(cbind(d, 
+                                                       d.upreg, d.downreg,
+                                                       d.partupreg, d.partdownreg)),
                      metadata=metadata, sampleID="sampleID")
+```
 
-
+# Visualize results
+```{r}
 results$changing <- str_split(results$feature, pattern="_") %>%
                         sapply(FUN=function(x) x[1])
+results$changing <- results$changing %>% 
+                     factor(levels=c("downregulated", "partiallydownregulated", 
+                                     "nochange",
+                                     "partiallyupregulated", "upregulated"))
+
 results$percent_zero <- str_split(results$feature, pattern="_") %>%
                         sapply(FUN=function(x) as.numeric(x[3]))
 
@@ -84,6 +106,7 @@ ggplot(results %>% filter(term=="treated"),
     geom_hline(yintercept=0.05)
 
 
-boxplot(d.upreg[,1] ~ treated)
-
+ggplot(as.data.frame(cbind(d.downreg, treated)), 
+       mapping=aes(y=downregulated_zeroes_0.5, x=as.factor(treated))) +
+    geom_jitter()
 ```
