@@ -2,8 +2,8 @@ test_that("check_proportional", {
   df <- data.frame(feature_1=c(1, 0.2, 0.4),
                    feature_2=c(0, 0.6, 0.5),
                    feature_3=c(0, 0.199999, 0))
-  expect_error(check_proportional(df,
-                                  "The following sample does not sum to 1: 3"))
+  expect_error(check_proportional(df),
+                                  "The following sample does not sum to 1: 3")
 })
 
 test_that("arcsinh works",{
@@ -37,5 +37,25 @@ test_that("multi arcsinh works",{
     expect_equal(transform_feature_table(df, transformation="arcsinh_1_nonorm"),
                  exp.scale.1,
                  tolerance=1e-3)
+
+})
+
+test_that("transform_feature_table errors",{
+    df <- data.frame(feature_1=c(1, 0.2),
+                     feature_2=c(0, 0.8))
+
+    expect_error(transform_feature_table(df, transformation="BAD_TRANSFORMATION"),
+                 "The requested transformation is not yet supported.
+             You are welcome to implement it via passing a function for the transformation argument.")
+
+})
+
+
+test_that("transform_feature_table warning for > 1",{
+    df <- data.frame(feature_1=c(1, 0.2),
+                     feature_2=c(0, 100))
+
+    expect_warning(transform_feature_table(df, transformation="arcsinh_1_nonorm"),
+                 "The following sample does not sum to 1: 2 Please make sure this is intentional...")
 
 })
