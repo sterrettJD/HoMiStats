@@ -4,10 +4,14 @@
 \alias{check_proportional}
 \title{Make sure data are proportional within a row}
 \usage{
-check_proportional(feature.table, tolerance = 0.001)
+check_proportional(feature.table, tolerance = 0.001, soft = FALSE)
 }
 \arguments{
 \item{feature.table}{A dataframe, where rows are samples, and columns are genes/features. Row names should be sample IDs.}
+
+\item{tolerance}{Numerical value for tolerance in checking if samples sum to 1.}
+
+\item{soft}{Boolean. If true, this function only warns.}
 }
 \value{
 Nothing
