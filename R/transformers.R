@@ -8,7 +8,7 @@
 #'
 transform_feature_table <- function(feature.table, transformation){
     check_proportional(feature.table, soft=TRUE)
-    mutate_all(feature.table, transformation)
+    dplyr::mutate_all(feature.table, transformation)
 }
 
 #' Make sure data are proportional within a row
