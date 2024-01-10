@@ -34,4 +34,8 @@ test_that("multi arcsinh works",{
                  exp.scale.1,
                  tolerance=1e-3)
 
+    expect_equal(transform_feature_table(df, transformation="arcsinh_1_nonorm"),
+                 exp.scale.1,
+                 tolerance=1e-3)
+
 })
