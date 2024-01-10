@@ -23,4 +23,15 @@ test_that("arcsinh works",{
                  tolerance=1e-3)
 })
 
+test_that("multi arcsinh works",{
+    df <- data.frame(feature_1=c(1, 0.2),
+                     feature_2=c(0, 0.8))
+    exp.scale.1 <- data.frame(feature_1=c(0.881, 0.198),
+                              feature_2=c(0, 0.732))
 
+    t.func <- function(x) arcsinh(x, scaling.factor=1, norm.by.scaling=F)
+    expect_equal(transform_feature_table(df, transformation=t.func),
+                 exp.scale.1,
+                 tolerance=1e-3)
+
+})
