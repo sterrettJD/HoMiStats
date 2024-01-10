@@ -1,6 +1,6 @@
 # HoMiStats
 
-Statstics tools for host-microbiome dual transcriptomics
+Statistics tools for host-microbiome dual transcriptomics
 
   <!-- badges: start -->
   [![R-CMD-check](https://github.com/sterrettJD/CauDA/actions/workflows/r.yml/badge.svg)](https://github.com/sterrettJD/CauDA/actions/workflows/r.yml)
@@ -13,6 +13,7 @@ Statstics tools for host-microbiome dual transcriptomics
 
 # Package capabilities
 
+## Statistical modules
 HoMiStats consists of two main modules:
 
 1.  Metatranscriptomics differential expression (mtxDE)
@@ -21,3 +22,6 @@ HoMiStats consists of two main modules:
     -   Other models? Not yet implemented...
 
 2.  Construction of correlation network between host and microbial transcripts - Not yet implemented...
+
+## Utilities
+HoMiStats additionally contains tools for transforming metatranscriptomic data
