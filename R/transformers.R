@@ -5,9 +5,39 @@
 #' @return The transformed table
 #' @export
 #' @importFrom dplyr mutate_all
+#' @importFrom base strsplit
 #'
 transform_feature_table <- function(feature.table, transformation){
     check_proportional(feature.table, soft=TRUE)
+
+    # SUPPORTED CHARACTER TRANSFORMATIONS
+    if(mode(transformation)=="character"){
+        # Arcsinh transform with renormalization (max return value is 1)
+        # Scaling factor is passed between underscores
+        if(grepl(pattern="^arcsinh_[0-9]+_norm$", x=transformation)){
+            arcsinh.args <- unlist(strsplit(x=transformation, split="_"))
+            scaling.factor <- as.numeric(arcsinh.args[2])
+
+            return(dplyr::mutate_all(feature.table,
+                                     function(x) arcsinh(x, scaling.factor,
+                                                         norm.by.scaling=T)))
+        }
+        # Arcsinh transform with NO normalization (max return value can be > 1)
+        # Scaling factor is passed between underscores
+        if(grepl(pattern="^arcsinh_[0-9]+_nonorm$", x=transformation)){
+            arcsinh.args <- unlist(strsplit(x=transformation, split="_"))
+            scaling.factor <- as.numeric(arcsinh.args[2])
+
+            return(dplyr::mutate_all(feature.table,
+                                     function(x) arcsinh(x, scaling.factor,
+                                                         norm.by.scaling=F)))
+        }
+
+        stop("The requested transformation is not yet supported.
+             You are welcome to implement it via passing a function for the transformation argument.")
+    }
+
+    # If not a character, try to implement the function provided
     dplyr::mutate_all(feature.table, transformation)
 }
 
