@@ -7,7 +7,10 @@
 #' @importFrom dplyr mutate_all
 #'
 transform_feature_table <- function(feature.table, transformation){
-
+    if(transformation == "arcsinh"){
+        check_proportional()
+        mutate_all(feature.table, arcsinh)
+    }
     mutate_all(feature.table, transformation)
 }
 
@@ -25,5 +28,24 @@ check_proportional <- function(feature.table, tolerance=1e-3){
     if(length(rownames.not.prop) > 0){
         stop(paste("The following sample does not sum to 1:",
                    rownames.not.prop))
+    }
+}
+
+#' Perform a inverse hyperbolic sin transformation
+#' @description Performs an arcsinh transformation, with scaling and adjustment. The arcsinh transformation behaves like a log transformation for large values but linearly for small values, and it can handle 0s.
+#' @param vec The numerical vector to be transformed
+#' @param scaling.factor A scaling factor by which to multiply the values prior to transforming. Increasing this scaling factor increases how much of the lower end of the data is treated linearly by the transformation. This is the opposite of the standard "cofactor" used with the arcsinh transformation in flow cyotmetry, as we're working with input data < 1, so we likely need to scale our values up.
+#' @param norm.by.scaling Boolean defining whether transformed data should be normalized (divided) by the arcsinh of the scaling factor. This is useful if you're using a model such as the beta regression implemented in mtxDE, which cannot handle values >= 1.
+#' @return The transformed vector.
+#' @export
+#' @importFrom base asinh
+#'
+arcsinh <- function(vec, scaling.factor=100, norm.by.scaling=TRUE){
+    scaled <- vec * scaling.factor
+
+    if(norm.by.scaling){
+        return( asinh(scaled)/asinh(scaling.factor) )
+    } else {
+        return( asinh(scaled) )
     }
 }
