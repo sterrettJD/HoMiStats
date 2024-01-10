@@ -7,27 +7,33 @@
 #' @importFrom dplyr mutate_all
 #'
 transform_feature_table <- function(feature.table, transformation){
-    if(transformation == "arcsinh"){
-        check_proportional()
-        mutate_all(feature.table, arcsinh)
-    }
+    check_proportional(feature.table, soft=TRUE)
     mutate_all(feature.table, transformation)
 }
 
 #' Make sure data are proportional within a row
 #' @description Some transformations are based on proportional data, where samples sum to 1. This checks that that's the case.
 #' @param feature.table A dataframe, where rows are samples, and columns are genes/features. Row names should be sample IDs.
+#' @param tolerance Numerical value for tolerance in checking if samples sum to 1.
+#' @param soft Boolean. If true, this function only warns.
 #' @return Nothing
 #' @export
 #'
-check_proportional <- function(feature.table, tolerance=1e-3){
+check_proportional <- function(feature.table, tolerance=1e-3, soft=FALSE){
     sample.sums <- rowSums(feature.table)
     rows.not.prop <- which((sample.sums < (1-tolerance)) | (sample.sums > (1+tolerance)))
     rownames.not.prop <- rownames(feature.table)[rows.not.prop]
 
     if(length(rownames.not.prop) > 0){
-        stop(paste("The following sample does not sum to 1:",
-                   rownames.not.prop))
+        if(soft){
+            warning(paste("The following sample does not sum to 1:",
+                       rownames.not.prop,
+                       "Please make sure this is intentional..."))
+        } else {
+            stop(paste("The following sample does not sum to 1:",
+                       rownames.not.prop))
+        }
+
     }
 }
 
