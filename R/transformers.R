@@ -1,7 +1,7 @@
 #' Transform feature table for analysis
 #' @description transforms feature table for differential expression or co-occurrence analysis
 #' @param feature.table A dataframe, where rows are samples, and columns are genes/features. Row names should be sample IDs.
-#' @param transformation Method for transforming the feature.table. String options include NOT YET IMPLEMENTED, or transformation can be a function used for transforming data
+#' @param transformation Method for transforming the feature.table. String options include "arcsinh_<scaling factor>_norm" and "arcsinh_<scaling factor>_nonorm". The arcsinh transforms small values linearly and large values on a log scale, and the scaling factor controls how much of the smaller values are transformed linearly. "norm" arcsinh transformations are normalized such that the maximum value after transformation can be 1. Additionally, transformation can be a function used for transforming data
 #' @return The transformed table
 #' @export
 #' @importFrom dplyr mutate_all
