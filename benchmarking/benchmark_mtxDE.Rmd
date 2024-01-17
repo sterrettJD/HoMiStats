@@ -1,0 +1,34 @@
+---
+title: "Benchmark_mtxDE"
+author: "John Sterrett"
+date: "2024-01-16"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(HoMiStats)
+```
+
+# Load data
+
+```{r}
+# Read in null df
+null.df <- data.table::fread("synth_mgx_mtx/group-null-enc.mtx_abunds_groups.tsv",
+                             data.table=F)
+
+# Create metadata
+metadata <- data.frame(phenotype=t(null.df[1,]),
+                       depth=t(null.df[2,]))
+metadata <- metadata[2:nrow(metadata),]
+colnames(metadata) <- c("phenotype", "depth")
+metadata$SampleID <- rownames(metadata)
+
+# Filter the df into a feature table where the samples are rows
+null.feature.table <- null.df[3:nrow(null.df),]
+null.feature.table <- as.data.frame(t(null.feature.table))
+colnames(null.feature.table) <- null.feature.table["#",]
+null.feature.table <- null.feature.table[2:nrow(null.feature.table),]
+
+```
