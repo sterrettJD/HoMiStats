@@ -1,8 +1,5 @@
 library(gamlss)
 
-# runs a zero-inflated beta distribution GAM using gamlss
-# returns the model
-
 #' Run a single zero-inflatd beta regression using gamlss
 #' @description runs a zero-inflated beta distribution GAM using gamlss
 #' @param formula the full formula to be used in the regression
@@ -11,12 +8,12 @@ library(gamlss)
 #' @export
 #' @importFrom gamlss.dist BEZI
 #'
-run_single_beta_regression <- function(formula, data){
+run_single_beta_regression_gamlss <- function(formula, data,
+                                              controller=gamlss.control(trace=FALSE)){
     mod <- gamlss::gamlss(as.formula(formula),
                         data=data,
                         family=gamlss.dist::BEZI,
-                        trace=FALSE # decreases verbosity
-                        )
+                        control=controller)
     return(mod)
 }
 
@@ -74,7 +71,7 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID, padj="fdr"){
 
     # Loop through each column and run the beta regression
     for(col in colnames(feature.table)){
-        mod <- run_single_beta_regression(paste0(col, formula),
+        mod <- run_single_beta_regression_gamlss(paste0(col, formula),
                                           data=data)
         mod.sum <- broom.mixed::tidy(mod)
         mod.sum$feature <- col
