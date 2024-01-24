@@ -8,7 +8,7 @@ library(gamlss)
 #' @export
 #' @importFrom gamlss.dist BEZI
 #'
-run_single_beta_regression_gamlss <- function(formula, data,
+run_single_beta_reg_gamlss <- function(formula, data,
                                               controller=gamlss.control(trace=FALSE)){
     mod <- gamlss::gamlss(as.formula(formula),
                         data=data,
@@ -16,6 +16,54 @@ run_single_beta_regression_gamlss <- function(formula, data,
                         control=controller)
     return(mod)
 }
+
+
+#' Run a single zero-inflated beta regression using gamlss
+#' @description runs a zero-inflated beta regression using ZIBR
+#' @param logistic_cov a string (or vector of strings) indicating the variables to be used as covariates predicting whether a value is 0 (in the logistic portion of ZIBR). Defaults to NULL, for which just an intercept will be fit for the logistic portion of ZIBR.
+#' @param beta_cov a string (or vector of strings) indicating the variables to be used as covariates predicting the relative abundance of a non-zero value (in the beta portion of ZIBR)
+#' @param Y a string indicating the the column with zero-inflated relative abundance data
+#' @param subject_ind a string indicating the column with participant ID information for longitudinal data. Defaults to NULL, which creates unique participant ID for each sample in the case of non-longitudinal, cross-sectional data
+#' @param time_ind a string indication the column with timepoint data. Defaults to NULL, which creates a constant data column for non-longitudinal, cross-sectional data
+#' @param data A dataframe to be used in the regression
+#' @return the resulting model
+#' @export
+#' @importFrom ZIBR zibr
+#'
+run_single_beta_reg_zibr <- function(logistic_cov=NULL, beta_cov, Y,
+                                     subject_ind=NULL, time_ind=NULL, data){
+    # If no logistic covariate is passed, make constant data for fitting just an intercept
+    if(is.null(logistic_cov)){
+        logistic_cov_dat <- as.matrix(rep(0, nrow(data)))
+    } else {
+        logistic_cov_dat <- as.matrix(data[,logistic_cov])
+    }
+
+    # If no subject ID, make them up, assuming each sample comes from a unique participant
+    if(is.null(subject_ind)){
+        subject_ind_dat <- as.matrix(1:nrow(data))
+    } else {
+        subject_ind_dat <- as.matrix(data[,subject_ind])
+    }
+    # If no timepoint column, assume each sample is from the same timepoint
+    if(is.null(time_ind)){
+        time_ind_dat <- as.matrix(rep(1, nrow(data)))
+    } else {
+        time_ind_dat <- as.matrix(data[,time_ind])
+    }
+
+
+    mod <- ZIBR::zibr(
+               logistic_cov=logistic_cov_dat,
+               beta_cov=as.matrix(data[,beta_cov]),
+               Y=as.matrix(data[,Y]),
+               subject_ind=subject_ind_dat,
+               time_ind=time_ind_dat,
+               verbose = T)
+
+    return(mod)
+}
+
 
 #' Check for 1 in feature.table
 #' @description The zero-inflated beta regression can't handle values of 1. This checks for them and raises an error if they exist.
@@ -38,13 +86,16 @@ check_for_ones <- function(feature.table){
 #' @param formula the right hand side of the regression formula to be used for each feature
 #' @param feature.table A dataframe, where rows are samples, and columns are genes/features. Row names should be sample IDs.
 #' @param metadata The metadata dataframe, where rows are samples and columns are features
-#' @param sampleID The name of the column in metadata with sample IDs, which should be used to merge metadata with the feature table's rownames
-#' @param padj p value adustment method. Options can be checked using 'p.adjust.methods'
+#' @param sampleID A string denoting name of the column in metadata with sample IDs, which should be used to merge metadata with the feature table's rownames
+#' @param reg.method A string denoting the method to use for regression. Options include "zibr" and "gamlss".
+#' @param padj A string denoting the p value adustment method. Options can be checked using 'p.adjust.methods'
 #' @return a dataframe with differential expression results
 #' @export
 #' @importFrom broom.mixed tidy
 #'
-run_mtxDE <- function(formula, feature.table, metadata, sampleID, padj="fdr"){
+run_mtxDE <- function(formula, feature.table, metadata, sampleID,
+                      reg.method="zibr", padj="fdr",
+                      zero_prop_from_formula=T){
     # Check for values of one, which the beta regression can't handle
     check_for_ones(feature.table)
 
@@ -71,7 +122,7 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID, padj="fdr"){
 
     # Loop through each column and run the beta regression
     for(col in colnames(feature.table)){
-        mod <- run_single_beta_regression_gamlss(paste0(col, formula),
+        mod <- run_single_beta_reg_gamlss(paste0(col, formula),
                                           data=data)
         mod.sum <- broom.mixed::tidy(mod)
         mod.sum$feature <- col
