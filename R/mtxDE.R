@@ -122,10 +122,30 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
 
     # Loop through each column and run the beta regression
     for(col in colnames(feature.table)){
-        mod <- run_single_beta_reg_gamlss(paste0(col, formula),
-                                          data=data)
-        mod.sum <- broom.mixed::tidy(mod)
-        mod.sum$feature <- col
+        if(reg.method == "gamlss"){
+            mod <- run_single_beta_reg_gamlss(paste0(col, formula),
+                                              data=data)
+            mod.sum <- broom.mixed::tidy(mod)
+            mod.sum$feature <- col
+        }
+        if((reg.method == "zibr") & zero_prop_from_formula){
+            vars <- all.vars(as.formula(formula))
+            mod <- run_single_beta_reg_zibr(logistic_cov=vars, beta_cov=vars,
+                                            Y=col,
+                                            subject_ind=NULL, time_ind=NULL,
+                                            data=data)
+            # TODO: tidy results
+            }
+
+        if((reg.method == "zibr") & zero_prop_from_formula==FALSE){
+            vars <- all.vars(as.formula(formula))
+            mod <- run_single_beta_reg_zibr(logistic_cov=NULL, beta_cov=vars,
+                                            Y=col,
+                                            subject_ind=NULL, time_ind=NULL,
+                                            data=data)
+            # TODO: tidy results
+        }
+
         mod.summaries <- rbind(mod.summaries, mod.sum)
 
         # progress bar things
