@@ -10,7 +10,7 @@ test_that("tidy zibr", {
         beta_s2_est=1,
         beta_v_est=1,
         loglikelihood=500,
-        joint_p=c(phenotype=1, depth=1)
+        joint_p=c(phenotype=1)
     )
 
     expected.clean.mod <- data.frame(
@@ -20,7 +20,7 @@ test_that("tidy zibr", {
                "intersept", "phenotype"),
         estimate=c(0, 0, 0, 0),
         p.value=c(1, 1, 1, 1),
-        joint.p <- c(NA, 1, NA, 1)
+        joint.p=c(NA, 1, NA, 1)
     )
 
     clean.mod <- tidy_zibr_results(dirty.mod)
