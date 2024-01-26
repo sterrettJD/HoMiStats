@@ -59,9 +59,39 @@ run_single_beta_reg_zibr <- function(logistic_cov=NULL, beta_cov, Y,
                Y=as.matrix(data[,Y]),
                subject_ind=subject_ind_dat,
                time_ind=time_ind_dat,
-               verbose = T)
+               verbose=T)
 
     return(mod)
+}
+
+#' Tidy ZIBR output
+#' @description ZIBR returns a list with lots of different kinds of entrie
+#' @param mod A ZIBR model results object.
+#' @return a dataframe with the tidy model results
+#' @export
+#'
+tidy_zibr_results <- function(mod){
+    # There is a joint_p if logistic_cov and beta_cov are the same
+    clean <- data.frame(
+        parameter=c(rep("logistic", nrow(mod$logistic_est_table)),
+                    rep("beta", nrow(mod$beta_est_table))),
+        term=c(row.names(mod$logistic_est_table),
+               row.names(mod$beta_est_table)),
+        estimate=c(mod$logistic_est_table[,"Estimate"],
+                   mod$beta_est_table[,"Estimate"]),
+        p.value=c(mod$logistic_est_table[,"Pvalue"],
+                  mod$beta_est_table[,"Pvalue"]),
+        joint.p=rep(NA,
+                    nrow(mod$logistic_est_table) + nrow(mod$beta_est_table))
+        )
+
+    for(term in names(mod$joint_p)){
+        print(term)
+        clean[clean$term==term, "joint.p"] <- mod$joint_p[term]
+    }
+
+    return(clean)
+
 }
 
 
