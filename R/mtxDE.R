@@ -135,11 +135,19 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
     data <- merge(feature.table, metadata[,metadata.vars], by="row.names")
 
     # initialize the model summaries df
-    mod.summaries <- data.frame(matrix(nrow=0, ncol=7))
-    colnames(mod.summaries) <- c("parameter", "term",
-                                 "estimate", "std.error",
-                                 "statistic", "p.value",
-                                 "feature")
+    if(reg.method == "gamlss"){
+        mod.summaries <- data.frame(matrix(nrow=0, ncol=7))
+        colnames(mod.summaries) <- c("parameter", "term",
+                                     "estimate", "std.error",
+                                     "statistic", "p.value",
+                                     "feature")
+    } else if(reg.method == "zibr"){
+        mod.summaries <- data.frame(matrix(nrow=0, ncol=6))
+        colnames(mod.summaries) <- c("parameter", "term",
+                                     "estimate",
+                                     "p.value", "joint.p",
+                                     "feature")
+    }
 
     n_iter <- ncol(feature.table)
     i <- 0
@@ -156,7 +164,6 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
             mod <- run_single_beta_reg_gamlss(paste0(col, formula),
                                               data=data)
             mod.sum <- broom.mixed::tidy(mod)
-            mod.sum$feature <- col
         }
         if((reg.method == "zibr") & zero_prop_from_formula){
             vars <- all.vars(as.formula(formula))
@@ -164,7 +171,8 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
                                             Y=col,
                                             subject_ind=NULL, time_ind=NULL,
                                             data=data)
-            # TODO: tidy results
+
+            mod.sum <- tidy_zibr_results(mod)
             }
 
         if((reg.method == "zibr") & zero_prop_from_formula==FALSE){
@@ -173,9 +181,11 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
                                             Y=col,
                                             subject_ind=NULL, time_ind=NULL,
                                             data=data)
-            # TODO: tidy results
+
+            mod.sum <- tidy_zibr_results(mod)
         }
 
+        mod.sum$feature <- col
         mod.summaries <- rbind(mod.summaries, mod.sum)
 
         # progress bar things
