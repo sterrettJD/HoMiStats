@@ -26,3 +26,14 @@ test_that("tidy zibr", {
     clean.mod <- tidy_zibr_results(dirty.mod)
     expect_equal(clean.mod, expected.clean.mod)
 })
+
+
+test_that("rand effects getter", {
+    expect_null(get_random_fx(y ~ x))
+    expect_null(get_random_fx(~ x))
+
+    expect_equal(get_random_fx(y ~ x + (1|z)),
+                 c("z"))
+    expect_equal(get_random_fx(y ~ x*z + (1|a) + (1|b)),
+                 c("a", "b"))
+})
