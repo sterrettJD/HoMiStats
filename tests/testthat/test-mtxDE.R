@@ -37,3 +37,17 @@ test_that("rand effects getter", {
     expect_equal(get_random_fx(y ~ x*z + (1|a) + (1|b)),
                  c("a", "b"))
 })
+
+test_that("check_for_ones works", {
+    should.error.df <- data.frame(a=c(0, 1),
+                                  b=c(1, 0))
+
+    expect_error(check_for_ones(should.error.df),
+                 "The following rows contains a value of one which the zero-inflated beta regression cannot handle: 1")
+    expect_error(check_for_ones(should.error.df),
+                 "The following rows contains a value of one which the zero-inflated beta regression cannot handle: 2")
+
+    no.error.df <- data.frame(a=c(0.1, 0.2),
+                              b=c(0.9, 0.8))
+    expect_no_error(check_for_ones(no.error.df))
+})
