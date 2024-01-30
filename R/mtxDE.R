@@ -119,13 +119,17 @@ check_for_ones <- function(feature.table){
 #' @param sampleID A string denoting name of the column in metadata with sample IDs, which should be used to merge metadata with the feature table's rownames
 #' @param reg.method A string denoting the method to use for regression. Options include "zibr" and "gamlss".
 #' @param padj A string denoting the p value adustment method. Options can be checked using 'p.adjust.methods'
+#' @param zero_prop_from_formula In ZIBR zero-inflated beta regression, should the zeroes be modeled with the provided formula? Default is TRUE.
+#' @param zibr_zibr_time_ind A string denoting the name of the time column for ZIBR. Defaults to NULL, which is implemented as a constant time value in ZIBR to not fit a time effect. This argument does nothing if reg.method is not "zibr".
 #' @return a dataframe with differential expression results
 #' @export
 #' @importFrom broom.mixed tidy
+#' @importFrom lme4 findbars
 #'
 run_mtxDE <- function(formula, feature.table, metadata, sampleID,
                       reg.method="zibr", padj="fdr",
-                      zero_prop_from_formula=T){
+                      zero_prop_from_formula=T,
+                      zibr_time_ind=NULL){
     # Check for values of one, which the beta regression can't handle
     check_for_ones(feature.table)
 
@@ -169,7 +173,7 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
             vars <- all.vars(as.formula(formula))
             mod <- run_single_beta_reg_zibr(logistic_cov=vars, beta_cov=vars,
                                             Y=col,
-                                            subject_ind=NULL, time_ind=NULL,
+                                            subject_ind=NULL, time_ind=zibr_time_ind,
                                             data=data)
 
             mod.sum <- tidy_zibr_results(mod)
@@ -179,7 +183,7 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
             vars <- all.vars(as.formula(formula))
             mod <- run_single_beta_reg_zibr(logistic_cov=NULL, beta_cov=vars,
                                             Y=col,
-                                            subject_ind=NULL, time_ind=NULL,
+                                            subject_ind=NULL, time_ind=zibr_time_ind,
                                             data=data)
 
             mod.sum <- tidy_zibr_results(mod)
@@ -192,6 +196,7 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
         setTxtProgressBar(pb, i)
         i <- i + 1
     }
+
 
     close(pb) #close the progress bar
 
