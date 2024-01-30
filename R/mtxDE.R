@@ -128,7 +128,6 @@ get_random_fx <- function(form){
     }
 
     return(vars)
-
 }
 
 
@@ -146,7 +145,6 @@ get_random_fx <- function(form){
 #' @return a dataframe with differential expression results
 #' @export
 #' @importFrom broom.mixed tidy
-#' @importFrom lme4 findbars
 #'
 run_mtxDE <- function(formula, feature.table, metadata, sampleID,
                       reg.method="zibr", padj="fdr",
@@ -159,10 +157,6 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
     formula <- paste0(" ~ ", formula)
     metadata.vars <- c(all.vars(as.formula(formula)), sampleID)
     data <- merge(feature.table, metadata[,metadata.vars], by="row.names")
-
-    # Handle random effects
-    # Extracts random effects from a formula
-    random.effects.vars <- get_random_fx(as.formula(formula))
 
     # initialize the model summaries df
     if(reg.method == "gamlss"){
@@ -177,18 +171,23 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
                                      "estimate",
                                      "p.value", "joint.p",
                                      "feature")
+        # extract vars for zibr
+        vars <- all.vars(as.formula(formula))
+        # Extracts random effects from formula
+        random.effects.vars <- get_random_fx(as.formula(formula))
+        fixed.vars <- setdiff(vars, random.effects.vars)
     }
 
+    # Initializes progress bar
     n_iter <- ncol(feature.table)
     i <- 0
-    # Initializes progress bar
     pb <- txtProgressBar(min = 0,
                          max = n_iter,
                          style = 3,
                          width = 50,   # Progress bar width. Defaults to getOption("width")
                          char = "=")
 
-    # Loop through each column and run the beta regression
+    # Loop through each column and run the regression
     for(col in colnames(feature.table)){
         if(reg.method == "gamlss"){
             mod <- run_single_beta_reg_gamlss(paste0(col, formula),
@@ -197,20 +196,22 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
         }
 
         if((reg.method == "zibr") & zero_prop_from_formula){
-            vars <- all.vars(as.formula(formula))
-            mod <- run_single_beta_reg_zibr(logistic_cov=vars, beta_cov=vars,
+
+            mod <- run_single_beta_reg_zibr(logistic_cov=fixed.vars, beta_cov=fixed.vars,
                                             Y=col,
-                                            subject_ind=NULL, time_ind=zibr_time_ind,
+                                            subject_ind=random.effects.vars,
+                                            time_ind=zibr_time_ind,
                                             data=data)
 
             mod.sum <- tidy_zibr_results(mod)
             }
 
         if((reg.method == "zibr") & zero_prop_from_formula==FALSE){
-            vars <- all.vars(as.formula(formula))
-            mod <- run_single_beta_reg_zibr(logistic_cov=NULL, beta_cov=vars,
+
+            mod <- run_single_beta_reg_zibr(logistic_cov=NULL, beta_cov=fixed.vars,
                                             Y=col,
-                                            subject_ind=NULL, time_ind=zibr_time_ind,
+                                            subject_ind=random.effects.vars,
+                                            time_ind=zibr_time_ind,
                                             data=data)
 
             mod.sum <- tidy_zibr_results(mod)
