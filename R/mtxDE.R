@@ -111,6 +111,28 @@ check_for_ones <- function(feature.table){
     }
 }
 
+
+#' Get random effects
+#' @description Sometimes you want the name of random effects variables from a formula. This function does that.
+#' @param form A formula with random effects.
+#' @return a character vector with the random effects variable names, or NULL if there are no random effects.
+#' @importFrom lme4 findbars
+#' @export
+#'
+get_random_fx <- function(form){
+    vars <- sapply(lme4::findbars(form),
+                    FUN=function(x) as.character(x)[3])
+
+    if(length(vars) == 0){
+        return(NULL)
+    }
+
+    return(vars)
+
+}
+
+
+
 #' Run differential expression analysis for metatranscriptomics data
 #' @description Regresses each feature using the formula provided and returns the statistical summary for each feature
 #' @param formula the right hand side of the regression formula to be used for each feature
@@ -137,6 +159,10 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
     formula <- paste0(" ~ ", formula)
     metadata.vars <- c(all.vars(as.formula(formula)), sampleID)
     data <- merge(feature.table, metadata[,metadata.vars], by="row.names")
+
+    # Handle random effects
+    # Extracts random effects from a formula
+    random.effects.vars <- get_random_fx(as.formula(formula))
 
     # initialize the model summaries df
     if(reg.method == "gamlss"){
@@ -169,6 +195,7 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
                                               data=data)
             mod.sum <- broom.mixed::tidy(mod)
         }
+
         if((reg.method == "zibr") & zero_prop_from_formula){
             vars <- all.vars(as.formula(formula))
             mod <- run_single_beta_reg_zibr(logistic_cov=vars, beta_cov=vars,
