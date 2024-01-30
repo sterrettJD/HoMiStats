@@ -51,3 +51,22 @@ test_that("check_for_ones works", {
                               b=c(0.9, 0.8))
     expect_no_error(check_for_ones(no.error.df))
 })
+
+
+test_that("run_mtxDE works", {
+    feature.table <- data.frame(a=c(0.1, 0.0, 0.0, 0.0),
+                                b=c(0.5, 0.5, 0.5, 0.4),
+                                c=c(0.4, 0.5, 0.0, 0.0),
+                                d=c(0.0, 0.0, 0.5, 0.6))
+    metadata <- data.frame(SampleID=1:4,
+                           phenotype=c(0,0,1,1),
+                           participant=c(0,1,0,1),
+                           timepoint=c(0,0,1,1))
+
+    expected.zibr.nolong <- read.csv("data/expected_mtxDE_results_zibrnolong.csv")
+
+    expect_equal(suppressWarnings(run_mtxDE("phenotype", feature.table,
+                                           metadata, sampleID="SampleID")),
+                 expected.zibr.nolong)
+
+})
