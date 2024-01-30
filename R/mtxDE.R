@@ -86,7 +86,6 @@ tidy_zibr_results <- function(mod){
         )
 
     for(term in names(mod$joint_p)){
-        print(term)
         clean[clean$term==term, "joint.p"] <- mod$joint_p[term]
     }
 
