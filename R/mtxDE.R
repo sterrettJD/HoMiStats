@@ -181,7 +181,7 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
     n_iter <- ncol(feature.table)
     i <- 0
     pb <- txtProgressBar(min = 0,
-                         max = n_iter,
+                         max = n_iter-1,
                          style = 3,
                          width = 50,   # Progress bar width. Defaults to getOption("width")
                          char = "=")
@@ -229,10 +229,19 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
 
     mod.summaries <- as.data.frame(mod.summaries)
     # adjust p value only for non-intercept terms
-    mod.summaries[mod.summaries$term!="(Intercept)",
-                  "q"] <- p.adjust(mod.summaries[mod.summaries$term!="(Intercept)",
-                                                "p.value"],
-                                   method=padj)
+    # and if we have a joint p, only adjust it for the beta coefficient (it's copied for the logistic)
+    if((reg.method == "zibr") & zero_prop_from_formula){
+        mod.summaries[mod.summaries$term!="(Intercept)" & mod.summaries$parameter=="beta",
+                      "q"] <- p.adjust(mod.summaries[mod.summaries$term!="(Intercept)" & mod.summaries$parameter=="beta",
+                                                     "joint.p"],
+                                       method=padj)
+    } else {
+        mod.summaries[mod.summaries$term!="(Intercept)",
+                      "q"] <- p.adjust(mod.summaries[mod.summaries$term!="(Intercept)",
+                                                     "p.value"],
+                                       method=padj)
+    }
+
 
     return(mod.summaries)
 }
