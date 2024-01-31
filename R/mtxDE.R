@@ -155,7 +155,9 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
     # merge the feature table and metadata based on the rownames
     formula <- paste0(" ~ ", formula)
     metadata.vars <- c(all.vars(as.formula(formula)), sampleID)
-    data <- merge(feature.table, metadata[,metadata.vars], by="row.names")
+    data <- merge(feature.table,
+                  metadata[,c(metadata.vars, zibr_time_ind)],
+                  by="row.names")
 
     # initialize the model summaries df
     if(reg.method == "gamlss"){
@@ -195,7 +197,7 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
         }
 
         if((reg.method == "zibr") & zero_prop_from_formula){
-
+            print(fixed.vars)
             mod <- run_single_beta_reg_zibr(logistic_cov=fixed.vars, beta_cov=fixed.vars,
                                             Y=col,
                                             subject_ind=random.effects.vars,
