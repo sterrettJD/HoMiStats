@@ -64,9 +64,22 @@ test_that("run_mtxDE works", {
                            timepoint=c(0,0,1,1))
 
     expected.zibr.nolong <- read.csv("data/expected_mtxDE_results_zibrnolong.csv")
+    expected.zibr.long <- read.csv("data/expected_mtxDE_results_zibrlong.csv")
+    expected.gamlss <- read.csv("data/expected_mtxDE_results_gamlss.csv")
 
     expect_equal(suppressWarnings(run_mtxDE("phenotype", feature.table,
                                            metadata, sampleID="SampleID")),
                  expected.zibr.nolong)
+
+    expect_equal(suppressWarnings(
+                    run_mtxDE("phenotype + (1|participant)", feature.table,
+                              metadata, sampleID="SampleID", zibr_time_ind="timepoint")
+                    ),
+                 expected.zibr.long)
+
+    expect_equal(suppressWarnings(run_mtxDE("phenotype", feature.table,
+                                            metadata, sampleID="SampleID",
+                                            reg.method="gamlss")),
+                 expected.gamlss)
 
 })
