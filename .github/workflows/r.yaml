@@ -38,7 +38,7 @@ jobs:
           upload-snapshots: true
           error-on: '"error"'
           build_args: '"--no-build-vignettes"'
-          args: '"--no-build-vignettes"'
+          args: c("--no-manual", "--as-cran", '"--no-build-vignettes"')
 
 
   document:
