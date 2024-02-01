@@ -4,7 +4,16 @@
 \alias{run_mtxDE}
 \title{Run differential expression analysis for metatranscriptomics data}
 \usage{
-run_mtxDE(formula, feature.table, metadata, sampleID, padj = "fdr")
+run_mtxDE(
+  formula,
+  feature.table,
+  metadata,
+  sampleID,
+  reg.method = "zibr",
+  padj = "fdr",
+  zero_prop_from_formula = T,
+  zibr_time_ind = NULL
+)
 }
 \arguments{
 \item{formula}{the right hand side of the regression formula to be used for each feature}
@@ -13,9 +22,15 @@ run_mtxDE(formula, feature.table, metadata, sampleID, padj = "fdr")
 
 \item{metadata}{The metadata dataframe, where rows are samples and columns are features}
 
-\item{sampleID}{The name of the column in metadata with sample IDs, which should be used to merge metadata with the feature table's rownames}
+\item{sampleID}{A string denoting name of the column in metadata with sample IDs, which should be used to merge metadata with the feature table's rownames}
 
-\item{padj}{p value adustment method. Options can be checked using 'p.adjust.methods'}
+\item{reg.method}{A string denoting the method to use for regression. Options include "zibr" and "gamlss".}
+
+\item{padj}{A string denoting the p value adustment method. Options can be checked using 'p.adjust.methods'}
+
+\item{zero_prop_from_formula}{In ZIBR zero-inflated beta regression, should the zeroes be modeled with the provided formula? Default is TRUE.}
+
+\item{zibr_zibr_time_ind}{A string denoting the name of the time column for ZIBR. Defaults to NULL, which is implemented as a constant time value in ZIBR to not fit a time effect. This argument does nothing if reg.method is not "zibr".}
 }
 \value{
 a dataframe with differential expression results
