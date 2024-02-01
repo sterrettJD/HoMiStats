@@ -38,4 +38,4 @@ jobs:
           upload-snapshots: true
           error-on: '"error"'
           build_args: '"--no-build-vignettes"'
-          args: c("--no-manual", "--as-cran", '"--ignore-vignettes"')
+          args: '"--no-manual --as-cran --ignore-vignettes"'
