@@ -94,6 +94,7 @@ results$changing <- results$changing %>%
 results$percent_zero <- str_split(results$feature, pattern="_") %>%
                         sapply(FUN=function(x) as.numeric(x[3]))
 
+head(results)
 
 ggplot(results,
        mapping=aes(x=percent_zero, y=estimate)) +

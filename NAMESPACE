@@ -1,6 +1,9 @@
 exportPattern("^[[:alpha:]]+")
 import(gamlss)
 import(gamlss.dist)
+import(ZIBR)
+import(lme4)
 importFrom(broom.mixed, tidy)
 importFrom("stats", "as.formula", "p.adjust")
 importFrom("utils", "setTxtProgressBar", "txtProgressBar")
+
