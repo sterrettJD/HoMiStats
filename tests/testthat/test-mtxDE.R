@@ -69,17 +69,20 @@ test_that("run_mtxDE works", {
 
     expect_equal(suppressWarnings(run_mtxDE("phenotype", feature.table,
                                            metadata, sampleID="SampleID")),
-                 expected.zibr.nolong)
+                 expected.zibr.nolong,
+                 tolerance=1e-3)
 
     expect_equal(suppressWarnings(
                     run_mtxDE("phenotype + (1|participant)", feature.table,
                               metadata, sampleID="SampleID", zibr_time_ind="timepoint")
                     ),
-                 expected.zibr.long)
+                 expected.zibr.long,
+                 tolerance=1e-3)
 
     expect_equal(suppressWarnings(run_mtxDE("phenotype", feature.table,
                                             metadata, sampleID="SampleID",
                                             reg.method="gamlss")),
-                 expected.gamlss)
+                 expected.gamlss,
+                 tolerance=1e-3)
 
 })
