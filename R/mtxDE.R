@@ -157,7 +157,7 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
     metadata.vars <- c(all.vars(as.formula(formula)), sampleID)
     data <- merge(feature.table,
                   metadata[,c(metadata.vars, zibr_time_ind)],
-                  by="row.names")
+                  by.x="row.names", by.y=sampleID)
 
     # initialize the model summaries df
     if(reg.method == "gamlss"){
@@ -190,14 +190,14 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
 
     # Loop through each column and run the regression
     for(col in colnames(feature.table)){
+
         if(reg.method == "gamlss"){
             mod <- run_single_beta_reg_gamlss(paste0(col, formula),
                                               data=data)
             mod.sum <- broom.mixed::tidy(mod)
         }
 
-        if((reg.method == "zibr") & zero_prop_from_formula){
-            print(fixed.vars)
+        if((reg.method == "zibr") & (zero_prop_from_formula==TRUE)){
             mod <- run_single_beta_reg_zibr(logistic_cov=fixed.vars, beta_cov=fixed.vars,
                                             Y=col,
                                             subject_ind=random.effects.vars,
