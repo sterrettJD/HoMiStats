@@ -58,7 +58,8 @@ test_that("run_mtxDE works", {
                                 b=c(0.5, 0.5, 0.5, 0.4),
                                 c=c(0.4, 0.5, 0.0, 0.0),
                                 d=c(0.0, 0.0, 0.5, 0.6))
-    metadata <- data.frame(SampleID=1:4,
+    row.names(feature.table) <- paste0("sample_", 1:4)
+    metadata <- data.frame(SampleID=paste0("sample_", 1:4),
                            phenotype=c(0,0,1,1),
                            participant=c(0,1,0,1),
                            timepoint=c(0,0,1,1))
