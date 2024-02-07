@@ -137,8 +137,11 @@ test_that("ZIBR timepoint errors", {
                            zibr_time_ind=NULL),
                  "A timepoint column is necessary if there are longitudinal samples.")
     # Not longitudinal with no timepoint column
-    expect_no_error(run_mtxDE("phenotype + (1|unique_participants)",
+    expect_no_error(suppressWarnings(
+                run_mtxDE("phenotype + (1|unique_participants)",
                            feature.table,
                            metadata, sampleID="SampleID",
-                           zibr_time_ind=NULL))
+                           zibr_time_ind=NULL)
+                        )
+                    )
 })
