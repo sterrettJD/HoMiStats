@@ -118,3 +118,27 @@ test_that("run_mtxDE works", {
                  colnames(expected.gamlss))
 
 })
+
+test_that("ZIBR timepoint errors", {
+    feature.table <- data.frame(a=c(0.1, 0.0, 0.0, 0.0),
+                                b=c(0.5, 0.5, 0.5, 0.4),
+                                c=c(0.4, 0.5, 0.0, 0.0),
+                                d=c(0.0, 0.0, 0.5, 0.6))
+    row.names(feature.table) <- paste0("sample_", 1:4)
+    metadata <- data.frame(SampleID=paste0("sample_", 1:4),
+                           phenotype=c(0,0,1,1),
+                           participant=c(0,1,0,1),
+                           unique_participants=1:4,
+                           timepoint=c(0,0,1,1))
+    # Longitudinal but no timepoint column
+    expect_error(run_mtxDE("phenotype + (1|participant)",
+                           feature.table,
+                           metadata, sampleID="SampleID",
+                           zibr_time_ind=NULL),
+                 "A timepoint column is necessary if there are longitudinal samples.")
+    # Not longitudinal with no timepoint column
+    expect_no_error(run_mtxDE("phenotype + (1|unique_participants)",
+                           feature.table,
+                           metadata, sampleID="SampleID",
+                           zibr_time_ind=NULL))
+})
