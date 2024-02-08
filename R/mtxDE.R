@@ -115,14 +115,13 @@ run_single_lm <- function(formula, data){
 #' @param data A dataframe to be used in the regression
 #' @return the resulting model
 #' @export
-#' @importFrom lme4 lmer
+#' @importFrom lmerTest lmer
 #'
 run_single_lmer <- function(formula, data){
-    mod <- lme4::lmer(as.formula(formula),
+    mod <- lmerTest::lmer(as.formula(formula),
               data=data)
     return(mod)
 }
-
 
 
 #' Check for 1 in feature.table
@@ -175,6 +174,7 @@ get_random_fx <- function(form){
 #' @return a dataframe with differential expression results
 #' @export
 #' @importFrom broom.mixed tidy
+#' @importFrom broom tidy
 #'
 run_mtxDE <- function(formula, feature.table, metadata, sampleID,
                       reg.method="zibr", padj="fdr",
@@ -197,6 +197,7 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
                                      "estimate", "std.error",
                                      "statistic", "p.value",
                                      "feature")
+
     } else if(reg.method == "zibr"){
         mod.summaries <- data.frame(matrix(nrow=0, ncol=6))
         colnames(mod.summaries) <- c("parameter", "term",
@@ -208,6 +209,21 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
         # Extracts random effects from formula
         random.effects.vars <- get_random_fx(as.formula(formula))
         fixed.vars <- setdiff(vars, random.effects.vars)
+
+    } else if(reg.method=="lm"){
+        mod.summaries <- data.frame(matrix(nrow=0, ncol=6))
+        colnames(mod.summaries) <- c("term", "estimate",
+                                     "std.error", "statistic",
+                                     "p.value", "feature")
+
+    } else if(reg.method=="lmer"){
+        mod.summaries <- data.frame(matrix(nrow=0, ncol=9))
+        colnames(mod.summaries) <- c("effect", "group",
+                                     "term", "estimate",
+                                     "std.error", "statistic",
+                                     "df", "p.value",
+                                     "feature")
+
     }
 
     # Initializes progress bar
@@ -226,9 +242,7 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
             mod <- run_single_beta_reg_gamlss(paste0(col, formula),
                                               data=data)
             mod.sum <- broom.mixed::tidy(mod)
-        }
-
-        if((reg.method == "zibr") & (zero_prop_from_formula==TRUE)){
+        } else if((reg.method == "zibr") & (zero_prop_from_formula==TRUE)){
             mod <- run_single_beta_reg_zibr(logistic_cov=fixed.vars, beta_cov=fixed.vars,
                                             Y=col,
                                             subject_ind=random.effects.vars,
@@ -236,9 +250,8 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
                                             data=data)
 
             mod.sum <- tidy_zibr_results(mod)
-            }
 
-        if((reg.method == "zibr") & zero_prop_from_formula==FALSE){
+        } else if((reg.method == "zibr") & (zero_prop_from_formula==FALSE)){
 
             mod <- run_single_beta_reg_zibr(logistic_cov=NULL, beta_cov=fixed.vars,
                                             Y=col,
@@ -247,6 +260,14 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
                                             data=data)
 
             mod.sum <- tidy_zibr_results(mod)
+
+        } else if(reg.method == "lm"){
+            mod <- run_single_lm(formula, data)
+            mod.sum <- broom::tidy(mod)
+
+        } else if(reg.method == "lmer"){
+            mod <- run_single_lmer(formula, data)
+            mod.sum <- broom.mixed::tidy(mod)
         }
 
         mod.sum$feature <- col
@@ -274,7 +295,7 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
                                                      "p.value"],
                                        method=padj)
     }
-
+    # TODO: P VAL ADJUSTMENT FOR LINEAR MODELS
 
     return(mod.summaries)
 }
