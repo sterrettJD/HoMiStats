@@ -94,6 +94,25 @@ tidy_zibr_results <- function(mod){
 }
 
 
+#' Run a single linear regression
+#' @description runs a basic linear regression
+#' @param formula the full formula to be used in the regression
+#' @param data A dataframe to be used in the regression
+#' @return the resulting model
+#' @export
+#' @importFrom gamlss.dist BEZI
+#'
+run_single_beta_reg_gamlss <- function(formula, data,
+                                       controller=gamlss.control(trace=FALSE)){
+    mod <- gamlss::gamlss(as.formula(formula),
+                          data=data,
+                          family=gamlss.dist::BEZI,
+                          control=controller)
+    return(mod)
+}
+
+
+
 #' Check for 1 in feature.table
 #' @description The zero-inflated beta regression can't handle values of 1. This checks for them and raises an error if they exist.
 #' @param feature.table A dataframe, where rows are samples, and columns are genes/features. Row names should be sample IDs.
