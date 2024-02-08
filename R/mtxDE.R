@@ -102,7 +102,7 @@ tidy_zibr_results <- function(mod){
 #' @export
 #' @importFrom stats lm
 #'
-run_single_lmer <- function(formula, data){
+run_single_lm <- function(formula, data){
     mod <- lm(as.formula(formula),
               data=data)
     return(mod)
@@ -117,7 +117,7 @@ run_single_lmer <- function(formula, data){
 #' @export
 #' @importFrom lme4 lmer
 #'
-run_single_lm <- function(formula, data){
+run_single_lmer <- function(formula, data){
     mod <- lme4::lmer(as.formula(formula),
               data=data)
     return(mod)
