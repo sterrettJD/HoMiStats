@@ -95,19 +95,31 @@ tidy_zibr_results <- function(mod){
 
 
 #' Run a single linear regression
-#' @description runs a basic linear regression
+#' @description runs a simple linear regression
 #' @param formula the full formula to be used in the regression
 #' @param data A dataframe to be used in the regression
 #' @return the resulting model
 #' @export
-#' @importFrom gamlss.dist BEZI
+#' @importFrom stats lm
 #'
-run_single_beta_reg_gamlss <- function(formula, data,
-                                       controller=gamlss.control(trace=FALSE)){
-    mod <- gamlss::gamlss(as.formula(formula),
-                          data=data,
-                          family=gamlss.dist::BEZI,
-                          control=controller)
+run_single_lmer <- function(formula, data){
+    mod <- lm(as.formula(formula),
+              data=data)
+    return(mod)
+}
+
+
+#' Run a single linear mixed effects regression
+#' @description runs a linear mixed regression using lme4
+#' @param formula the full formula to be used in the regression
+#' @param data A dataframe to be used in the regression
+#' @return the resulting model
+#' @export
+#' @importFrom lme4 lmer
+#'
+run_single_lm <- function(formula, data){
+    mod <- lme4::lmer(as.formula(formula),
+              data=data)
     return(mod)
 }
 
