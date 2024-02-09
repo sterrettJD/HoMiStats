@@ -16,11 +16,11 @@ Statistics tools for host-microbiome dual transcriptomics
 ## Statistical modules
 HoMiStats consists of two main modules:
 
-1.  Metatranscriptomics differential expression (mtxDE)
+1.  Metatranscriptomics differential expression (mtxDE implemented in `run_mtxDE()`)
 
     -   Zero inflated beta regression, motivated by [this review](https://academic.oup.com/bib/article/24/5/bbad279/7239897) and using a model inspired by [Peng et al., 2016](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6109378/)
-        - Implemented via [GAMLSS BEZI](https://www.rdocumentation.org/packages/gamlss.dist/versions/6.1-1/topics/BEZI) and [ZIBR](https://github.com/PennChopMicrobiomeProgram/ZIBR) (supports random effects) in the function `run_mtxDE()`
-    -   Other models? Not yet implemented...
+        - Implemented via [GAMLSS BEZI](https://www.rdocumentation.org/packages/gamlss.dist/versions/6.1-1/topics/BEZI) and [ZIBR](https://github.com/PennChopMicrobiomeProgram/ZIBR) (supports random effects) 
+    -   Linear regression and linear mixed-effects regression
 
 2.  Construction of correlation network between host and microbial transcripts - Not yet implemented...
 
