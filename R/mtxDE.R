@@ -174,6 +174,7 @@ get_random_fx <- function(form){
 #' @param padj A string denoting the p value adustment method. Options can be checked using 'p.adjust.methods'
 #' @param zero_prop_from_formula In ZIBR zero-inflated beta regression, should the zeroes be modeled with the provided formula? Default is TRUE.
 #' @param zibr_zibr_time_ind A string denoting the name of the time column for ZIBR. Defaults to NULL, which is implemented as a constant time value in ZIBR to not fit a time effect. This argument does nothing if reg.method is not "zibr".
+#' @param show_progress A boolean denoting if a progress bar should be shown.
 #' @return a dataframe with differential expression results
 #' @export
 #' @importFrom broom.mixed tidy
@@ -182,7 +183,8 @@ get_random_fx <- function(form){
 run_mtxDE <- function(formula, feature.table, metadata, sampleID,
                       reg.method="zibr", padj="fdr",
                       zero_prop_from_formula=T,
-                      zibr_time_ind=NULL){
+                      zibr_time_ind=NULL,
+                      show_progress=TRUE){
     # Check for values of one, which the beta regression can't handle
     if(reg.method %in% c("zibr", "gamlss")){
         check_for_ones(feature.table)
@@ -233,14 +235,17 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
 
     }
 
-    # Initializes progress bar
-    n_iter <- ncol(feature.table)
-    i <- 0
-    pb <- txtProgressBar(min = 0,
-                         max = n_iter-1,
-                         style = 3,
-                         width = 50,   # Progress bar width. Defaults to getOption("width")
-                         char = "=")
+    if(show_progress){
+        # Initializes progress bar
+        n_iter <- ncol(feature.table)
+        i <- 0
+        pb <- txtProgressBar(min = 0,
+                             max = n_iter-1,
+                             style = 3,
+                             width = 50,   # Progress bar width. Defaults to getOption("width")
+                             char = "=")
+    }
+
 
     # Loop through each column and run the regression
     for(col in colnames(feature.table)){
@@ -280,13 +285,15 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
         mod.sum$feature <- col
         mod.summaries <- rbind(mod.summaries, mod.sum)
 
-        # progress bar things
-        setTxtProgressBar(pb, i)
-        i <- i + 1
+        if(show_progress){
+            # progress bar things
+            setTxtProgressBar(pb, i)
+            i <- i + 1
+        }
     }
 
 
-    close(pb) #close the progress bar
+    if(show_progress){ close(pb) } #close the progress bar
 
     mod.summaries <- as.data.frame(mod.summaries)
     # adjust p value only for non-intercept terms
