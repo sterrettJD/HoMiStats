@@ -97,6 +97,36 @@ tidy_zibr_results <- function(mod){
 }
 
 
+#' Run a single linear regression
+#' @description runs a simple linear regression
+#' @param formula the full formula to be used in the regression
+#' @param data A dataframe to be used in the regression
+#' @return the resulting model
+#' @export
+#' @importFrom stats lm
+#'
+run_single_lm <- function(formula, data){
+    mod <- lm(as.formula(formula),
+              data=data)
+    return(mod)
+}
+
+
+#' Run a single linear mixed effects regression
+#' @description runs a linear mixed regression using lme4
+#' @param formula the full formula to be used in the regression
+#' @param data A dataframe to be used in the regression
+#' @return the resulting model
+#' @export
+#' @importFrom lmerTest lmer
+#'
+run_single_lmer <- function(formula, data){
+    mod <- lmerTest::lmer(as.formula(formula),
+              data=data)
+    return(mod)
+}
+
+
 #' Check for 1 in feature.table
 #' @description The zero-inflated beta regression can't handle values of 1. This checks for them and raises an error if they exist.
 #' @param feature.table A dataframe, where rows are samples, and columns are genes/features. Row names should be sample IDs.
@@ -104,7 +134,7 @@ tidy_zibr_results <- function(mod){
 #' @export
 #'
 check_for_ones <- function(feature.table){
-    rows.with.ones <- which(feature.table == 1, arr.ind = T)[,1]
+    rows.with.ones <- which(feature.table >= 1, arr.ind = T)[,1]
     unique.rows.with.ones <- unique(rows.with.ones)
     unique.rownames.with.ones <- rownames(feature.table)[unique.rows.with.ones]
     if(length(unique.rownames.with.ones) > 0){
@@ -136,24 +166,28 @@ get_random_fx <- function(form){
 
 #' Run differential expression analysis for metatranscriptomics data
 #' @description Regresses each feature using the formula provided and returns the statistical summary for each feature
-#' @param formula the right hand side of the regression formula to be used for each feature
+#' @param formula the right hand side of the regression formula to be used for each feature. All variables in this formula should be of a numeric type (factors should be dummy coded, such that the reference value is 0).
 #' @param feature.table A dataframe, where rows are samples, and columns are genes/features. Row names should be sample IDs.
 #' @param metadata The metadata dataframe, where rows are samples and columns are features
 #' @param sampleID A string denoting name of the column in metadata with sample IDs, which should be used to merge metadata with the feature table's rownames
-#' @param reg.method A string denoting the method to use for regression. Options include "zibr" and "gamlss".
+#' @param reg.method A string denoting the method to use for regression. Options include "zibr" (Zero-inflated beta regression with random effects), "gamlss" (Zero-inflated beta regression implemented via GAMLSS), "lm" (linear regression), and "lmer" (linear mixed effects regression implemented via lme4 and lmerTest).
 #' @param padj A string denoting the p value adustment method. Options can be checked using 'p.adjust.methods'
 #' @param zero_prop_from_formula In ZIBR zero-inflated beta regression, should the zeroes be modeled with the provided formula? Default is TRUE.
 #' @param zibr_zibr_time_ind A string denoting the name of the time column for ZIBR. Defaults to NULL, which is implemented as a constant time value in ZIBR to not fit a time effect. This argument does nothing if reg.method is not "zibr".
 #' @return a dataframe with differential expression results
 #' @export
 #' @importFrom broom.mixed tidy
+#' @importFrom broom tidy
 #'
 run_mtxDE <- function(formula, feature.table, metadata, sampleID,
                       reg.method="zibr", padj="fdr",
                       zero_prop_from_formula=T,
                       zibr_time_ind=NULL){
     # Check for values of one, which the beta regression can't handle
-    check_for_ones(feature.table)
+    if(reg.method %in% c("zibr", "gamlss")){
+        check_for_ones(feature.table)
+    }
+
 
     # merge the feature table and metadata based on the rownames
     formula <- paste0(" ~ ", formula)
@@ -170,6 +204,7 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
                                      "estimate", "std.error",
                                      "statistic", "p.value",
                                      "feature")
+
     } else if(reg.method == "zibr"){
         mod.summaries <- data.frame(matrix(nrow=0, ncol=6))
         colnames(mod.summaries) <- c("parameter", "term",
@@ -181,6 +216,21 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
         # Extracts random effects from formula
         random.effects.vars <- get_random_fx(as.formula(formula))
         fixed.vars <- setdiff(vars, random.effects.vars)
+
+    } else if(reg.method=="lm"){
+        mod.summaries <- data.frame(matrix(nrow=0, ncol=6))
+        colnames(mod.summaries) <- c("term", "estimate",
+                                     "std.error", "statistic",
+                                     "p.value", "feature")
+
+    } else if(reg.method=="lmer"){
+        mod.summaries <- data.frame(matrix(nrow=0, ncol=9))
+        colnames(mod.summaries) <- c("effect", "group",
+                                     "term", "estimate",
+                                     "std.error", "statistic",
+                                     "df", "p.value",
+                                     "feature")
+
     }
 
     # Initializes progress bar
@@ -199,9 +249,7 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
             mod <- run_single_beta_reg_gamlss(paste0(col, formula),
                                               data=data)
             mod.sum <- broom.mixed::tidy(mod)
-        }
-
-        if((reg.method == "zibr") & (zero_prop_from_formula==TRUE)){
+        } else if((reg.method == "zibr") & (zero_prop_from_formula==TRUE)){
             mod <- run_single_beta_reg_zibr(logistic_cov=fixed.vars, beta_cov=fixed.vars,
                                             Y=col,
                                             subject_ind=random.effects.vars,
@@ -209,9 +257,8 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
                                             data=data)
 
             mod.sum <- tidy_zibr_results(mod)
-            }
 
-        if((reg.method == "zibr") & zero_prop_from_formula==FALSE){
+        } else if((reg.method == "zibr") & (zero_prop_from_formula==FALSE)){
 
             mod <- run_single_beta_reg_zibr(logistic_cov=NULL, beta_cov=fixed.vars,
                                             Y=col,
@@ -220,6 +267,14 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
                                             data=data)
 
             mod.sum <- tidy_zibr_results(mod)
+
+        } else if(reg.method == "lm"){
+            mod <- run_single_lm(paste0(col, formula), data)
+            mod.sum <- broom::tidy(mod)
+
+        } else if(reg.method == "lmer"){
+            mod <- run_single_lmer(paste0(col, formula), data)
+            mod.sum <- broom.mixed::tidy(mod)
         }
 
         mod.sum$feature <- col
@@ -237,17 +292,34 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
     # adjust p value only for non-intercept terms
     # and if we have a joint p, only adjust it for the beta coefficient (it's copied for the logistic)
     if((reg.method == "zibr") & zero_prop_from_formula){
-        mod.summaries[mod.summaries$term!="(Intercept)" & mod.summaries$parameter=="beta",
-                      "q"] <- p.adjust(mod.summaries[mod.summaries$term!="(Intercept)" & mod.summaries$parameter=="beta",
-                                                     "joint.p"],
-                                       method=padj)
-    } else {
-        mod.summaries[mod.summaries$term!="(Intercept)",
-                      "q"] <- p.adjust(mod.summaries[mod.summaries$term!="(Intercept)",
-                                                     "p.value"],
-                                       method=padj)
-    }
+        mod.summaries[mod.summaries$term!="(Intercept)" & mod.summaries$parameter == "beta",
+                      "q"] <- p.adjust(
+                                mod.summaries[mod.summaries$term!="(Intercept)" & mod.summaries$parameter == "beta",
+                                              "joint.p"],
+                                method=padj)
 
+    } else if((reg.method == "gamlss") |
+              (reg.method == "zibr") & (zero_prop_from_formula == FALSE)){
+        mod.summaries[mod.summaries$term!="(Intercept)",
+                      "q"] <- p.adjust(
+                                mod.summaries[mod.summaries$term!="(Intercept)",
+                                              "p.value"],
+                                method=padj)
+
+    } else if(reg.method == "lmer"){
+        mod.summaries[mod.summaries$term!="(Intercept)" & mod.summaries$effect == "fixed",
+                      "q"] <- p.adjust(
+                                mod.summaries[mod.summaries$term!="(Intercept)"  & mod.summaries$effect == "fixed",
+                                              "p.value"],
+                                method=padj)
+
+    } else if(reg.method == "lm"){
+        mod.summaries[mod.summaries$term!="(Intercept)",
+                      "q"] <- p.adjust(
+                          mod.summaries[mod.summaries$term!="(Intercept)",
+                                        "p.value"],
+                          method=padj)
+    }
 
     return(mod.summaries)
 }

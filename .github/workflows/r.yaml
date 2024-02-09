@@ -28,6 +28,8 @@ jobs:
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::rcmdcheck, any::remotes, any::pandoc, any::gh
+      - name: lme4 from source
+        run: R -q -e 'install.packages(c("lme4"), type = "source")'
 
       - name: Install pandoc
         uses: r-lib/actions/setup-pandoc@v2
