@@ -163,11 +163,11 @@ get_random_fx <- function(form){
 
 #' Run differential expression analysis for metatranscriptomics data
 #' @description Regresses each feature using the formula provided and returns the statistical summary for each feature
-#' @param formula the right hand side of the regression formula to be used for each feature
+#' @param formula the right hand side of the regression formula to be used for each feature. All variables in this formula should be of a numeric type (factors should be dummy coded, such that the reference value is 0).
 #' @param feature.table A dataframe, where rows are samples, and columns are genes/features. Row names should be sample IDs.
 #' @param metadata The metadata dataframe, where rows are samples and columns are features
 #' @param sampleID A string denoting name of the column in metadata with sample IDs, which should be used to merge metadata with the feature table's rownames
-#' @param reg.method A string denoting the method to use for regression. Options include "zibr" and "gamlss".
+#' @param reg.method A string denoting the method to use for regression. Options include "zibr" (Zero-inflated beta regression with random effects), "gamlss" (Zero-inflated beta regression implemented via GAMLSS), "lm" (linear regression), and "lmer" (linear mixed effects regression implemented via lme4 and lmerTest).
 #' @param padj A string denoting the p value adustment method. Options can be checked using 'p.adjust.methods'
 #' @param zero_prop_from_formula In ZIBR zero-inflated beta regression, should the zeroes be modeled with the provided formula? Default is TRUE.
 #' @param zibr_zibr_time_ind A string denoting the name of the time column for ZIBR. Defaults to NULL, which is implemented as a constant time value in ZIBR to not fit a time effect. This argument does nothing if reg.method is not "zibr".
