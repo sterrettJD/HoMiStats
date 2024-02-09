@@ -47,11 +47,14 @@ run_single_beta_reg_zibr <- function(logistic_cov=NULL, beta_cov, Y,
     }
     # If no timepoint column, assume each sample is from the same timepoint
     if(is.null(time_ind)){
+        # If there are multiple timepoints for any participant
+        if(length(unique(subject_ind_dat)) != length(subject_ind_dat)){
+            stop("A timepoint column is necessary if there are longitudinal samples.")
+        }
         time_ind_dat <- as.matrix(rep(1, nrow(data)))
     } else {
         time_ind_dat <- as.matrix(data[,time_ind])
     }
-
 
     mod <- ZIBR::zibr(
                logistic_cov=logistic_cov_dat,
@@ -189,6 +192,7 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
     # merge the feature table and metadata based on the rownames
     formula <- paste0(" ~ ", formula)
     metadata.vars <- c(all.vars(as.formula(formula)), sampleID)
+
     data <- merge(feature.table,
                   metadata[,c(metadata.vars, zibr_time_ind)],
                   by.x="row.names", by.y=sampleID)
