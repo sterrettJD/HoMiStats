@@ -285,17 +285,34 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
     # adjust p value only for non-intercept terms
     # and if we have a joint p, only adjust it for the beta coefficient (it's copied for the logistic)
     if((reg.method == "zibr") & zero_prop_from_formula){
-        mod.summaries[mod.summaries$term!="(Intercept)" & mod.summaries$parameter=="beta",
-                      "q"] <- p.adjust(mod.summaries[mod.summaries$term!="(Intercept)" & mod.summaries$parameter=="beta",
-                                                     "joint.p"],
-                                       method=padj)
-    } else {
+        mod.summaries[mod.summaries$term!="(Intercept)" & mod.summaries$parameter == "beta",
+                      "q"] <- p.adjust(
+                                mod.summaries[mod.summaries$term!="(Intercept)" & mod.summaries$parameter == "beta",
+                                              "joint.p"],
+                                method=padj)
+
+    } else if((reg.method == "gamlss") |
+              (reg.method == "zibr") & (zero_prop_from_formula == FALSE)){
         mod.summaries[mod.summaries$term!="(Intercept)",
-                      "q"] <- p.adjust(mod.summaries[mod.summaries$term!="(Intercept)",
-                                                     "p.value"],
-                                       method=padj)
+                      "q"] <- p.adjust(
+                                mod.summaries[mod.summaries$term!="(Intercept)",
+                                              "p.value"],
+                                method=padj)
+
+    } else if(reg.method == "lmer"){
+        mod.summaries[mod.summaries$term!="(Intercept)" & mod.summaries$effect == "fixed",
+                      "q"] <- p.adjust(
+                                mod.summaries[mod.summaries$term!="(Intercept)"  & mod.summaries$effect == "fixed",
+                                              "p.value"],
+                                method=padj)
+
+    } else if(reg.method == "lm"){
+        mod.summaries[mod.summaries$term!="(Intercept)",
+                      "q"] <- p.adjust(
+                          mod.summaries[mod.summaries$term!="(Intercept)",
+                                        "p.value"],
+                          method=padj)
     }
-    # TODO: P VAL ADJUSTMENT FOR LINEAR MODELS
 
     return(mod.summaries)
 }
