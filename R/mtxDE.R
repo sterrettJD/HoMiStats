@@ -181,7 +181,10 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
                       zero_prop_from_formula=T,
                       zibr_time_ind=NULL){
     # Check for values of one, which the beta regression can't handle
-    check_for_ones(feature.table)
+    if(reg.method %in% c("zibr", "gamlss")){
+        check_for_ones(feature.table)
+    }
+
 
     # merge the feature table and metadata based on the rownames
     formula <- paste0(" ~ ", formula)
