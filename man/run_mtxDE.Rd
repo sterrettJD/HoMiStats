@@ -16,7 +16,7 @@ run_mtxDE(
 )
 }
 \arguments{
-\item{formula}{the right hand side of the regression formula to be used for each feature}
+\item{formula}{the right hand side of the regression formula to be used for each feature. All variables in this formula should be of a numeric type (factors should be dummy coded, such that the reference value is 0).}
 
 \item{feature.table}{A dataframe, where rows are samples, and columns are genes/features. Row names should be sample IDs.}
 
@@ -24,7 +24,7 @@ run_mtxDE(
 
 \item{sampleID}{A string denoting name of the column in metadata with sample IDs, which should be used to merge metadata with the feature table's rownames}
 
-\item{reg.method}{A string denoting the method to use for regression. Options include "zibr" and "gamlss".}
+\item{reg.method}{A string denoting the method to use for regression. Options include "zibr" (Zero-inflated beta regression with random effects), "gamlss" (Zero-inflated beta regression implemented via GAMLSS), "lm" (linear regression), and "lmer" (linear mixed effects regression implemented via lme4 and lmerTest).}
 
 \item{padj}{A string denoting the p value adustment method. Options can be checked using 'p.adjust.methods'}
 
