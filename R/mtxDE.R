@@ -265,11 +265,11 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
             mod.sum <- tidy_zibr_results(mod)
 
         } else if(reg.method == "lm"){
-            mod <- run_single_lm(formula, data)
+            mod <- run_single_lm(paste0(col, formula), data)
             mod.sum <- broom::tidy(mod)
 
         } else if(reg.method == "lmer"){
-            mod <- run_single_lmer(formula, data)
+            mod <- run_single_lmer(paste0(col, formula), data)
             mod.sum <- broom.mixed::tidy(mod)
         }
 
