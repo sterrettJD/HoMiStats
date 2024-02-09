@@ -131,7 +131,7 @@ run_single_lmer <- function(formula, data){
 #' @export
 #'
 check_for_ones <- function(feature.table){
-    rows.with.ones <- which(feature.table == 1, arr.ind = T)[,1]
+    rows.with.ones <- which(feature.table >= 1, arr.ind = T)[,1]
     unique.rows.with.ones <- unique(rows.with.ones)
     unique.rownames.with.ones <- rownames(feature.table)[unique.rows.with.ones]
     if(length(unique.rownames.with.ones) > 0){
