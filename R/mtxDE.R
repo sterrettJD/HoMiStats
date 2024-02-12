@@ -1,4 +1,5 @@
 library(gamlss)
+library(foreach)
 
 #' Run a single zero-inflatd beta regression using gamlss
 #' @description runs a zero-inflated beta distribution GAM using gamlss
@@ -174,17 +175,23 @@ get_random_fx <- function(form){
 #' @param padj A string denoting the p value adustment method. Options can be checked using 'p.adjust.methods'
 #' @param zero_prop_from_formula In ZIBR zero-inflated beta regression, should the zeroes be modeled with the provided formula? Default is TRUE.
 #' @param zibr_zibr_time_ind A string denoting the name of the time column for ZIBR. Defaults to NULL, which is implemented as a constant time value in ZIBR to not fit a time effect. This argument does nothing if reg.method is not "zibr".
+#' @param ncores An integer denoting the number of cores to use if running in parallel. Defaults to 1 (not parallelized).
 #' @param show_progress A boolean denoting if a progress bar should be shown.
 #' @return a dataframe with differential expression results
 #' @export
 #' @importFrom broom.mixed tidy
 #' @importFrom broom tidy
+#' @importFrom parallel makeCluster
+#' @importFrom doParallel registerDoParallel
+#' @importFrom parallel stopCluster
 #'
 run_mtxDE <- function(formula, feature.table, metadata, sampleID,
                       reg.method="zibr", padj="fdr",
                       zero_prop_from_formula=T,
                       zibr_time_ind=NULL,
-                      show_progress=TRUE){
+                      ncores=1,
+                      show_progress=TRUE
+                      ){
     # Check for values of one, which the beta regression can't handle
     if(reg.method %in% c("zibr", "gamlss")){
         check_for_ones(feature.table)
@@ -246,9 +253,12 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
                              char = "=")
     }
 
+    # Setup cluster for parallel running
+    cl <- parallel::makeCluster(ncores)
+    doParallel::registerDoParallel(cl, cores=ncores)
 
     # Loop through each column and run the regression
-    for(col in colnames(feature.table)){
+    mod.summaries <- foreach::foreach(col=colnames(feature.table), .combine=rbind) %dopar% {
 
         if(reg.method == "gamlss"){
             mod <- run_single_beta_reg_gamlss(paste0(col, formula),
@@ -283,17 +293,19 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
         }
 
         mod.sum$feature <- col
-        mod.summaries <- rbind(mod.summaries, mod.sum)
+        #mod.summaries <- rbind(mod.summaries, mod.sum)
 
         if(show_progress){
             # progress bar things
             setTxtProgressBar(pb, i)
             i <- i + 1
         }
+        mod.sum
     }
 
 
-    if(show_progress){ close(pb) } #close the progress bar
+    if(show_progress){ close(pb) } # close the progress bar
+    parallel::stopCluster(cl) # close the cluster for parallel computation
 
     mod.summaries <- as.data.frame(mod.summaries)
     # adjust p value only for non-intercept terms
