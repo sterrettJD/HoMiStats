@@ -71,7 +71,8 @@ test_that("run_mtxDE works", {
     zibr.nolong.actual <-suppressWarnings(run_mtxDE("phenotype",
                                                     feature.table,
                                                     metadata,
-                                                    sampleID="SampleID"))
+                                                    sampleID="SampleID",
+                                                    show_progress=FALSE))
 
     expect_equal(zibr.nolong.actual$p.value,
                  expected.zibr.nolong$p.value,
@@ -88,7 +89,8 @@ test_that("run_mtxDE works", {
                                 run_mtxDE("phenotype + (1|participant)",
                                           feature.table,
                                           metadata, sampleID="SampleID",
-                                          zibr_time_ind="timepoint")
+                                          zibr_time_ind="timepoint",
+                                          show_progress=FALSE)
                             )
 
     expect_equal(zibr.long.actual$p.value,
@@ -106,7 +108,8 @@ test_that("run_mtxDE works", {
     # gamlss
     gamlss.actual <- suppressWarnings(run_mtxDE("phenotype", feature.table,
                                       metadata, sampleID="SampleID",
-                                      reg.method="gamlss")
+                                      reg.method="gamlss",
+                                      show_progress=FALSE)
                                      )
     expect_equal(gamlss.actual$p.value,
                  expected.gamlss$p.value,
@@ -128,21 +131,23 @@ test_that("ZIBR timepoint errors", {
     row.names(feature.table) <- paste0("sample_", 1:4)
     metadata <- data.frame(SampleID=paste0("sample_", 1:4),
                            phenotype=c(0,0,1,1),
-                           participant=c(0,1,0,1),                           
+                           participant=c(0,1,0,1),
                            unique_participants=1:4,
                            timepoint=c(0,0,1,1))
     # Longitudinal but no timepoint column
     expect_error(run_mtxDE("phenotype + (1|participant)",
                            feature.table,
                            metadata, sampleID="SampleID",
-                           zibr_time_ind=NULL),
+                           zibr_time_ind=NULL,
+                           show_progress=FALSE),
                  "A timepoint column is necessary if there are longitudinal samples.")
     # Not longitudinal with no timepoint column
     expect_no_error(suppressWarnings(
                 run_mtxDE("phenotype + (1|unique_participants)",
                            feature.table,
                            metadata, sampleID="SampleID",
-                           zibr_time_ind=NULL)
+                           zibr_time_ind=NULL,
+                          show_progress=FALSE)
                         )
                     )
 })
@@ -165,7 +170,8 @@ test_that("run_mtxDE works linear models", {
                            feature.table,
                            metadata,
                            reg.method="lm",
-                           sampleID="SampleID")
+                           sampleID="SampleID",
+                           show_progress=FALSE)
 
     expect_equal(lm.actual$p.value,
                  expected.lm$p.value,
@@ -182,7 +188,8 @@ test_that("run_mtxDE works linear models", {
                             feature.table,
                             metadata,
                             reg.method="lmer",
-                            sampleID="SampleID")
+                            sampleID="SampleID",
+                            show_progress=FALSE)
 
     expect_equal(lmer.actual$p.value,
                  expected.lmer$p.value,
@@ -201,6 +208,28 @@ test_that("run_mtxDE works linear models", {
                              feature.table.bigvals,
                              metadata,
                              reg.method="lmer",
-                             sampleID="SampleID"))
+                             sampleID="SampleID",
+                             show_progress=FALSE))
+})
+
+test_that("run_mtxDE works with multiple cores", {
+    feature.table <- data.frame(a=c(0.1, 0.0, 0.0, 0.0),
+                                b=c(0.5, 0.5, 0.5, 0.4),
+                                c=c(0.4, 0.5, 0.0, 0.0),
+                                d=c(0.0, 0.0, 0.5, 0.6))
+    row.names(feature.table) <- paste0("sample_", 1:4)
+    metadata <- data.frame(SampleID=paste0("sample_", 1:4),
+                           phenotype=c(0,0,1,1),
+                           participant=c(0,1,0,1),
+                           timepoint=c(0,0,1,1))
+
+
+    expect_no_error(run_mtxDE("phenotype + (1|participant)",
+                              feature.table,
+                              metadata,
+                              reg.method="lmer",
+                              sampleID="SampleID",
+                              ncores=2,
+                              show_progress=FALSE))
 })
 
