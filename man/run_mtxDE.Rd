@@ -13,6 +13,7 @@ run_mtxDE(
   padj = "fdr",
   zero_prop_from_formula = T,
   zibr_time_ind = NULL,
+  ncores = 1,
   show_progress = TRUE
 )
 }
@@ -30,6 +31,8 @@ run_mtxDE(
 \item{padj}{A string denoting the p value adustment method. Options can be checked using 'p.adjust.methods'}
 
 \item{zero_prop_from_formula}{In ZIBR zero-inflated beta regression, should the zeroes be modeled with the provided formula? Default is TRUE.}
+
+\item{ncores}{An integer denoting the number of cores to use if running in parallel. Defaults to 1 (not parallelized).}
 
 \item{show_progress}{A boolean denoting if a progress bar should be shown.}
 
