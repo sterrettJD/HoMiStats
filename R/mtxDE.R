@@ -184,6 +184,7 @@ get_random_fx <- function(form){
 #' @importFrom parallel makeCluster
 #' @importFrom doParallel registerDoParallel
 #' @importFrom parallel stopCluster
+#' @importFrom doSNOW registerDoSNOW
 #'
 run_mtxDE <- function(formula, feature.table, metadata, sampleID,
                       reg.method="zibr", padj="fdr",
