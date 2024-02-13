@@ -242,23 +242,27 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
 
     }
 
+    # Setup cluster for parallel running
+    cl <- parallel::makeCluster(ncores)
+    doParallel::registerDoParallel(cl, cores=ncores)
+    doSNOW::registerDoSNOW(cl)
+
     if(show_progress){
         # Initializes progress bar
         n_iter <- ncol(feature.table)
         i <- 0
-        pb <- txtProgressBar(min = 0,
-                             max = n_iter-1,
-                             style = 3,
-                             width = 50,   # Progress bar width. Defaults to getOption("width")
-                             char = "=")
+
+        pb <- txtProgressBar(max=n_iter-1, style=3)
+        progress <- function(n) setTxtProgressBar(pb, n)
+        doSNOWopts <- list(progress = progress)
+    } else {
+        doSNOWopts <- list()
     }
 
-    # Setup cluster for parallel running
-    cl <- parallel::makeCluster(ncores)
-    doParallel::registerDoParallel(cl, cores=ncores)
-
     # Loop through each column and run the regression
-    mod.summaries <- foreach::foreach(col=colnames(feature.table), .combine=rbind) %dopar% {
+    mod.summaries <- foreach::foreach(col=colnames(feature.table),
+                                      .combine=rbind,
+                                      .options.snow = doSNOWopts) %dopar% {
 
         if(reg.method == "gamlss"){
             mod <- run_single_beta_reg_gamlss(paste0(col, formula),
@@ -293,16 +297,9 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
         }
 
         mod.sum$feature <- col
-        #mod.summaries <- rbind(mod.summaries, mod.sum)
 
-        if(show_progress){
-            # progress bar things
-            setTxtProgressBar(pb, i)
-            i <- i + 1
-        }
         mod.sum
     }
-
 
     if(show_progress){ close(pb) } # close the progress bar
     parallel::stopCluster(cl) # close the cluster for parallel computation
