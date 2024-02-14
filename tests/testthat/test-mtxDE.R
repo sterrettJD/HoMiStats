@@ -32,8 +32,13 @@ test_that("map zibr term names", {
 
     mapped <- map_zibr_termnames(unmapped, c("phenotype", "treatment"))
     expect_equal(mapped,
-                 rep(c("intersept", "phenotype", "treatment"), 10)
-)
+                 rep(c("intercept", "phenotype", "treatment"), 10)
+    )
+
+    mapped <- map_zibr_termnames(unmapped, c("treatment", "phenotype"))
+    expect_equal(mapped,
+                 rep(c("intercept", "treatment", "phenotype"), 10)
+    )
 })
 
 
