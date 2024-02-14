@@ -21,7 +21,7 @@
 #' @importFrom parallel stopCluster
 #' @importFrom doSNOW registerDoSNOW
 #'
-run_mtxDE <- function(mtx, host,
+run_HoMiCorr <- function(mtx, host,
                       covariates=NULL, metadata=NULL,
                       sampleID=NULL,
                       reg.method="zibr",
@@ -29,20 +29,28 @@ run_mtxDE <- function(mtx, host,
                       zero_prop_from_formula=T,
                       zibr_time_ind=NULL,
                       ncores=1,
-                      show_progress=TRUE
-){
+                      show_progress=TRUE){
     # Check for values of one, which the beta regression can't handle
     if(reg.method %in% c("zibr", "gamlss")){
         check_for_ones(mtx)
     }
 
     # merge the feature table and metadata based on the rownames
-    formula <- paste0(" ~ ", covariates)
+    if(!is.null(covariates)){
+        formula <- paste0(" ~ ", covariates)
+    } else {
+        formula <- NULL
+    }
+
     metadata.vars <- c(all.vars(as.formula(formula)), sampleID)
 
-    data <- merge(mtx, host,
-                  metadata[,c(metadata.vars, zibr_time_ind)],
-                  by.x="row.names", by.y=sampleID)
+    data <- merge(mtx, host, by="row.names")
+    if(!is.null(metadata)){
+        data <- merge(data,
+                      metadata[,c(metadata.vars, zibr_time_ind)],
+                      by.x="row.names", by.y=sampleID)
+    }
+
 
     # initialize the model summaries df
     if(reg.method == "gamlss"){
@@ -58,11 +66,20 @@ run_mtxDE <- function(mtx, host,
                                      "estimate",
                                      "p.value", "joint.p",
                                      "feature")
-        # extract vars for zibr
-        vars <- all.vars(as.formula(formula))
-        # Extracts random effects from formula
-        random.effects.vars <- get_random_fx(as.formula(formula))
-        fixed.vars <- setdiff(vars, random.effects.vars)
+        if(!is.null(covariates)){
+            # extract vars for zibr
+            vars <- all.vars(as.formula(formula))
+            # Extracts random effects from formula
+            random.effects.vars <- get_random_fx(as.formula(formula))
+            fixed.vars <- setdiff(vars, random.effects.vars)
+        } else {
+            # extract vars for zibr
+            vars <- NULL
+            # Extracts random effects from formula
+            random.effects.vars <- NULL
+            fixed.vars <- NULL
+        }
+
 
     } else if(reg.method=="lm"){
         mod.summaries <- data.frame(matrix(nrow=0, ncol=6))
@@ -116,7 +133,7 @@ run_mtxDE <- function(mtx, host,
       } else if((reg.method == "zibr") & (zero_prop_from_formula==TRUE)){
           mod <- run_single_beta_reg_zibr(logistic_cov=c(fixed.vars, col2),
                                           beta_cov=c(fixed.vars, col2),
-                                          Y=col,
+                                          Y=col1,
                                           subject_ind=random.effects.vars,
                                           time_ind=zibr_time_ind,
                                           data=data)
