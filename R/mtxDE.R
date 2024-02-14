@@ -1,7 +1,4 @@
-library(gamlss)
-library(foreach)
-
-#' Run a single zero-inflatd beta regression using gamlss
+#' Run a single zero-inflated beta regression using gamlss
 #' @description runs a zero-inflated beta distribution GAM using gamlss
 #' @param formula the full formula to be used in the regression
 #' @param data A dataframe to be used in the regression
