@@ -27,6 +27,15 @@ test_that("tidy zibr", {
     expect_equal(clean.mod, expected.clean.mod)
 })
 
+test_that("map zibr term names", {
+    unmapped <- rep(c("intersept", "var1", "var2"), 10)
+
+    mapped <- map_zibr_termnames(unmapped, c("phenotype", "treatment"))
+    expect_equal(mapped,
+                 rep(c("intersept", "phenotype", "treatment"), 10)
+)
+})
+
 
 test_that("rand effects getter", {
     expect_null(get_random_fx(y ~ x))
@@ -73,7 +82,8 @@ test_that("run_mtxDE works", {
                                                     metadata,
                                                     sampleID="SampleID",
                                                     show_progress=FALSE))
-
+    expect_equal(zibr.nolong.actual$term,
+                 rep(c("intercept", "phenotype"), ncol(feature.table)*2))
     expect_equal(zibr.nolong.actual$p.value,
                  expected.zibr.nolong$p.value,
                  tolerance=1e-3)
@@ -93,6 +103,8 @@ test_that("run_mtxDE works", {
                                           show_progress=FALSE)
                             )
 
+    expect_equal(zibr.long.actual$term,
+                 rep(c("intercept", "phenotype"), ncol(feature.table)*2))
     expect_equal(zibr.long.actual$p.value,
                  expected.zibr.long$p.value,
                  tolerance=1e-2)
