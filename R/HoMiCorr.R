@@ -114,23 +114,27 @@ run_mtxDE <- function(mtx, host,
                                             data=data)
           mod.sum <- broom.mixed::tidy(mod)
       } else if((reg.method == "zibr") & (zero_prop_from_formula==TRUE)){
-          mod <- run_single_beta_reg_zibr(logistic_cov=fixed.vars, beta_cov=fixed.vars,
+          mod <- run_single_beta_reg_zibr(logistic_cov=c(fixed.vars, col2),
+                                          beta_cov=c(fixed.vars, col2),
                                           Y=col,
                                           subject_ind=random.effects.vars,
                                           time_ind=zibr_time_ind,
                                           data=data)
 
           mod.sum <- tidy_zibr_results(mod)
+          mod.sum$term <- map_zibr_termnames(mod.sum$term, c(fixed.vars, col2))
 
       } else if((reg.method == "zibr") & (zero_prop_from_formula==FALSE)){
 
-          mod <- run_single_beta_reg_zibr(logistic_cov=NULL, beta_cov=c(fixed.vars, col2),
+          mod <- run_single_beta_reg_zibr(logistic_cov=NULL,
+                                          beta_cov=c(fixed.vars, col2),
                                           Y=col1,
                                           subject_ind=random.effects.vars,
                                           time_ind=zibr_time_ind,
                                           data=data)
 
           mod.sum <- tidy_zibr_results(mod)
+          mod.sum$term <- map_zibr_termnames(mod.sum$term, c(fixed.vars, col2))
 
       } else if(reg.method == "lm"){
           mod <- run_single_lm(paste0(col1, formula, " + ", col2), data)
