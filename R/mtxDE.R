@@ -35,6 +35,7 @@ run_single_beta_reg_zibr <- function(logistic_cov=NULL, beta_cov, Y,
         logistic_cov_dat <- as.matrix(rep(0, nrow(data)))
     } else {
         logistic_cov_dat <- as.matrix(data[,logistic_cov])
+        colnames(logistic_cov_dat) <- logistic_cov
     }
 
     # If no subject ID, make them up, assuming each sample comes from a unique participant
@@ -54,9 +55,12 @@ run_single_beta_reg_zibr <- function(logistic_cov=NULL, beta_cov, Y,
         time_ind_dat <- as.matrix(data[,time_ind])
     }
 
+    beta_cov_dat <- as.matrix(data[,beta_cov])
+    colnames(beta_cov_dat) <- beta_cov
+
     mod <- ZIBR::zibr(
                logistic_cov=logistic_cov_dat,
-               beta_cov=as.matrix(data[,beta_cov]),
+               beta_cov=beta_cov_dat,
                Y=as.matrix(data[,Y]),
                subject_ind=subject_ind_dat,
                time_ind=time_ind_dat,
@@ -66,7 +70,7 @@ run_single_beta_reg_zibr <- function(logistic_cov=NULL, beta_cov, Y,
 }
 
 #' Tidy ZIBR output
-#' @description ZIBR returns a list with lots of different kinds of entrie
+#' @description ZIBR returns a list with lots of different kinds of entries. This tidies that up.
 #' @param mod A ZIBR model results object.
 #' @return a dataframe with the tidy model results
 #' @export
@@ -92,6 +96,21 @@ tidy_zibr_results <- function(mod){
 
     return(clean)
 
+}
+
+
+#' Map ZIBR term names
+#' @description ZIBR outputs terms as "var1", "var2", etc in the results. This maps these to the original variable names
+#' @param data a character vector of the ZIBR terms (e.g. c("intercept", "var1", "var2"))
+#' @param real.names names of variables in the order they were passed to ZIBR. Do not include intercept
+#' @return a character vector with the mapped variable names
+#' @importFrom plyr mapvalues
+#' @export
+#'
+map_zibr_termnames <- function(data, real.names){
+    names(real.names) <- paste0("var", 1:length(real.names))
+    real.names <- c(real.names, "intersept"="intercept")
+    return(plyr::mapvalues(data, from=names(real.names), to=real.names))
 }
 
 
@@ -159,7 +178,6 @@ get_random_fx <- function(form){
 
     return(vars)
 }
-
 
 
 #' Run differential expression analysis for metatranscriptomics data
@@ -269,6 +287,7 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
                                             data=data)
 
             mod.sum <- tidy_zibr_results(mod)
+            mod.sum$term <- map_zibr_termnames(mod.sum$term, fixed.vars)
 
         } else if((reg.method == "zibr") & (zero_prop_from_formula==FALSE)){
 
@@ -279,6 +298,7 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
                                             data=data)
 
             mod.sum <- tidy_zibr_results(mod)
+            mod.sum$term <- map_zibr_termnames(mod.sum$term, fixed.vars)
 
         } else if(reg.method == "lm"){
             mod <- run_single_lm(paste0(col, formula), data)
