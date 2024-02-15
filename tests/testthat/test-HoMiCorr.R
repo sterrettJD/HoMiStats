@@ -28,6 +28,8 @@ test_that("HoMiCorr works", {
                                  sampleID="lm",
                                  show_progress=FALSE))
     expect_no_error(run_HoMiCorr(mtx, host,
+                                 covariates="(1|participant)",
+                                 metadata=metadata,
                                  sampleID="SampleID",
                                  reg.method="lmer",
                                  show_progress=FALSE))
