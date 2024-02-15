@@ -126,7 +126,7 @@ run_HoMiCorr <- function(mtx, host,
         col2 <- cols[2]
 
       if(reg.method == "gamlss"){
-          mod <- run_single_beta_reg_gamlss(paste0(col1, covariates, " + ", col2),
+          mod <- run_single_beta_reg_gamlss(paste0(col1, "~", covariates, " + ", col2),
                                             data=data)
           mod.sum <- broom.mixed::tidy(mod)
       } else if((reg.method == "zibr") & (zero_prop_from_formula==TRUE)){
