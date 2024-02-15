@@ -1,4 +1,3 @@
-
 #' Create a correlation network between host and microbial data
 #' @description Runs regressions between all features and returns a correlation matrix
 #' @param mtx A dataframe of metatranscriptome gene counts, where rows are samples, and columns are metatranscriptome genes. Row names should be sample IDs.
@@ -48,7 +47,7 @@ run_HoMiCorr <- function(mtx, host,
     if(!is.null(metadata)){
         data <- merge(data,
                       metadata[,c(metadata.vars, zibr_time_ind)],
-                      by.x="row.names", by.y=sampleID)
+                      by.x="Row.names", by.y=sampleID)
     }
 
 
@@ -127,7 +126,7 @@ run_HoMiCorr <- function(mtx, host,
         col2 <- cols[2]
 
       if(reg.method == "gamlss"){
-          mod <- run_single_beta_reg_gamlss(paste0(col1, formula, " + ", col2),
+          mod <- run_single_beta_reg_gamlss(paste0(col1, covariates, " + ", col2),
                                             data=data)
           mod.sum <- broom.mixed::tidy(mod)
       } else if((reg.method == "zibr") & (zero_prop_from_formula==TRUE)){
@@ -154,12 +153,24 @@ run_HoMiCorr <- function(mtx, host,
           mod.sum$term <- map_zibr_termnames(mod.sum$term, c(fixed.vars, col2))
 
       } else if(reg.method == "lm"){
-          mod <- run_single_lm(paste0(col1, formula, " + ", col2), data)
+          mod <- run_single_lm(paste0(col1, "~", covariates, " + ", col2), data)
           mod.sum <- broom::tidy(mod)
 
       } else if(reg.method == "lmer"){
-          mod <- run_single_lmer(paste0(col, formula, " + ", col2), data)
-          mod.sum <- broom.mixed::tidy(mod)
+          tryCatch({
+             mod <- run_single_lmer(paste0(col1, "~", covariates, " + ", col2),
+                                   data)
+             mod.sum <- broom.mixed::tidy(mod)
+
+          }, error=function(e) {
+              if(e$message == "not a positive definite matrix (and positive semidefiniteness is not checked)"){
+                  mod.sum <- data.frame("effect"=NA, "group"=NA,
+                                         "term"=col2, "estimate"=NA,
+                                          "std.error"=NA, "statistic"=NA,
+                                          "df"=NA, "p.value"=NA,
+                                          "feature"=col1)
+              }
+          }) # END trycatch block
       }
 
       mod.sum$feature <- col1
