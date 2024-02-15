@@ -18,14 +18,19 @@ test_that("HoMiCorr works", {
 
     expect_no_error(run_HoMiCorr(mtx, host,
                                  reg.method="zibr",
+                                 show_progress=FALSE))
+    expect_no_error(run_HoMiCorr(mtx, host,
+                                 reg.method="zibr",
+                                 covariates="(1|participant)",
+                                 metadata=metadata,
                                  sampleID="SampleID",
+                                 zibr_time_ind="timepoint",
                                  show_progress=FALSE))
     expect_no_error(run_HoMiCorr(mtx, host,
                                  reg.method="gamlss",
-                                 sampleID="SampleID",
                                  show_progress=FALSE))
     expect_no_error(run_HoMiCorr(mtx, host,
-                                 sampleID="lm",
+                                 reg.method="lm",
                                  show_progress=FALSE))
     expect_no_error(run_HoMiCorr(mtx, host,
                                  covariates="(1|participant)",
