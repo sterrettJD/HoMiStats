@@ -1,4 +1,4 @@
-test_that("filter_low_abundance_by_mean function filters low abundance features", {
+test_that("filter_low_abundance_by_mean filters low abundance features", {
     df <- data.frame(
         sample1 = c(0.1, 0.2, 0.3, 0.4),
         sample2 = c(0.2, 0.3, 0.4, 0.5),
@@ -24,7 +24,7 @@ test_that("filter_low_abundance_by_mean function filters low abundance features"
 
 
 
-test_that("filter_low_variance function filters low variance features", {
+test_that("filter_low_variance filters low variance features", {
     df <- data.frame(
         feature1 = c(0.1, 0.1, 0.0),
         feature2 = c(0.2, 0.3, 0.5),
@@ -42,5 +42,27 @@ test_that("filter_low_variance function filters low variance features", {
     # Check that the filtered dataframe has the correct values
     expect_null(filtered_df$feature1)
     expect_equal(filtered_df$feature2, c(0.2, 0.3, 0.5))
+    expect_equal(filtered_df$feature3, c(0.3, 0.4, 0.8))
+})
+
+
+test_that("filter_sparse_features filters low variance features", {
+    df <- data.frame(
+        feature1 = c(0.0, 0.1, 0.0),
+        feature2 = c(0.0, 0.3, 0.5),
+        feature3 = c(0.3, 0.4, 0.8),
+        feature4 = c(0.4, 0.5, 0.7)
+    )
+    rownames(df) <- c("sample1", "sample2", "sample3")
+
+    threshold <- 0.1
+    filtered_df <- filter_sparse_features(df, threshold)
+
+    # Check that the filtered dataframe has the correct number of rows and columns
+    expect_equal(ncol(filtered_df), 2)
+
+    # Check that the filtered dataframe has the correct values
+    expect_null(filtered_df$feature1)
+    expect_null(filtered_df$feature2)
     expect_equal(filtered_df$feature3, c(0.3, 0.4, 0.8))
 })
