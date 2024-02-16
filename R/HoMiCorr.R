@@ -1,5 +1,5 @@
 #' Create a correlation network between host and microbial data
-#' @description Runs regressions between all features and returns a correlation matrix
+#' @description Runs regressions between all features and returns the model outputs
 #' @param mtx A dataframe of metatranscriptome gene counts, where rows are samples, and columns are metatranscriptome genes. Row names should be sample IDs.
 #' @param host A dataframe of tpm-normalized host gene counts, where rows are samples, and columns are host genes. Row names should be sample IDs.
 #' @param covariates A string formula with covariates to be included in each regression. All variables in this formula should be of a numeric type (factors should be dummy coded, such that the reference value is 0).
@@ -11,7 +11,7 @@
 #' @param zibr_zibr_time_ind A string denoting the name of the time column for ZIBR. Defaults to NULL, which is implemented as a constant time value in ZIBR to not fit a time effect. This argument does nothing if reg.method is not "zibr".
 #' @param ncores An integer denoting the number of cores to use if running in parallel. Defaults to 1 (not parallelized).
 #' @param show_progress A boolean denoting if a progress bar should be shown.
-#' @return a correlation matrix
+#' @return A dataframe with the model summaries
 #' @export
 #' @importFrom broom.mixed tidy
 #' @importFrom broom tidy
@@ -32,6 +32,7 @@ run_HoMiCorr <- function(mtx, host,
     # Check for values of one, which the beta regression can't handle
     if(reg.method %in% c("zibr", "gamlss")){
         check_for_ones(mtx)
+        check_for_ones(host)
     }
 
     # merge the feature table and metadata based on the rownames
@@ -101,9 +102,15 @@ run_HoMiCorr <- function(mtx, host,
     doParallel::registerDoParallel(cl, cores=ncores)
     doSNOW::registerDoSNOW(cl)
 
+
+    all.featurenames <- c(colnames(mtx), colnames(host))
+    featurenames.combos <- combn(all.featurenames, 2,
+                                 simplify=FALSE)
+    print(paste("Running", length(featurenames.combos), "interations"))
+
     if(show_progress){
         # Initializes progress bar
-        total.features <- ncol(mtx)*ncol(host)
+        total.features <- ncol(mtx)+ncol(host)
         n_iter <- (total.features*(total.features-1))/2
         i <- 0
 
@@ -114,14 +121,10 @@ run_HoMiCorr <- function(mtx, host,
         doSNOWopts <- list()
     }
 
-    all.featurenames <- c(colnames(mtx), colnames(host))
-    featurenames.combos <- combn(all.featurenames, 2,
-                                 simplify=FALSE)
-
     # Loop through each combination of columns and run the regression
     mod.summaries <- foreach::foreach(cols=featurenames.combos,
                                       .combine=rbind,
-                                      .options.snow = doSNOWopts) %dopar% {
+                                      .options.snow=doSNOWopts) %dopar% {
         col1 <- cols[1]
         col2 <- cols[2]
 
@@ -157,6 +160,7 @@ run_HoMiCorr <- function(mtx, host,
           mod.sum <- broom::tidy(mod)
 
       } else if(reg.method == "lmer"){
+          # Some data will have issues, this catches that error and returns NA
           tryCatch({
              mod <- run_single_lmer(paste0(col1, "~", covariates, " + ", col2),
                                    data)
@@ -180,6 +184,8 @@ run_HoMiCorr <- function(mtx, host,
 
     if(show_progress){ close(pb) } # close the progress bar
     parallel::stopCluster(cl) # close the cluster for parallel computation
+
+
 
     mod.summaries <- as.data.frame(mod.summaries)
     # adjust p value only for non-intercept terms
@@ -216,3 +222,6 @@ run_HoMiCorr <- function(mtx, host,
 
     return(mod.summaries)
 }
+
+
+
