@@ -106,13 +106,11 @@ run_HoMiCorr <- function(mtx, host,
     all.featurenames <- c(colnames(mtx), colnames(host))
     featurenames.combos <- combn(all.featurenames, 2,
                                  simplify=FALSE)
-    print(paste("Running", length(featurenames.combos), "interations"))
 
     if(show_progress){
+        n_iter <- length(featurenames.combos)
+        print(paste("Running", n_iter, "interations"))
         # Initializes progress bar
-        total.features <- ncol(mtx)+ncol(host)
-        n_iter <- (total.features*(total.features-1))/2
-        i <- 0
 
         pb <- txtProgressBar(max=n_iter-1, style=3)
         progress <- function(n) setTxtProgressBar(pb, n)
@@ -132,6 +130,9 @@ run_HoMiCorr <- function(mtx, host,
           mod <- run_single_beta_reg_gamlss(paste0(col1, "~", covariates, " + ", col2),
                                             data=data)
           mod.sum <- broom.mixed::tidy(mod)
+          # grab only the col2 beta row
+          mod.sum <- mod.sum[mod.sum$term==col2 & mod.sum$parameter=="mu",]
+
       } else if((reg.method == "zibr") & (zero_prop_from_formula==TRUE)){
           mod <- run_single_beta_reg_zibr(logistic_cov=c(fixed.vars, col2),
                                           beta_cov=c(fixed.vars, col2),
@@ -142,6 +143,8 @@ run_HoMiCorr <- function(mtx, host,
 
           mod.sum <- tidy_zibr_results(mod)
           mod.sum$term <- map_zibr_termnames(mod.sum$term, c(fixed.vars, col2))
+          # grab only the col2 beta row
+          mod.sum <- mod.sum[mod.sum$term==col2 & mod.sum$parameter=="beta",]
 
       } else if((reg.method == "zibr") & (zero_prop_from_formula==FALSE)){
 
@@ -154,10 +157,14 @@ run_HoMiCorr <- function(mtx, host,
 
           mod.sum <- tidy_zibr_results(mod)
           mod.sum$term <- map_zibr_termnames(mod.sum$term, c(fixed.vars, col2))
+          # grab only the col2 beta row
+          mod.sum <- mod.sum[mod.sum$term==col2 & mod.sum$parameter=="beta",]
 
       } else if(reg.method == "lm"){
           mod <- run_single_lm(paste0(col1, "~", covariates, " + ", col2), data)
           mod.sum <- broom::tidy(mod)
+          # grab only the col2 row
+          mod.sum <- mod.sum[mod.sum$term==col2,]
 
       } else if(reg.method == "lmer"){
           # Some data will have issues, this catches that error and returns NA
@@ -175,6 +182,8 @@ run_HoMiCorr <- function(mtx, host,
                                           "feature"=col1)
               }
           }) # END trycatch block
+          # grab only the col2 beta row
+          mod.sum <- mod.sum[mod.sum$term==col2 & mod.sum$effect=="fixed",]
       }
 
       mod.sum$feature <- col1
