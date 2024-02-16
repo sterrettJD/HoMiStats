@@ -47,4 +47,28 @@ filter_low_variance <- function(df, threshold) {
 }
 
 
+#' Filter sparse features from relative abundance data
+#' @description Filters features with sparsity above a certain threshold.
+#' @param df A dataframe containing relative abundance data, where rows are samples and columns are features (genes).
+#' @param threshold The threshold for filtering sparse features. Any features more sparse than this will be removed.
+#' @param zero_threshold The threshold below which a sample is considered not present. Defaults to zero
+#' @return A dataframe with sparse features filtered out.
+#' @examples
+#' df <- data.frame(
+#'   feature1 = c(0.0, 0.2, 0.3, 0.4),
+#'   feature2 = c(0.2, 0.3, 0.4, 0.5),
+#'   feature3 = c(0.3, 0.4, 0.5, 0.6)
+#' )
+#' filtered_df <- filter_low_abundance(df, 0.1)
+#' print(filtered_df)
+#' @export
+filter_sparse_features <- function(df, threshold, zero_threshold=0) {
+    # Calculate the proportion of zero values for each feature
+    sparsity <- lapply(df, function(x) sum(x <= zero_threshold)/length(x))
 
+    # Filter out features with a proportion of zero values above the threshold
+    filtered_df <- df[, sparsity <= threshold]
+
+    # Return the filtered dataframe
+    return(filtered_df)
+}
