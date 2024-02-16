@@ -16,26 +16,90 @@ test_that("HoMiCorr works", {
 
 
 
-    expect_no_error(run_HoMiCorr(mtx, host,
+    expect_no_error(actual <- run_HoMiCorr(mtx, host,
                                  reg.method="zibr",
                                  show_progress=FALSE))
-    expect_no_error(run_HoMiCorr(mtx, host,
+    expected <- read.csv("data/expected_homicorr_zibr.csv")
+    expect_equal(actual$term,
+                 expected$term)
+    expect_equal(actual$p.value,
+                 expected$p.value,
+                 tolerance=1e-3)
+    expect_equal(actual$estimate,
+                 expected$estimate,
+                 tolerance=5 # some of these values are big and variable
+                 # and the p value/CI matters more
+    )
+
+    expect_no_error(actual <- run_HoMiCorr(mtx, host,
                                  reg.method="zibr",
                                  covariates="(1|participant)",
                                  metadata=metadata,
                                  sampleID="SampleID",
                                  zibr_time_ind="timepoint",
                                  show_progress=FALSE))
-    expect_no_error(run_HoMiCorr(mtx, host,
+    expected <- read.csv("data/expected_homicorr_zibr_rand.csv")
+    expect_equal(actual$term,
+                 expected$term)
+    expect_equal(actual$p.value,
+                 expected$p.value,
+                 tolerance=1e-3)
+    expect_equal(actual$estimate,
+                 expected$estimate,
+                 tolerance=5 # some of these values are big and variable
+                 # and the p value/CI matters more
+    )
+
+
+    expect_no_error(actual <- run_HoMiCorr(mtx, host,
                                  reg.method="gamlss",
                                  show_progress=FALSE))
-    expect_no_error(run_HoMiCorr(mtx, host,
+    expected <- read.csv("data/expected_homicorr_gamlss.csv")
+    expect_equal(actual$term,
+                 expected$term)
+    expect_equal(actual$p.value,
+                 expected$p.value,
+                 tolerance=1e-3)
+    expect_equal(actual$estimate,
+                 expected$estimate,
+                 tolerance=5 # some of these values are big and variable
+                 # and the p value/CI matters more
+    )
+
+
+    expect_no_error(actual <- run_HoMiCorr(mtx, host,
                                  reg.method="lm",
                                  show_progress=FALSE))
-    expect_no_error(run_HoMiCorr(mtx, host,
+    expected <- read.csv("data/expected_homicorr_lm.csv")
+    expect_equal(actual$term,
+                 expected$term)
+    expect_equal(actual$p.value,
+                 expected$p.value,
+                 tolerance=1e-3)
+    expect_equal(actual$estimate,
+                 expected$estimate,
+                 tolerance=5 # some of these values are big and variable
+                 # and the p value/CI matters more
+    )
+
+
+
+    expect_no_error(actual <- run_HoMiCorr(mtx, host,
                                  covariates="(1|participant)",
                                  metadata=metadata,
                                  sampleID="SampleID",
                                  reg.method="lmer",
                                  show_progress=FALSE))
+    expected <- read.csv("data/expected_homicorr_lmer.csv")
+    expect_equal(actual$term,
+                 expected$term)
+    expect_equal(actual$p.value,
+                 expected$p.value,
+                 tolerance=1e-3)
+    expect_equal(actual$estimate,
+                 expected$estimate,
+                 tolerance=5 # some of these values are big and variable
+                 # and the p value/CI matters more
+    )
+
 })
