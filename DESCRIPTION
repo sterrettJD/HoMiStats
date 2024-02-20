@@ -7,7 +7,7 @@ Maintainer: John Sterrett <john.sterrett@colorado.edu>
 Description: Stats for host-microbiome dual transcriptomics
     Contains tools for metatranscriptome differential expression and
     for creating co-occurrence networks between host and microbial transcripts
-Imports: gamlss, gamlss.dist, broom, broom.mixed, ggplot2, tidyverse, lme4, ZIBR, dplyr, lmerTest, Matrix, parallel, foreach, doParallel, doSNOW
+Imports: gamlss, gamlss.dist, broom, broom.mixed, ggplot2, tidyverse, lme4, ZIBR, dplyr, lmerTest, Matrix, parallel, foreach, doParallel, doSNOW, plyr, Rfast
 License: MIT
 Encoding: UTF-8
 LazyData: true

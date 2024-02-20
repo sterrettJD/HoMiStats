@@ -22,7 +22,8 @@ HoMiStats consists of two main modules:
         - Implemented via [GAMLSS BEZI](https://www.rdocumentation.org/packages/gamlss.dist/versions/6.1-1/topics/BEZI) and [ZIBR](https://github.com/PennChopMicrobiomeProgram/ZIBR) (supports random effects) 
     -   Linear regression and linear mixed-effects regression
 
-2.  Construction of correlation network between host and microbial transcripts - Not yet implemented...
+2.  Construction of correlation network between host and microbial transcripts (HoMiCorr implemented in `run_HoMiCorr()`)
+    - Also supports both zero inflated beta regression (gamlss or ZIBR for random effects) and linear regression or linear mixed-effects regression
 
 ## Utilities
-HoMiStats additionally contains tools for transforming metatranscriptomic data
+HoMiStats contains tools for transforming metatranscriptomic data, as well as tools for filtering genes based on low expression, prevalence, or variance.
