@@ -2,7 +2,7 @@
 % Please edit documentation in R/mtxDE.R
 \name{run_single_beta_reg_gamlss}
 \alias{run_single_beta_reg_gamlss}
-\title{Run a single zero-inflatd beta regression using gamlss}
+\title{Run a single zero-inflated beta regression using gamlss}
 \usage{
 run_single_beta_reg_gamlss(
   formula,

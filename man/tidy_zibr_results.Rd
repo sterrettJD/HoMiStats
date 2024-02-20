@@ -13,5 +13,5 @@ tidy_zibr_results(mod)
 a dataframe with the tidy model results
 }
 \description{
-ZIBR returns a list with lots of different kinds of entrie
+ZIBR returns a list with lots of different kinds of entries. This tidies that up.
 }
