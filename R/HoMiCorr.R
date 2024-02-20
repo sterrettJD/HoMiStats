@@ -11,8 +11,9 @@
 #' @param zibr_zibr_time_ind A string denoting the name of the time column for ZIBR. Defaults to NULL, which is implemented as a constant time value in ZIBR to not fit a time effect. This argument does nothing if reg.method is not "zibr".
 #' @param ncores An integer denoting the number of cores to use if running in parallel. Defaults to 1 (not parallelized).
 #' @param show_progress A boolean denoting if a progress bar should be shown.
-#' @return A dataframe with the model summaries
+#' @return A dataframe with the model summaries as an adjacency list
 #' @export
+#' @importFrom Rfast comb_n
 #' @importFrom broom.mixed tidy
 #' @importFrom broom tidy
 #' @importFrom parallel makeCluster
@@ -104,12 +105,14 @@ run_HoMiCorr <- function(mtx, host,
 
 
     all.featurenames <- c(colnames(mtx), colnames(host))
-    featurenames.combos <- combn(all.featurenames, 2,
-                                 simplify=FALSE)
+    n.feat <- length(all.featurenames)
+    feature.combos <- Rfast::comb_n(1:n.feat,
+                                    k=2,
+                                    simplify=FALSE)
 
     if(show_progress){
-        n_iter <- length(featurenames.combos)
-        print(paste("Running", n_iter, "interations"))
+        n.iterations <- length(feature.combos)
+        print(paste("Running", n.iterations, "interations"))
         # Initializes progress bar
 
         pb <- txtProgressBar(max=n_iter-1, style=3)
@@ -120,11 +123,12 @@ run_HoMiCorr <- function(mtx, host,
     }
 
     # Loop through each combination of columns and run the regression
-    mod.summaries <- foreach::foreach(cols=featurenames.combos,
+    mod.summaries <- foreach::foreach(cols=feature.combos,
                                       .combine=rbind,
                                       .options.snow=doSNOWopts) %dopar% {
-        col1 <- cols[1]
-        col2 <- cols[2]
+        col1 <- all.featurenames[cols[1]]
+        col2 <- all.featurenames[cols[2]]
+
 
       if(reg.method == "gamlss"){
           mod <- run_single_beta_reg_gamlss(paste0(col1, "~", covariates, " + ", col2),
@@ -231,6 +235,5 @@ run_HoMiCorr <- function(mtx, host,
 
     return(mod.summaries)
 }
-
 
 
