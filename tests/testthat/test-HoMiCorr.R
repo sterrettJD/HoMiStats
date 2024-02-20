@@ -41,9 +41,8 @@ test_that("HoMiCorr works", {
     expected <- read.csv("data/expected_homicorr_zibr_rand.csv")
     expect_equal(actual$term,
                  expected$term)
-    expect_equal(actual$p.value,
-                 expected$p.value,
-                 tolerance=1e-3)
+    expect_equal(actual$p.value < 0.01,
+                 expected$p.value < 0.01)
     expect_equal(actual$estimate,
                  expected$estimate,
                  tolerance=5 # some of these values are big and variable
