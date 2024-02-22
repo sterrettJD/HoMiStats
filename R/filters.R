@@ -30,11 +30,11 @@ filter_low_abundance_by_mean <- function(df, threshold) {
 #' @return A dataframe with low variance features filtered out.
 #' @examples
 #' df <- data.frame(
-#'   feature1 = c(0.1, 0.2, 0.3, 0.4),
+#'   feature1 = c(0.1, 0.2, 0.1, 0.1),
 #'   feature2 = c(0.2, 0.3, 0.4, 0.5),
 #'   feature3 = c(0.3, 0.4, 0.5, 0.6)
 #' )
-#' filtered_df <- filter_low_abundance(df, 0.1)
+#' filtered_df <- filter_low_variance(df, 0.01)
 #' print(filtered_df)
 #' @export
 filter_low_variance <- function(df, threshold) {
@@ -59,7 +59,7 @@ filter_low_variance <- function(df, threshold) {
 #'   feature2 = c(0.2, 0.3, 0.4, 0.5),
 #'   feature3 = c(0.3, 0.4, 0.5, 0.6)
 #' )
-#' filtered_df <- filter_low_abundance(df, 0.1)
+#' filtered_df <- filter_sparse_features(df, 0.2)
 #' print(filtered_df)
 #' @export
 filter_sparse_features <- function(df, threshold, zero_threshold=0) {
