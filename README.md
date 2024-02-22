@@ -3,7 +3,7 @@
 Statistics tools for host-microbiome dual transcriptomics
 
   <!-- badges: start -->
-  [![R-CMD-check](https://github.com/sterrettJD/CauDA/actions/workflows/r.yml/badge.svg)](https://github.com/sterrettJD/CauDA/actions/workflows/r.yml)
+  [![R-CMD-check](https://github.com/sterrettJD/HoMiStats/actions/workflows/r.yml/badge.svg)](https://github.com/sterrettJD/HoMiStats/actions/workflows/r.yml)
   <!-- badges: end -->
 
 
