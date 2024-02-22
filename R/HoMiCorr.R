@@ -115,7 +115,7 @@ run_HoMiCorr <- function(mtx, host,
         print(paste("Running", n.iterations, "interations"))
         # Initializes progress bar
 
-        pb <- txtProgressBar(max=n_iter-1, style=3)
+        pb <- txtProgressBar(max=n.iterations-1, style=3)
         progress <- function(n) setTxtProgressBar(pb, n)
         doSNOWopts <- list(progress = progress)
     } else {
