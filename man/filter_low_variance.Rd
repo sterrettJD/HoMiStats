@@ -23,6 +23,7 @@ df <- data.frame(
   feature2 = c(0.2, 0.3, 0.4, 0.5),
   feature3 = c(0.3, 0.4, 0.5, 0.6)
 )
+
 filtered_df <- filter_low_variance(df, 0.01)
 print(filtered_df)
 }
