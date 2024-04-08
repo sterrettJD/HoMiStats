@@ -30,6 +30,9 @@ run_HoMiCorr <- function(mtx, host,
                       zibr_time_ind=NULL,
                       ncores=1,
                       show_progress=TRUE){
+
+    # Make sure there aren't duplicated column names between the two datasets
+    check_duplicated_colnames(colnames(mtx), colnames(host))
     # Check for values of one, which the beta regression can't handle
     if(reg.method %in% c("zibr", "gamlss")){
         check_for_ones(mtx)
@@ -127,7 +130,6 @@ run_HoMiCorr <- function(mtx, host,
                                       .options.snow=doSNOWopts) %dopar% {
         col1 <- all.featurenames[cols[1]]
         col2 <- all.featurenames[cols[2]]
-
 
       if(reg.method == "gamlss"){
           mod <- run_single_beta_reg_gamlss(paste0(col1, "~", covariates, " + ", col2),
@@ -233,6 +235,20 @@ run_HoMiCorr <- function(mtx, host,
     }
 
     return(mod.summaries)
+}
+
+
+#' Check for duplicated values between 2 sets of column names
+#' @description Ensures there are no intersecting values between two vectors
+#' @param colnames1 vector of strings with column names from the first dataset
+#' @param colnames2 vector of strings with column names from the second dataset
+#' @return Nothing
+#' @export
+check_duplicated_colnames <- function(colnames1, colnames2){
+    colnames.intersection <- intersect(colnames1, colnames2)
+    if(length(colnames.intersection) > 0){
+        stop(paste0(colnames.intersection, " is found in both datasets."))
+    }
 }
 
 
