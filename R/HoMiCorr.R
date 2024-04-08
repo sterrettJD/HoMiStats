@@ -52,17 +52,24 @@ run_HoMiCorr <- function(mtx, host,
                       by.x="Row.names", by.y=sampleID)
     }
 
+    # calculate regressions to run
+    all.featurenames <- c(colnames(mtx), colnames(host))
+    n.feat <- length(all.featurenames)
+    feature.combos <- Rfast::comb_n(1:n.feat,
+                                    k=2,
+                                    simplify=FALSE)
+    n.iterations <- length(feature.combos)
 
     # initialize the model summaries df
     if(reg.method == "gamlss"){
-        mod.summaries <- data.frame(matrix(nrow=0, ncol=7))
+        mod.summaries <- data.frame(matrix(nrow=n.iterations, ncol=7))
         colnames(mod.summaries) <- c("parameter", "term",
                                      "estimate", "std.error",
                                      "statistic", "p.value",
                                      "feature")
 
     } else if(reg.method == "zibr"){
-        mod.summaries <- data.frame(matrix(nrow=0, ncol=6))
+        mod.summaries <- data.frame(matrix(nrow=n.iterations, ncol=6))
         colnames(mod.summaries) <- c("parameter", "term",
                                      "estimate",
                                      "p.value", "joint.p",
@@ -83,13 +90,13 @@ run_HoMiCorr <- function(mtx, host,
 
 
     } else if(reg.method=="lm"){
-        mod.summaries <- data.frame(matrix(nrow=0, ncol=6))
+        mod.summaries <- data.frame(matrix(nrow=n.iterations, ncol=6))
         colnames(mod.summaries) <- c("term", "estimate",
                                      "std.error", "statistic",
                                      "p.value", "feature")
 
     } else if(reg.method=="lmer"){
-        mod.summaries <- data.frame(matrix(nrow=0, ncol=9))
+        mod.summaries <- data.frame(matrix(nrow=n.iterations, ncol=9))
         colnames(mod.summaries) <- c("effect", "group",
                                      "term", "estimate",
                                      "std.error", "statistic",
@@ -103,15 +110,7 @@ run_HoMiCorr <- function(mtx, host,
     doParallel::registerDoParallel(cl, cores=ncores)
     doSNOW::registerDoSNOW(cl)
 
-
-    all.featurenames <- c(colnames(mtx), colnames(host))
-    n.feat <- length(all.featurenames)
-    feature.combos <- Rfast::comb_n(1:n.feat,
-                                    k=2,
-                                    simplify=FALSE)
-
     if(show_progress){
-        n.iterations <- length(feature.combos)
         print(paste("Running", n.iterations, "interations"))
         # Initializes progress bar
 

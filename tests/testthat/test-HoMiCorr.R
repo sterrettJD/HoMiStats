@@ -101,3 +101,23 @@ test_that("HoMiCorr works", {
     )
 
 })
+
+
+test_that("HoMiCorr errors with duplicated column names", {
+    mtx <- data.frame(a=c(0.1, 0.0, 0.0, 0.0),
+                      b=c(0.5, 0.5, 0.5, 0.4),
+                      c=c(0.4, 0.5, 0.0, 0.0),
+                      d=c(0.0, 0.0, 0.5, 0.6))
+    host <- data.frame(a=c(0.5, 0.0, 0.0, 0.0),
+                       b=c(0.5, 0.5, 0.5, 0.4),
+                       c=c(0.4, 0.5, 0.0, 0.0),
+                       d=c(0.0, 0.0, 0.5, 0.6))
+    row.names(mtx) <- paste0("sample_", 1:4)
+    row.names(host) <- paste0("sample_", 1:4)
+
+    expect_error(actual <- run_HoMiCorr(mtx, host,
+                                           reg.method="zibr",
+                                           show_progress=FALSE),
+                 "a is found in both datasets.")
+
+})
