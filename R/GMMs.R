@@ -4,12 +4,13 @@
 #' @return Nothing
 #' @export
 #'
-pull_GMMs_file <- function(filepath, version="v1.07"){
+pull_GMMs_file <- function(filepath, version="v1.07", quietly=TRUE){
     if(!file.exists(filepath)){
         gmm.url <- paste0("https://raw.githubusercontent.com/raeslab/GMMs/master/GMMs.",
                           version, ".txt")
         download.file(gmm.url,
-                      filepath)
+                      filepath,
+                      quiet=quietly)
     } else {
         warning("File already exists.")
     }
@@ -40,12 +41,14 @@ add_K_line_to_matrix <- function(GMM.matrix, line, mod.name, mod.number){
 #' @description Download the GMM data (if needed) and parses this file to return a table with the GMMs and corresponding KOs
 #' @param filepath The filepath at which the GMMs file should be downloaded or found.
 #' @param version The version of GMMs to be used. As of April '24, the newest version is v1.07. This is used in pulling the data from the Raes lab GMMs github, so old versions that are not on the master branch may cause the filepath to not work.
+#' @param quietly A boolean denoting if the GMMs file should be downloaded quietly
 #' @param cleanup A boolean denoting if the filepath should be removed at the end of this function.
 #' @return A tabular version of the GMMs as a dataframe
 #' @export
 #'
-get_GMM_matrix <- function(filepath="GMMs.txt", version="v1.07", cleanup=TRUE){
-    pull_GMMs_file(filepath=filepath, version=version)
+get_GMM_matrix <- function(filepath="GMMs.txt", version="v1.07",
+                           quietly_download=TRUE, cleanup=TRUE){
+    pull_GMMs_file(filepath=filepath, version=version, quietly=quietly_download)
 
     GMM.fileconts <- readLines(filepath)
 
