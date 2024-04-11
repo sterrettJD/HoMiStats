@@ -48,7 +48,9 @@ add_K_line_to_matrix <- function(GMM.matrix, line, mod.name, mod.number){
 #'
 get_GMM_matrix <- function(filepath="GMMs.txt", version="v1.07",
                            quietly_download=TRUE, cleanup=TRUE){
-    pull_GMMs_file(filepath=filepath, version=version, quietly=quietly_download)
+    if(!file.exists(filepath)){
+        pull_GMMs_file(filepath=filepath, version=version, quietly=quietly_download)
+    }
 
     GMM.fileconts <- readLines(filepath)
 
