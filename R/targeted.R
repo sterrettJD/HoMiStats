@@ -45,3 +45,22 @@ features_from_gmm_df <- function(GMM, GMM.kos.df, mtx.feature.names){
     }
     return(mtx.features)
 }
+
+#' Pull all human genes corresponding to a GO term of interest
+#' @description Looks for all genes corresponding to the GO term of interest
+#' @param go.term A string version of a GO term, such as "GO:0042110"
+#' @return a vector of gene names corresponding to the GO term of interest
+#' @export
+#' @importFrom AnnotationDbi select
+#' @importFrom org.Hs.eg.db org.Hs.eg.db
+#' #'
+get_go_term_human_genes <- function(go.term){
+    gene.data <- AnnotationDbi::select(org.Hs.eg.db::org.Hs.eg.db,
+                                       keys=c(go.term),
+                                       columns=c('SYMBOL'),
+                                       keytype="GOALL") #uses human ensembl annotations
+    #gets gene symbol, transcript_id and go_id for all genes annotated with the go term
+
+    targeted.genes <- unique(gene.data$SYMBOL)
+    return(targeted.genes)
+}
