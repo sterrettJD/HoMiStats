@@ -1,6 +1,6 @@
 #' Run differential expression testing on a targeted subset of genes
 #' @description
-#' @param go.term the GO term of interest
+#' @param go.terms A string vector with the GO terms of interest
 #' @param host.genes A matrix or data.frame with the host gene count data
 #' @param mtx A data.frame with the normalized microbial gene count data
 #' @param mtx.features A vector of features to use from the microbial gene counts
@@ -8,20 +8,33 @@
 #' @return a data.frame with DESeq results for each mtx feature
 #' @export
 #'
-GO_targeted_for_each_KO_within_GMM <- function(go.term, host.genes,
+GO_targeted_for_each_KO_within_GMM <- function(go.terms, host.genes,
                                             mtx, mtx.features,
                                             padj="fdr"){
+    # Get the host gene names to use
+    full.targeted.genes <- c()
+    for(term in go.terms){
+        targeted.genes <- get_go_term_human_genes(go.term)
+        # filter empty strings
+        targeted.genes <- targeted.genes[nzchar(targeted.genes)]
+        full.targeted.genes <- c(full.targeted.genes, targeted.genes)
+    }
+    full.targeted.genes <- unique(full.targeted.genes)
+
+    # Initialize results object
     results <- data.frame(row.names=c("baseMean", "log2FoldChange", "lfcSE",
                                       "stat", "pvalue", "padj"))
     # This is kinda slow because it still relies on pulling the GO terms each time
     for(feature in mtx.features){
-        res <- go_targeted_diffex(go.term, host.genes=gns.only.subset,
-                                  microbial.genes=mtx,
-                                  microbial.gene=feature)
+        res <- go_targeted_diffex(targeted.genes=full.targeted.genes,
+                                  host.genes=gns.only.subset,
+                                  microbial.gene=feature,
+                                  microbial.genes=mtx)
         res$term <- feature
         results <- rbind(results, as.data.frame(res))
 
     }
+
     results$padj <- p.adjust(results$pvalue, method=padj)
     return(results)
 }
@@ -81,16 +94,11 @@ get_go_term_human_genes <- function(go.term){
 go_targeted_diffex <- function(targeted.genes, host.genes,
                                microbial.gene, microbial.genes,
                                verbose=T){
-    targeted.genes <- get_go_term_human_genes(go.term)
-
-    # filter empty strings
-    targeted.genes <- targeted.genes[nzchar(targeted.genes)]
-
-
     targeted.data <- host.genes[targeted.genes,]
     if(verbose){
         s1 <- paste0(length(targeted.genes), " genes identified from GO term")
         s2 <- paste0(nrow(targeted.data), " genes in DESeq2 dataset")
+
         print(s1)
         print(s2)
     }
