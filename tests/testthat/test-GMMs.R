@@ -17,7 +17,9 @@ test_that("Download works", {
 
 test_that("parsing works", {
 
-    gmms.df <- get_GMM_matrix("GMMs.txt", cleanup=TRUE)
+    gmms.df <- suppressMessages(
+                    get_GMM_matrix("GMMs.txt", cleanup=TRUE)
+               )
 
     # file should be cleaned up
     expect_false(file.exists("GMMs.txt"))
@@ -31,7 +33,9 @@ test_that("parsing works", {
 
     # Check that it also works with a predownloaded file
     pull_GMMs_file("predownloaded_GMMs.txt")
-    predownloaded.gmms.df <- get_GMM_matrix("predownloaded_GMMs.txt")
+    predownloaded.gmms.df <- suppressMessages(
+                                get_GMM_matrix("predownloaded_GMMs.txt")
+                             )
 
     expect_equal(predownloaded.gmms.df, gmms.df)
 })
