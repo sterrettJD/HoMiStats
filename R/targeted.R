@@ -10,10 +10,11 @@
 #'
 GO_targeted_for_each_KO_within_GMM <- function(go.terms, host.genes,
                                             mtx, mtx.features,
-                                            padj="fdr"){
+                                            padj="fdr",
+                                            verbose=FALSE){
     # Get the host gene names to use
     full.targeted.genes <- c()
-    for(term in go.terms){
+    for(go.term in go.terms){
         targeted.genes <- get_go_term_human_genes(go.term)
         # filter empty strings
         targeted.genes <- targeted.genes[nzchar(targeted.genes)]
@@ -27,9 +28,10 @@ GO_targeted_for_each_KO_within_GMM <- function(go.terms, host.genes,
     # This is kinda slow because it still relies on pulling the GO terms each time
     for(feature in mtx.features){
         res <- go_targeted_diffex(targeted.genes=full.targeted.genes,
-                                  host.genes=gns.only.subset,
+                                  host.genes=host.genes,
                                   microbial.gene=feature,
-                                  microbial.genes=mtx)
+                                  microbial.genes=mtx,
+                                  verbose=verbose)
         res$term <- feature
         results <- rbind(results, as.data.frame(res))
 
@@ -48,7 +50,7 @@ GO_targeted_for_each_KO_within_GMM <- function(go.terms, host.genes,
 #' @export
 #'
 features_from_gmm_df <- function(GMM, GMM.kos.df, mtx.feature.names){
-    module.kos <- GMMs.kos.df[GMMs.kos.df$Module==GMM, "KEGG"]
+    module.kos <- GMM.kos.df[GMM.kos.df$Module==GMM, "KEGG"]
 
     mtx.features <- c()
     for(ko in module.kos){
@@ -58,6 +60,7 @@ features_from_gmm_df <- function(GMM, GMM.kos.df, mtx.feature.names){
     }
     return(mtx.features)
 }
+
 
 #' Pull all human genes corresponding to a GO term of interest
 #' @description Looks for all genes corresponding to the GO term of interest
