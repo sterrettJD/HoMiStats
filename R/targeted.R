@@ -8,9 +8,9 @@
 #' @return a data.frame with DESeq results for each mtx feature
 #' @export
 #'
-targeted_for_each_KO <- function(go.term, host.genes,
-                                 mtx, mtx.features,
-                                 padj="fdr"){
+GO_targeted_for_each_KO_within_GMM <- function(go.term, host.genes,
+                                            mtx, mtx.features,
+                                            padj="fdr"){
     results <- data.frame(row.names=c("baseMean", "log2FoldChange", "lfcSE",
                                       "stat", "pvalue", "padj"))
     # This is kinda slow because it still relies on pulling the GO terms each time
@@ -53,7 +53,7 @@ features_from_gmm_df <- function(GMM, GMM.kos.df, mtx.feature.names){
 #' @export
 #' @importFrom AnnotationDbi select
 #' @importFrom org.Hs.eg.db org.Hs.eg.db
-#' #'
+#'
 get_go_term_human_genes <- function(go.term){
     gene.data <- AnnotationDbi::select(org.Hs.eg.db::org.Hs.eg.db,
                                        keys=c(go.term),
@@ -64,3 +64,44 @@ get_go_term_human_genes <- function(go.term){
     targeted.genes <- unique(gene.data$SYMBOL)
     return(targeted.genes)
 }
+
+
+#' Run targeted differential expression analysis in DESeq2 for a subset of genes
+#' @description Uses the vector of genes provided to subset the data then run DESeq2
+#' @param targeted.genes A vector of host gene names
+#' @param host.genes A matrix or data.frame with the host gene count data
+#' @param microbial.gene The name of the microbial gene to be used
+#' @param microbial.genes A matrix or data.frame with the microbial gene count data
+#' @return A dataframe of DESeq2 results
+#' @export
+#' @importFrom DESeq2 DESeqDataSetFromMatrix
+#' @importFrom DESeq2 DESeq2
+#' @importFrom DESeq2 results
+#'
+go_targeted_diffex <- function(targeted.genes, host.genes,
+                               microbial.gene, microbial.genes,
+                               verbose=T){
+    targeted.genes <- get_go_term_human_genes(go.term)
+
+    # filter empty strings
+    targeted.genes <- targeted.genes[nzchar(targeted.genes)]
+
+
+    targeted.data <- host.genes[targeted.genes,]
+    if(verbose){
+        s1 <- paste0(length(targeted.genes), " genes identified from GO term")
+        s2 <- paste0(nrow(targeted.data), " genes in DESeq2 dataset")
+        print(s1)
+        print(s2)
+    }
+
+    ds <- DESeq2::DESeqDataSetFromMatrix(
+        countData=targeted.data,
+        colData=microbial.genes,
+        design=as.formula(paste0("~",microbial.gene)))
+    dds <- DESeq2::DESeq(ds)
+
+    res <- DESeq2::results(dds, pAdjustMethod="fdr")
+    return(res)
+}
+
