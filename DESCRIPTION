@@ -17,3 +17,4 @@ Suggests:
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 BugReports: https://github.com/sterrettJD/HoMiStats/issues
+biocViews: GeneExpression, Regression, DifferentialExpression, Transcriptomics, Metagenomics, Microbiome
