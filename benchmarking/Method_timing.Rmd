@@ -1,0 +1,105 @@
+---
+title: "mtxDE method timing"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{mtxDE method timing}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+    collapse = TRUE,
+    comment = "#>"
+)
+```
+
+```{r setup}
+library(HoMiStats)
+library(ggplot2)
+library(tidyverse)
+library(microbenchmark)
+```
+
+# Simulate datasets
+
+```{r simulate}
+# Set params
+set.seed(42)
+
+
+simulate_data <- function(N.samples, N.features) {
+    # make the metadata var (effect size is zero)
+    treated <- c(rep(0, N.samples/2), rep(1, N.samples/2))
+    metadata <- data.frame(sampleID=1:N.samples, treated=treated)
+    
+    
+    zero.props <- seq(from=0, to=0.99, length=N.features)
+    
+    d <- matrix(nrow=N.samples, ncol=N.features)
+    const.dat <- rnbinom(n=N.samples, size=10, prob=0.1)
+    
+    i <- 1
+    for(zero.prop in zero.props){
+        is.zero <- rbinom(n=N.samples, size=1, prob=zero.prop)
+        d[,i] <- const.dat * is.zero
+        i <- i + 1
+    }
+    
+    # relative abundance
+    d <- d/rowSums(d)
+    colnames(d) <- paste0("sample_", zero.props)    
+    return(list(data=as.data.frame(d), metadata=metadata))
+}
+
+
+simulate_and_time_mtxDE <- function(N.samples, N.features, method, cores, reps=10){
+    simulation <- simulate_data(N.samples, N.features)
+    
+    benchmark.res <- microbenchmark(
+        run_mtxDE("treated",
+                     feature.table=simulation$data,
+                     metadata=simulation$metadata, sampleID="sampleID",
+                     reg.method=method,
+                     ncores=cores),
+                   times=reps)
+    
+    return(benchmark.res$time)
+    
+}
+```
+
+
+# Time options
+```{r time_mtxDE}
+N.samples.vec <- c(10, 50, 100, 150, 200)
+N.features.vec <- c(50, 100, 150, 200, 250)
+cores.vec <- c(1, 2, 4, 8, 16, 32)
+methods.vec <- c("zibr", "gamlss", "lm")
+timing.replicates <- 2
+
+options.grid <- data.frame(expand.grid(N.samples.vec, 
+                                       N.features.vec, 
+                                       cores.vec, 
+                                       methods.vec)
+                           )
+colnames(options.grid) <- c("Samples", "Features", "Cores", "Method")
+
+times <- matrix(nrow=nrow(options.grid), ncol=timing.replicates)
+for(i in 1:nrow(options.grid)){
+    print(options.grid[i,])
+    res <- tryCatch(simulate_and_time_mtxDE(options.grid[i, "Samples"], 
+                                   options.grid[i, "Features"], 
+                                   method=options.grid[i, "Method"], 
+                                   cores=options.grid[i, "Cores"],
+                                   reps=timing.replicates),
+                    error=function(e){rep(NA, timing.replicates)}
+    )
+             
+    
+    times[i,] <- res
+    
+}
+
+
+```
