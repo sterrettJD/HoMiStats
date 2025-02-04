@@ -64,7 +64,7 @@ run_single_beta_reg_zibr <- function(logistic_cov=NULL, beta_cov, Y,
                Y=as.matrix(data[,Y]),
                subject_ind=subject_ind_dat,
                time_ind=time_ind_dat,
-               verbose=T)
+               verbose=TRUE)
 
     return(mod)
 }
@@ -160,6 +160,24 @@ check_for_ones <- function(feature.table){
     }
 }
 
+#' Filter undetected features from the feature.table
+#' @description The beta regression methods don't deal well with features that are entirely undetected. This filters them from the feature table.
+#' @param feature.table A dataframe, where rows are samples, and columns are genes/features. Row names should be sample IDs.
+#' @return A dataframe, with undetected features removed (where rows are samples, and columns are genes/features).
+#' @export
+#'
+filter_undetected <- function(feature.table){
+    detected.features <- which(colSums(feature.table) > 0)
+    if(length(detected.features) < ncol(feature.table)){
+        warning(strwrap(prefix = " ", initial = "",
+                        "Undetected features (summing to 0)
+                        were removed from this dataset.
+                        Consider filtering these prior to
+                        analysis."))
+    }
+    return(feature.table[, detected.features])
+}
+
 
 #' Get random effects
 #' @description Sometimes you want the name of random effects variables from a formula. This function does that.
@@ -211,6 +229,8 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
     # Check for values of one, which the beta regression can't handle
     if(reg.method %in% c("zibr", "gamlss")){
         check_for_ones(feature.table)
+        # gamlss can't handle undetected features
+        feature.table <- filter_undetected(feature.table)
     }
 
 
