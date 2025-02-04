@@ -250,3 +250,37 @@ test_that("run_mtxDE works with multiple cores", {
                               show_progress=FALSE))
 })
 
+
+
+test_that("run_mtxDE warns about undetected features", {
+    feature.table <- data.frame(a=c(0.0, 0.0, 0.0, 0.0),
+                                b=c(0.0, 0.0, 0.0, 0.0),
+                                c=c(0.0, 0.0, 0.0, 0.0),
+                                d=c(0.0, 0.0, 0.0, 0.0))
+    row.names(feature.table) <- paste0("sample_", 1:4)
+    metadata <- data.frame(SampleID=paste0("sample_", 1:4),
+                           phenotype=c(0,0,1,1),
+                           participant=c(0,1,0,1),
+                           timepoint=c(0,0,1,1))
+
+
+    expect_warning(run_mtxDE("phenotype",
+                              feature.table,
+                              metadata,
+                              reg.method="gamlss",
+                              sampleID="SampleID",
+                              ncores=2,
+                              show_progress=FALSE),
+                   "Undetected features",
+                   perl=TRUE)
+
+    expect_warning(run_mtxDE("phenotype",
+                             feature.table,
+                             metadata,
+                             reg.method="zibr",
+                             sampleID="SampleID",
+                             ncores=2,
+                             show_progress=FALSE),
+                   "Undetected features",
+                   perl=TRUE)
+})
