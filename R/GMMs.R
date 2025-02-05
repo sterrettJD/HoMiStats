@@ -2,6 +2,12 @@
 #' @description Pulls the Raes lab gut metabolic modules file (v1.0.7). Will not overwrite an existing file.
 #' @param filepath The filepath where the GMMs file should be downloaded
 #' @return Nothing
+#' @examples
+#' pull_GMMs_file("loc/to/download.txt")
+#'
+#' # If you want to download GMMs from a different version verbosely:
+#' pull_GMMs_file("loc/to/download.txt", version="v1.06", quietly=FALSE)
+#'
 #' @export
 #'
 pull_GMMs_file <- function(filepath, version="v1.07", quietly=TRUE){
@@ -44,6 +50,14 @@ add_K_line_to_matrix <- function(GMM.matrix, line, mod.name, mod.number){
 #' @param quietly A boolean denoting if the GMMs file should be downloaded quietly
 #' @param cleanup A boolean denoting if the filepath should be removed at the end of this function.
 #' @return A tabular version of the GMMs as a dataframe
+#'
+#' @examples
+#' GMM.df <- get_GMM_matrix()
+#'
+#' If you want to download GMMs from a different version verbosely:
+#' GMM.df <- get_GMM_matrix("loc/to/download.txt", version="v1.06",
+#'                          quietly_download=FALSE)
+#'
 #' @export
 #'
 get_GMM_matrix <- function(filepath="GMMs.txt", version="v1.07",
