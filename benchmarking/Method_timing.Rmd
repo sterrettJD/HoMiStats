@@ -101,5 +101,46 @@ for(i in 1:nrow(options.grid)){
     
 }
 
+times.df <- as.data.frame(times)
+colnames(times.df) <- c("T_1","T_2")
+res.df <- cbind(options.grid, times.df)
 
+res.df <- res.df %>% 
+    pivot_longer(cols=!c(Samples, Features, Cores, Method),
+                 names_to="Replicate",
+                 values_to="Time")
+
+write.csv(res.df, "benchmarking/method_timing_results.csv")
+
+res.df.filt <- res.df %>%
+    filter(Cores < 16) %>%
+    mutate(Minutes = Time/6e11)
+
+
+res.df.filt %>%
+ggplot(mapping=aes(x=Cores, y=Minutes, color=as.factor(Samples))) +
+    geom_point() +
+    geom_smooth() +
+    facet_grid(Method~Features, scales="free") +
+    guides(color=guide_legend(title="Samples")) +
+    theme_bw()
+ggsave("benchmarking/method_timing_cores_fac_meth_feat.pdf", width=8, height=8)
+
+res.df.filt %>%
+ggplot(mapping=aes(x=Features, y=Minutes, color=as.factor(Samples))) +
+    geom_point() +
+    geom_smooth() +
+    facet_grid(Method~Cores, scales="free") +
+    guides(color=guide_legend(title="Samples")) +
+    theme_bw()
+ggsave("benchmarking/method_timing_feat_fac_meth_cores.pdf", width=8, height=8)
+
+res.df.filt %>%
+ggplot(mapping=aes(x=Samples, y=Minutes, color=as.factor(Features))) +
+    geom_point() +
+    geom_smooth() +
+    facet_grid(Method~Cores, scales="free") +
+    guides(color=guide_legend(title="Features")) +
+    theme_bw()
+ggsave("benchmarking/method_timing_samples_fac_meth_cores.pdf", width=8, height=8)
 ```
