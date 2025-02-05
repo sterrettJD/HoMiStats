@@ -1,9 +1,11 @@
 Package: HoMiStats
 Type: Package
 Title: Stats for host-microbiome dual transcriptomics
-Version: 0.1.0
-Author: John Sterrett
-Maintainer: John Sterrett <john.sterrett@colorado.edu>
+Version: 0.99.0
+Authors@R: person("John", "Sterrett", 
+                email = "sterrettjd@protonmail.com", 
+                role = c("aut", "cre"),
+                comment = c(ORCID = "0000-0002-0931-7181"))
 Description: Stats for host-microbiome dual transcriptomics
     Contains tools for metatranscriptome differential expression and
     for creating co-occurrence networks between host and microbial transcripts
