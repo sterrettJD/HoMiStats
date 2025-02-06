@@ -1,6 +1,8 @@
 #' Filter low abundance features from relative abundance data
-#' @description Filters low abundance features with means below a certain threshold.
-#' @param df A dataframe containing relative abundance data, where rows are samples and columns are features (genes).
+#' @description Filters low abundance features with
+#' means below a certain threshold.
+#' @param df A dataframe containing relative abundance data,
+#' where rows are samples and columns are features (genes).
 #' @param threshold The threshold for filtering low abundance features.
 #' @return A dataframe with low abundance features filtered out.
 #' @examples
@@ -25,7 +27,8 @@ filter_low_abundance_by_mean <- function(df, threshold) {
 
 #' Filter low variance features from relative abundance data
 #' @description Filters features with variance below a certain threshold.
-#' @param df A dataframe containing relative abundance data, where rows are samples and columns are features (genes).
+#' @param df A dataframe containing relative abundance data,
+#' where rows are samples and columns are features (genes).
 #' @param threshold The threshold for filtering low variance features.
 #' @return A dataframe with low variance features filtered out.
 #' @examples
@@ -50,9 +53,12 @@ filter_low_variance <- function(df, threshold) {
 
 #' Filter sparse features from relative abundance data
 #' @description Filters features with sparsity above a certain threshold.
-#' @param df A dataframe containing relative abundance data, where rows are samples and columns are features (genes).
-#' @param threshold The threshold for filtering sparse features. Any features more sparse than this will be removed.
-#' @param zero_threshold The threshold below which a sample is considered not present. Defaults to zero
+#' @param df A dataframe containing relative abundance data,
+#' where rows are samples and columns are features (genes).
+#' @param threshold The threshold for filtering sparse features.
+#' Any features more sparse than this will be removed.
+#' @param zero_threshold The threshold below which
+#' a sample is considered not present. Defaults to zero
 #' @return A dataframe with sparse features filtered out.
 #' @examples
 #' df <- data.frame(

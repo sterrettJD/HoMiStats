@@ -1,15 +1,39 @@
 #' Create a correlation network between host and microbial data
-#' @description Runs regressions between all features and returns the model outputs
-#' @param mtx A dataframe of metatranscriptome gene counts, where rows are samples, and columns are metatranscriptome genes. Row names should be sample IDs.
-#' @param host A dataframe of tpm-normalized host gene counts, where rows are samples, and columns are host genes. Row names should be sample IDs.
-#' @param covariates A string formula with covariates to be included in each regression. All variables in this formula should be of a numeric type (factors should be dummy coded, such that the reference value is 0).
-#' @param metadata The metadata dataframe, where rows are samples and columns are features. Only needed if
-#' @param sampleID A string denoting name of the column in metadata with sample IDs, which should be used to merge metadata with the feature table's rownames
-#' @param reg.method A string denoting the method to use for regression. Options include "zibr" (Zero-inflated beta regression with random effects), "gamlss" (Zero-inflated beta regression implemented via GAMLSS), "lm" (linear regression), and "lmer" (linear mixed effects regression implemented via lme4 and lmerTest).
-#' @param padj A string denoting the p value adustment method. Options can be checked using 'p.adjust.methods'
-#' @param zero_prop_from_formula In ZIBR zero-inflated beta regression, should the zeroes be modeled with the provided formula? Default is TRUE.
-#' @param zibr_zibr_time_ind A string denoting the name of the time column for ZIBR. Defaults to NULL, which is implemented as a constant time value in ZIBR to not fit a time effect. This argument does nothing if reg.method is not "zibr".
-#' @param ncores An integer denoting the number of cores to use if running in parallel. Defaults to 1 (not parallelized).
+#' @description Runs regressions between all features
+#' and returns the model outputs
+#' @param mtx A dataframe of metatranscriptome gene counts,
+#' where rows are samples, and columns are metatranscriptome genes.
+#' Row names should be sample IDs.
+#' @param host A dataframe of tpm-normalized host gene counts,
+#' where rows are samples, and columns are host genes.
+#' Row names should be sample IDs.
+#' @param covariates A string formula with covariates to be included
+#' in each regression.
+#' All variables in this formula should be of a numeric type
+#' (factors should be dummy coded, such that the reference value is 0).
+#' @param metadata The metadata dataframe,
+#' where rows are samples and columns are features.
+#' Only needed if passing covariates.
+#' @param sampleID A string denoting name of the column in metadata with
+#' sample IDs,
+#' which should be used to merge metadata with the feature table's rownames
+#' @param reg.method A string denoting the method to use for regression.
+#' Options include "zibr" (Zero-inflated beta regression with random effects),
+#' "gamlss" (Zero-inflated beta regression implemented via GAMLSS),
+#' "lm" (linear regression),
+#' and "lmer" (linear mixed effects regression
+#' implemented via lme4 and lmerTest).
+#' @param padj A string denoting the p value adustment method.
+#' Options can be checked using 'p.adjust.methods'
+#' @param zero_prop_from_formula In ZIBR zero-inflated beta regression,
+#' should the zeroes be modeled with the provided formula? Default is TRUE.
+#' @param zibr_zibr_time_ind A string denoting the name of the time column
+#' for ZIBR.
+#' Defaults to NULL, which is implemented as a constant time value in ZIBR
+#' to not fit a time effect.
+#' This argument does nothing if reg.method is not "zibr".
+#' @param ncores An integer denoting the number of cores to use if
+#' running in parallel. Defaults to 1 (not parallelized).
 #' @param show_progress A boolean denoting if a progress bar should be shown.
 #' @return A dataframe with the model summaries as an adjacency list
 #' @export
@@ -164,7 +188,9 @@ run_HoMiCorr <- function(mtx, host,
         col2 <- all.featurenames[cols[2]]
 
       if(reg.method == "gamlss"){
-          mod <- run_single_beta_reg_gamlss(paste0(col1, "~", covariates, " + ", col2),
+          mod <- run_single_beta_reg_gamlss(paste0(col1, "~",
+                                                   covariates, 
+                                                   " + ", col2),
                                             data=data)
           mod.sum <- broom.mixed::tidy(mod)
           # grab only the col2 beta row
@@ -211,7 +237,9 @@ run_HoMiCorr <- function(mtx, host,
              mod.sum <- broom.mixed::tidy(mod)
 
           }, error=function(e) {
-              if(e$message == "not a positive definite matrix (and positive semidefiniteness is not checked)"){
+              if(e$message == paste0("not a positive definite matrix ",
+                                     "(and positive semidefiniteness ",
+                                     "is not checked)")){
                   mod.sum <- data.frame("effect"=NA, "group"=NA,
                                          "term"=col2, "estimate"=NA,
                                           "std.error"=NA, "statistic"=NA,
@@ -235,11 +263,14 @@ run_HoMiCorr <- function(mtx, host,
 
     mod.summaries <- as.data.frame(mod.summaries)
     # adjust p value only for non-intercept terms
-    # and if we have a joint p, only adjust it for the beta coefficient (it's copied for the logistic)
+    # and if we have a joint p, 
+    # only adjust it for the beta coefficient (it's copied for the logistic)
     if((reg.method == "zibr") & zero_prop_from_formula){
-        mod.summaries[mod.summaries$term!="(Intercept)" & mod.summaries$parameter == "beta",
+        mod.summaries[mod.summaries$term!="(Intercept)" &
+                      mod.summaries$parameter == "beta",
                       "q"] <- p.adjust(
-                          mod.summaries[mod.summaries$term!="(Intercept)" & mod.summaries$parameter == "beta",
+                          mod.summaries[mod.summaries$term!="(Intercept)" &
+                          mod.summaries$parameter == "beta",
                                         "joint.p"],
                           method=padj)
 
@@ -252,9 +283,11 @@ run_HoMiCorr <- function(mtx, host,
                           method=padj)
 
     } else if(reg.method == "lmer"){
-        mod.summaries[mod.summaries$term!="(Intercept)" & mod.summaries$effect == "fixed",
+        mod.summaries[mod.summaries$term!="(Intercept)" &
+        mod.summaries$effect == "fixed",
                       "q"] <- p.adjust(
-                          mod.summaries[mod.summaries$term!="(Intercept)"  & mod.summaries$effect == "fixed",
+                          mod.summaries[mod.summaries$term!="(Intercept)" &
+                          mod.summaries$effect == "fixed",
                                         "p.value"],
                           method=padj)
 

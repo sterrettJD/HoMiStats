@@ -1,14 +1,24 @@
 #' Run differential expression testing on a targeted subset of genes
-#' @description This function runs differential expression analysis on a subset of genes that are associated with specific Gene Ontology (GO) terms.
+#' @description This function runs differential expression analysis on a
+#' subset of genes that are associated with specific Gene Ontology (GO) terms.
 #'
-#' @param go.terms A character vector containing the GO terms of interest (e.g., c("GO:0000009", "GO:0042110")).
-#' @param host.genes A matrix or data.frame containing host gene count data, with rows as genes and columns as samples.
-#' @param mtx A data.frame containing normalized microbial gene count data, with rows as microbial genes and columns as samples.
-#' @param mtx.features A character vector specifying the microbial gene features to use.
-#' @param padj A string specifying the p-value adjustment method. Available options can be checked using `p.adjust.methods` (default: "fdr").
-#' @param verbose Logical indicating whether to print progress messages (default: FALSE).
+#' @param go.terms A character vector containing the GO terms of interest
+#' (e.g., c("GO:0000009", "GO:0042110")).
+#' @param host.genes A matrix or data.frame containing host gene count data,
+#' with rows as genes and columns as samples.
+#' @param mtx A data.frame containing normalized microbial gene count data,
+#' with rows as microbial genes and columns as samples.
+#' @param mtx.features A character vector specifying the microbial gene
+#' features to use.
+#' @param padj A string specifying the p-value adjustment method.
+#' Available options can be checked using `p.adjust.methods` (default: "fdr").
+#' @param verbose Logical indicating whether to print progress messages
+#' (default: FALSE).
 #'
-#' @return A data.frame with DESeq2 results for each microbial gene feature, including columns for baseMean, log2FoldChange, standard error (lfcSE), statistical significance (stat), p-value, and adjusted p-value (padj).
+#' @return A data.frame with DESeq2 results for each microbial gene feature,
+#' including columns for baseMean,
+#' log2FoldChange, standard error (lfcSE),
+#' statistical significance (stat), p-value, and adjusted p-value (padj).
 #'
 #' @export
 #' @examples
@@ -65,7 +75,8 @@ GO_targeted_for_each_KO_within_GMM <- function(go.terms, host.genes,
     # Initialize results object
     results <- data.frame(row.names=c("baseMean", "log2FoldChange", "lfcSE",
                                       "stat", "pvalue", "padj"))
-    # This is kinda slow because it still relies on pulling the GO terms each time
+    # This is kinda slow because it still relies on
+    # pulling the GO terms each time
     for(feature in mtx.features){
         res <- go_targeted_diffex(targeted.genes=full.targeted.genes,
                                   host.genes=host.genes,
@@ -82,13 +93,18 @@ GO_targeted_for_each_KO_within_GMM <- function(go.terms, host.genes,
 }
 
 #' Pull microbial features corresponding to a gut metabolic module (GMM)
-#' @description Extracts all microbial transcriptomic (mtx) features associated with a given gut metabolic module.
+#' @description Extracts all microbial transcriptomic (mtx) features
+#' associated with a given gut metabolic module.
 #'
 #' @param GMM A string specifying the gut metabolic module of interest.
-#' @param GMM.kos.df A data.frame with columns "Module" and "KEGG" mapping KOs to their respective gut metabolic modules. Can be generated using `get_GMM_matrix()`.
-#' @param mtx.feature.names A character vector of all metatranscriptomic feature names, including KEGG Orthology (KO) identifiers.
+#' @param GMM.kos.df A data.frame with columns "Module" and "KEGG"
+#' mapping KOs to their respective gut metabolic modules.
+#' This can be generated using `get_GMM_matrix()`.
+#' @param mtx.feature.names A character vector of all
+#' metatranscriptomic feature names, including KEGG Orthology (KO) identifiers.
 #'
-#' @return A character vector of microbial features corresponding to the specified GMM.
+#' @return A character vector of microbial features
+#' corresponding to the specified GMM.
 #' @export
 #' @examples
 #' GMM.matrix <- suppressMessages(get_GMM_matrix())
@@ -110,9 +126,11 @@ features_from_gmm_df <- function(GMM, GMM.kos.df, mtx.feature.names){
 
 
 #' Retrieve human genes associated with a GO term
-#' @description Fetches all human genes that are annotated with a given Gene Ontology (GO) term.
+#' @description Fetches all human genes that are annotated with a given
+#' Gene Ontology (GO) term.
 #'
-#' @param go.term A character string representing a GO term, such as "GO:0042110".
+#' @param go.term A character string representing a GO term,
+#' such as "GO:0042110".
 #'
 #' @return A character vector of human gene symbols associated with the GO term.
 #' @export
@@ -127,8 +145,10 @@ get_go_term_human_genes <- function(go.term){
     gene.data <- AnnotationDbi::select(org.Hs.eg.db::org.Hs.eg.db,
                                        keys=c(go.term),
                                        columns=c('SYMBOL'),
-                                       keytype="GOALL") #uses human ensembl annotations
-    #gets gene symbol, transcript_id and go_id for all genes annotated with the go term
+                                       keytype="GOALL") # uses human
+                                                        # ensembl annotations
+    # gets gene symbol,
+    # transcript_id and go_id for all genes annotated with the go term
 
     targeted.genes <- unique(gene.data$SYMBOL)
     return(targeted.genes)
@@ -136,15 +156,25 @@ get_go_term_human_genes <- function(go.term){
 
 
 #' Run targeted differential expression analysis using DESeq2
-#' @description Performs differential expression analysis in DESeq2 on a subset of host genes, based on their association with microbial gene expression.
+#' @description Performs differential expression analysis in DESeq2
+#' on a subset of host genes,
+#' based on their association with microbial gene expression.
 #'
-#' @param targeted.genes A character vector of host gene names to include in the analysis.
-#' @param host.genes A matrix or data.frame containing host gene count data, with rows as genes and columns as samples.
+#' @param targeted.genes A character vector of host gene names
+#' to include in the analysis.
+#' @param host.genes A matrix or data.frame containing host gene count data,
+#' with rows as genes and columns as samples.
 #' @param microbial.gene A string specifying the microbial gene of interest.
-#' @param microbial.genes A matrix or data.frame containing microbial gene count data.
-#' @param verbose Logical indicating whether to print progress messages (default: TRUE).
+#' @param microbial.genes A matrix or data.frame containing microbial
+#' gene count data.
+#' @param verbose Logical indicating whether to print progress messages
+#' (default: TRUE).
 #'
-#' @return A data.frame with DESeq2 results, including columns for baseMean, log2FoldChange, standard error (lfcSE), statistical significance (stat), p-value, and adjusted p-value (padj).
+#' @return A data.frame with DESeq2 results,
+#' including columns for baseMean, log2FoldChange,
+#' standard error (lfcSE),
+#' statistical significance (stat),
+#' p-value, and adjusted p-value (padj).
 #'
 #' @export
 #' @importFrom DESeq2 DESeqDataSetFromMatrix

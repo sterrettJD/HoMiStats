@@ -1,5 +1,6 @@
 #' Download GMMs file
-#' @description Pulls the Raes lab gut metabolic modules file (v1.0.7). Will not overwrite an existing file.
+#' @description Pulls the Raes lab gut metabolic modules file (v1.0.7).
+#' This will not overwrite an existing file.
 #' @param filepath The filepath where the GMMs file should be downloaded
 #' @return Nothing
 #' @examples
@@ -12,7 +13,8 @@
 #'
 pull_GMMs_file <- function(filepath, version="v1.07", quietly=TRUE){
     if(!file.exists(filepath)){
-        gmm.url <- paste0("https://raw.githubusercontent.com/raeslab/GMMs/master/GMMs.",
+        gmm.url <- paste0("https://raw.githubusercontent.com/",
+                          "raeslab/GMMs/master/GMMs.",
                           version, ".txt")
         download.file(gmm.url,
                       filepath,
@@ -26,10 +28,14 @@ pull_GMMs_file <- function(filepath, version="v1.07", quietly=TRUE){
 #' Adds KEGG line to the GMM matrix
 #' @description Parser for each line of the GMM file
 #' @param GMM.matrix The matrix with GMM data
-#' @param line A string containing the line to be parsed and added to the GMM matrix
-#' @param mod.name A string containing the name of the module for which current line is being parsed
-#' @param mod.number A string containing the ID of the module for which current line is being parsed
+#' @param line A string containing the line
+#' to be parsed and added to the GMM matrix
+#' @param mod.name A string containing the name of the module
+#' for which current line is being parsed
+#' @param mod.number A string containing the ID of the module
+#' for which current line is being parsed
 #' @return The updated matrix of GMMs, with the new line parsed and added
+#' @noRd
 #'
 add_K_line_to_matrix <- function(GMM.matrix, line, mod.name, mod.number){
     # Splits line on either a comma or tab
@@ -44,11 +50,19 @@ add_K_line_to_matrix <- function(GMM.matrix, line, mod.name, mod.number){
 }
 
 #' Gets the GMM matrix in a tabular format
-#' @description Download the GMM data (if needed) and parses this file to return a table with the GMMs and corresponding KOs
-#' @param filepath The filepath at which the GMMs file should be downloaded or found.
-#' @param version The version of GMMs to be used. As of April '24, the newest version is v1.07. This is used in pulling the data from the Raes lab GMMs github, so old versions that are not on the master branch may cause the filepath to not work.
-#' @param quietly A boolean denoting if the GMMs file should be downloaded quietly
-#' @param cleanup A boolean denoting if the filepath should be removed at the end of this function.
+#' @description Download the GMM data (if needed) and
+#' parses this file to return a table with the GMMs and corresponding KOs
+#' @param filepath The filepath at which
+#' the GMMs file should be downloaded or found.
+#' @param version The version of GMMs to be used.
+#' As of April '24, the newest version is v1.07.
+#' This is used in pulling the data from the Raes lab GMMs github,
+#' so old versions that are not on the master branch
+#' may cause the filepath to not work.
+#' @param quietly A boolean denoting if the GMMs file
+#' should be downloaded quietly
+#' @param cleanup A boolean denoting if the filepath
+#' should be removed at the end of this function.
 #' @return A tabular version of the GMMs as a dataframe
 #'
 #' @examples
@@ -63,7 +77,8 @@ add_K_line_to_matrix <- function(GMM.matrix, line, mod.name, mod.number){
 get_GMM_matrix <- function(filepath="GMMs.txt", version="v1.07",
                            quietly_download=TRUE, cleanup=TRUE){
     if(!file.exists(filepath)){
-        pull_GMMs_file(filepath=filepath, version=version, quietly=quietly_download)
+        pull_GMMs_file(filepath=filepath, version=version, 
+                       quietly=quietly_download)
     }
 
     GMM.fileconts <- readLines(filepath)
@@ -79,7 +94,8 @@ get_GMM_matrix <- function(filepath="GMMs.txt", version="v1.07",
         }
         # If KO line, add that info to the matrix
         else if(grepl("^K\\d{5}", line)){
-            GMM.matrix <- add_K_line_to_matrix(GMM.matrix, line, mod.name, mod.number)
+            GMM.matrix <- add_K_line_to_matrix(GMM.matrix, line, 
+                                               mod.name, mod.number)
         }
     }
 
