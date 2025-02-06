@@ -11,7 +11,7 @@ run_mtxDE(
   sampleID,
   reg.method = "zibr",
   padj = "fdr",
-  zero_prop_from_formula = T,
+  zero_prop_from_formula = TRUE,
   zibr_time_ind = NULL,
   ncores = 1,
   show_progress = TRUE
