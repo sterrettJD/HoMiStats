@@ -5,6 +5,12 @@
 #' @return the resulting model
 #' @export
 #' @importFrom gamlss.dist BEZI
+#' @examples
+#' data <- data.frame(a=c(0.1, 0.2, 0.3, 0.4),
+#'                    b=c(0, 0, 1, 1))
+#'
+#' run_single_beta_reg_gamlss("a ~ b",
+#'                            data=data)
 #'
 run_single_beta_reg_gamlss <- function(formula, data,
                                               controller=gamlss.control(trace=FALSE)){
@@ -27,6 +33,32 @@ run_single_beta_reg_gamlss <- function(formula, data,
 #' @return the resulting model
 #' @export
 #' @importFrom ZIBR zibr
+#' @examples
+#' data <- data.frame(y=c(0.1, 0, 0.3, 0.4),
+#'                    treated=c(0, 0, 0, 1),
+#'                    participant=c(1, 2, 1, 2),
+#'                    timepoint=c(0, 0, 1, 1))
+#'
+#' # This runs ZIBR with a constant amount of zero-inflation
+#' # for all participants and random intercepts for participant
+#' run_single_beta_reg_zibr(beta_cov="treated", Y="y",
+#'                          subject_ind="participant",
+#'                          time_ind="timepoint",
+#'                          data=data)
+#'
+#' # This runs ZIBR where treatment impacts both whether a feature might be zero
+#' # and the abundance of that feature (and random intercepts for participant)
+#' run_single_beta_reg_zibr(logistic_cov="treated",
+#'                          beta_cov="treated",
+#'                          Y="y",
+#'                          subject_ind="participant",
+#'                          time_ind="timepoint",
+#'                          data=data)
+#'
+#' # This can also be run without random effects
+#' # by not specifying participant or timepoint
+#' run_single_beta_reg_zibr(beta_cov="treated", Y="y",
+#'                          data=data)
 #'
 run_single_beta_reg_zibr <- function(logistic_cov=NULL, beta_cov, Y,
                                      subject_ind=NULL, time_ind=NULL, data){
@@ -74,6 +106,21 @@ run_single_beta_reg_zibr <- function(logistic_cov=NULL, beta_cov, Y,
 #' @param mod A ZIBR model results object.
 #' @return a dataframe with the tidy model results
 #' @export
+#' @examples
+#' data <- data.frame(y=c(0.1, 0, 0.3, 0.4),
+#'                    treated=c(0, 0, 0, 1),
+#'                    participant=c(1, 2, 1, 2),
+#'                    timepoint=c(0, 0, 1, 1))
+#'
+#' # This runs ZIBR where treatment impacts both whether a feature might be zero
+#' # and the abundance of that feature (and random intercepts for participant)
+#' mod <- run_single_beta_reg_zibr(logistic_cov="treated",
+#'                                 beta_cov="treated",
+#'                                 Y="y",
+#'                                 subject_ind="participant",
+#'                                 time_ind="timepoint",
+#'                                 data=data)
+#' tidied.mod <- tidy_zibr_results(mod)
 #'
 tidy_zibr_results <- function(mod){
     # There is a joint_p if logistic_cov and beta_cov are the same
@@ -106,6 +153,22 @@ tidy_zibr_results <- function(mod){
 #' @return a character vector with the mapped variable names
 #' @importFrom plyr mapvalues
 #' @export
+#' @examples
+#' data <- data.frame(y=c(0.1, 0, 0.3, 0.4),
+#'                    treated=c(0, 0, 0, 1),
+#'                    participant=c(1, 2, 1, 2),
+#'                    timepoint=c(0, 0, 1, 1))
+#'
+#' # This runs ZIBR where treatment impacts both whether a feature might be zero
+#' # and the abundance of that feature (and random intercepts for participant)
+#' mod <- run_single_beta_reg_zibr(logistic_cov="treated",
+#'                                 beta_cov="treated",
+#'                                 Y="y",
+#'                                 subject_ind="participant",
+#'                                 time_ind="timepoint",
+#'                                 data=data)
+#' tidied.mod <- tidy_zibr_results(mod)
+#' tidied.mod$term <- map_zibr_termnames(tidied.mod$term, c("treated"))
 #'
 map_zibr_termnames <- function(data, real.names){
     names(real.names) <- paste0("var", 1:length(real.names))
@@ -121,6 +184,12 @@ map_zibr_termnames <- function(data, real.names){
 #' @return the resulting model
 #' @export
 #' @importFrom stats lm
+#' @examples
+#' data <- data.frame(a=c(0.1, 0.2, 0.3, 0.4),
+#'                    b=c(0, 0, 1, 1))
+#'
+#' run_single_lm("a ~ b",
+#'               data=data)
 #'
 run_single_lm <- function(formula, data){
     mod <- lm(as.formula(formula),
@@ -136,6 +205,13 @@ run_single_lm <- function(formula, data){
 #' @return the resulting model
 #' @export
 #' @importFrom lmerTest lmer
+#' @examples
+#' data <- data.frame(a=c(0.1, 0.2, 0.3, 0.4),
+#'                    b=c(0, 0, 1, 1),
+#'                    participant=c(0, 1, 0, 1))
+#'
+#' run_single_lmer("a ~ b + (1|participant)",
+#'               data=data)
 #'
 run_single_lmer <- function(formula, data){
     mod <- lmerTest::lmer(as.formula(formula),
@@ -149,6 +225,12 @@ run_single_lmer <- function(formula, data){
 #' @param feature.table A dataframe, where rows are samples, and columns are genes/features. Row names should be sample IDs.
 #' @return Nothing
 #' @export
+#' @examples
+#' data <- data.frame(a=c(0.1, 0.2, 0.3, 0.4),
+#'                    b=c(0, 0, 1, 1))
+#'
+#' # This would raise an error about rows 3 and 4
+#' try(check_for_ones(data))
 #'
 check_for_ones <- function(feature.table){
     rows.with.ones <- which(feature.table >= 1, arr.ind = T)[,1]
@@ -165,6 +247,18 @@ check_for_ones <- function(feature.table){
 #' @param feature.table A dataframe, where rows are samples, and columns are genes/features. Row names should be sample IDs.
 #' @return A dataframe, with undetected features removed (where rows are samples, and columns are genes/features).
 #' @export
+#' @examples
+#' good.data <- data.frame(a=c(0.1, 0.2, 0.3, 0.4),
+#'                    b=c(0, 0, 1, 1))
+#' bad.data <- data.frame(a=c(0.1, 0.2, 0.3, 0.4),
+#'                    b=c(0, 0, 1, 1),
+#'                    undetected_feature=c(0, 0, 0, 0))
+#'
+#' # This will not raise any warning
+#' filter_undetected(good.data)
+#'
+#' # This would raise a warning
+#' try(filter_undetected(bad.data))
 #'
 filter_undetected <- function(feature.table){
     detected.features <- which(colSums(feature.table) > 0)
@@ -185,6 +279,15 @@ filter_undetected <- function(feature.table){
 #' @return a character vector with the random effects variable names, or NULL if there are no random effects.
 #' @importFrom lme4 findbars
 #' @export
+#' @examples
+#' form <- as.formula("y ~ x + (1|z)")
+#'
+#' This would return `c("z")`
+#' get_random_fx(form)
+#'
+#' form.norand <- as.formula("y ~ x")
+#' This would return NULL
+#' get_random_fx(form.norand)
 #'
 get_random_fx <- function(form){
     vars <- sapply(lme4::findbars(form),
