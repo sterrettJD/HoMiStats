@@ -54,7 +54,7 @@ add_K_line_to_matrix <- function(GMM.matrix, line, mod.name, mod.number){
 #' @examples
 #' GMM.df <- get_GMM_matrix()
 #'
-#' If you want to download GMMs from a different version verbosely:
+#' # If you want to download GMMs from a different version verbosely:
 #' GMM.df <- get_GMM_matrix("loc/to/download.txt", version="v1.06",
 #'                          quietly_download=FALSE)
 #'
