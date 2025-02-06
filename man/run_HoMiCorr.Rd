@@ -57,9 +57,9 @@ host <- data.frame(a2=c(0.5, 0.0, 0.0, 0.0),
                    b2=c(0.5, 0.5, 0.5, 0.4),
                    c2=c(0.4, 0.5, 0.0, 0.0),
                    d2=c(0.0, 0.0, 0.5, 0.6))
-row.names(mtx) <- paste0("sample_", 1:4)
-row.names(host) <- paste0("sample_", 1:4)
-metadata <- data.frame(SampleID=paste0("sample_", 1:4),
+row.names(mtx) <- paste0("sample_", seq_len(4))
+row.names(host) <- paste0("sample_", seq_len(4))
+metadata <- data.frame(SampleID=paste0("sample_", seq_len(4)),
                        phenotype=c(0,0,1,1),
                        participant=c(0,1,0,1),
                        timepoint=c(0,0,1,1))

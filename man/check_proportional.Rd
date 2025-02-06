@@ -20,7 +20,8 @@ Nothing; throws a warning or error if the check fails.
 Some transformations require proportional data where sample rows sum to 1. This function checks that condition.
 }
 \examples{
-feature.table <- data.frame(gene1 = c(0.4, 0.5, 0.6), gene2 = c(0.6, 0.5, 0.4))
+feature.table <- data.frame(gene1 = c(0.4, 0.5, 0.6),
+                            gene2 = c(0.6, 0.5, 0.4))
 rownames(feature.table) <- c("sample1", "sample2", "sample3")
 check_proportional(feature.table, soft=TRUE)
 

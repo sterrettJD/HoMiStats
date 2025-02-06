@@ -45,16 +45,19 @@ mtx.feature.names <- c("k02005_hly_d_family_secretion_protein",
 relevant.host.genes <- c("PIGV","ALG12")
 nonrelevant.host.genes <- c("goofballgene", "sillygoosegene")
 all.host.genes <- c(relevant.host.genes, nonrelevant.host.genes)
-host.gene.counts <- data.frame(sapply(X=all.host.genes,
-                                      FUN=function(x){
-                                             rnbinom(n=1000,
-                                             size=400000, prob=runif(1))})
-                                   )
+host.gene.counts <- data.frame(vapply(X = all.host.genes,
+                                   FUN = function(x) {
+                                         rnbinom(n = 1000,
+                                         size = 400000, prob = runif(1))},
+                                   FUN.VALUE = numeric(1000)
+                                    )
+                            )
 
 # simulate some mtx data
-microbial.gene.counts <- data.frame(sapply(X=mtx.feature.names,
+microbial.gene.counts <- data.frame(vapply(X=mtx.feature.names,
                                            FUN=function(x){
-                                               rnorm(n=1000, mean=100)})
+                                               rnorm(n=1000, mean=100)},
+                                           FUN.VALUE=numeric(1000))
                                     )
 
 mtx.features.to.test <- features_from_gmm_df("butyrate production I",
