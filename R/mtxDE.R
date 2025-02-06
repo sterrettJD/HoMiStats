@@ -282,11 +282,11 @@ filter_undetected <- function(feature.table){
 #' @examples
 #' form <- as.formula("y ~ x + (1|z)")
 #'
-#' This would return `c("z")`
+#' # This would return `c("z")`
 #' get_random_fx(form)
 #'
 #' form.norand <- as.formula("y ~ x")
-#' This would return NULL
+#' # This would return NULL
 #' get_random_fx(form.norand)
 #'
 get_random_fx <- function(form){
@@ -336,7 +336,7 @@ get_random_fx <- function(form){
 #'                                feature.table,
 #'                                metadata,
 #'                                sampleID="SampleID",
-#'                                show_progress=FALSE))
+#'                                show_progress=FALSE)
 #'
 #' # Use ZIBR with random effects
 #' zibr.with.random.fx <- run_mtxDE("phenotype + (1|participant)",
