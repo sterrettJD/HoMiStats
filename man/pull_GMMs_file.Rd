@@ -15,3 +15,10 @@ Nothing
 \description{
 Pulls the Raes lab gut metabolic modules file (v1.0.7). Will not overwrite an existing file.
 }
+\examples{
+pull_GMMs_file("loc/to/download.txt")
+
+# If you want to download GMMs from a different version verbosely:
+pull_GMMs_file("loc/to/download.txt", version="v1.06", quietly=FALSE)
+
+}

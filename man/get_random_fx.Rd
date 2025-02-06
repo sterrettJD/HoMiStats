@@ -15,3 +15,14 @@ a character vector with the random effects variable names, or NULL if there are 
 \description{
 Sometimes you want the name of random effects variables from a formula. This function does that.
 }
+\examples{
+form <- as.formula("y ~ x + (1|z)")
+
+# This would return `c("z")`
+get_random_fx(form)
+
+form.norand <- as.formula("y ~ x")
+# This would return NULL
+get_random_fx(form.norand)
+
+}

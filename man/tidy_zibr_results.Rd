@@ -15,3 +15,20 @@ a dataframe with the tidy model results
 \description{
 ZIBR returns a list with lots of different kinds of entries. This tidies that up.
 }
+\examples{
+data <- data.frame(y=c(0.1, 0, 0.3, 0.4),
+                   treated=c(0, 0, 0, 1),
+                   participant=c(1, 2, 1, 2),
+                   timepoint=c(0, 0, 1, 1))
+
+# This runs ZIBR where treatment impacts both whether a feature might be zero
+# and the abundance of that feature (and random intercepts for participant)
+mod <- run_single_beta_reg_zibr(logistic_cov="treated",
+                                beta_cov="treated",
+                                Y="y",
+                                subject_ind="participant",
+                                time_ind="timepoint",
+                                data=data)
+tidied.mod <- tidy_zibr_results(mod)
+
+}

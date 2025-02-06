@@ -21,3 +21,11 @@ the resulting model
 \description{
 runs a zero-inflated beta distribution GAM using gamlss
 }
+\examples{
+data <- data.frame(a=c(0.1, 0.2, 0.3, 0.4),
+                   b=c(0, 0, 1, 1))
+
+run_single_beta_reg_gamlss("a ~ b",
+                           data=data)
+
+}

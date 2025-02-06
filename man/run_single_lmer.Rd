@@ -17,3 +17,12 @@ the resulting model
 \description{
 runs a linear mixed regression using lme4
 }
+\examples{
+data <- data.frame(a=c(0.1, 0.2, 0.3, 0.4),
+                   b=c(0, 0, 1, 1),
+                   participant=c(0, 1, 0, 1))
+
+run_single_lmer("a ~ b + (1|participant)",
+              data=data)
+
+}

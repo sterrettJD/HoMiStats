@@ -14,19 +14,56 @@ GO_targeted_for_each_KO_within_GMM(
 )
 }
 \arguments{
-\item{go.terms}{A string vector with the GO terms of interest}
+\item{go.terms}{A character vector containing the GO terms of interest (e.g., c("GO:0000009", "GO:0042110")).}
 
-\item{host.genes}{A matrix or data.frame with the host gene count data}
+\item{host.genes}{A matrix or data.frame containing host gene count data, with rows as genes and columns as samples.}
 
-\item{mtx}{A data.frame with the normalized microbial gene count data}
+\item{mtx}{A data.frame containing normalized microbial gene count data, with rows as microbial genes and columns as samples.}
 
-\item{mtx.features}{A vector of features to use from the microbial gene counts}
+\item{mtx.features}{A character vector specifying the microbial gene features to use.}
 
-\item{padj}{A string denoting the p value adustment method. Options can be checked using 'p.adjust.methods'}
+\item{padj}{A string specifying the p-value adjustment method. Available options can be checked using `p.adjust.methods` (default: "fdr").}
+
+\item{verbose}{Logical indicating whether to print progress messages (default: FALSE).}
 }
 \value{
-a data.frame with DESeq results for each mtx feature
+A data.frame with DESeq2 results for each microbial gene feature, including columns for baseMean, log2FoldChange, standard error (lfcSE), statistical significance (stat), p-value, and adjusted p-value (padj).
 }
 \description{
-Run differential expression testing on a targeted subset of genes
+This function runs differential expression analysis on a subset of genes that are associated with specific Gene Ontology (GO) terms.
+}
+\examples{
+set.seed(123)
+GMM.matrix <- suppressMessages(get_GMM_matrix())
+mtx.feature.names <- c("k02005_hly_d_family_secretion_protein",
+                  "k02007_cobalt_nickel_transport_system_permease_protein",
+                  "k00248_butyrate_gene_1",
+                  "K00634_butyrate_gene_2",
+                  "K00929_butyrate_gene_3")
+
+# simulate some host data
+relevant.host.genes <- c("PIGV","ALG12")
+nonrelevant.host.genes <- c("goofballgene", "sillygoosegene")
+all.host.genes <- c(relevant.host.genes, nonrelevant.host.genes)
+host.gene.counts <- data.frame(sapply(X=all.host.genes,
+                                      FUN=function(x){
+                                             rnbinom(n=1000,
+                                             size=400000, prob=runif(1))})
+                                   )
+
+# simulate some mtx data
+microbial.gene.counts <- data.frame(sapply(X=mtx.feature.names,
+                                           FUN=function(x){
+                                               rnorm(n=1000, mean=100)})
+                                    )
+
+mtx.features.to.test <- features_from_gmm_df("butyrate production I",
+                                       GMM.matrix,
+                                       mtx.feature.names=mtx.feature.names)
+
+results <- GO_targeted_for_each_KO_within_GMM(go.terms=c("GO:0000009"),
+                              host.genes=t(host.gene.counts),
+                              mtx=microbial.gene.counts,
+                              mtx.features=mtx.features.to.test)
+
 }

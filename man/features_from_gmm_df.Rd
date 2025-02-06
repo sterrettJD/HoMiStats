@@ -2,20 +2,27 @@
 % Please edit documentation in R/targeted.R
 \name{features_from_gmm_df}
 \alias{features_from_gmm_df}
-\title{Pull mtx features for a gut metabolic module of interest}
+\title{Pull microbial features corresponding to a gut metabolic module (GMM)}
 \usage{
 features_from_gmm_df(GMM, GMM.kos.df, mtx.feature.names)
 }
 \arguments{
-\item{GMM}{The name of the gut metabolic module of interest}
+\item{GMM}{A string specifying the gut metabolic module of interest.}
 
-\item{GMM.kos.df}{A data.frame with columns "Module" and "KEGG" with the KOs corresponding to each gut metabolic module. Can be generated using get_GMM_matrix()}
+\item{GMM.kos.df}{A data.frame with columns "Module" and "KEGG" mapping KOs to their respective gut metabolic modules. Can be generated using `get_GMM_matrix()`.}
 
-\item{mtx}{A vector with all of the metatranscriptome feature names, with KOs in them}
+\item{mtx.feature.names}{A character vector of all metatranscriptomic feature names, including KEGG Orthology (KO) identifiers.}
 }
 \value{
-a vector of feature names corresponding to the GMM of interest
+A character vector of microbial features corresponding to the specified GMM.
 }
 \description{
-Looks for all mtx features corresponding to the gut metabolic module of interest
+Extracts all microbial transcriptomic (mtx) features associated with a given gut metabolic module.
+}
+\examples{
+GMM.matrix <- suppressMessages(get_GMM_matrix())
+features <- features_from_gmm_df(GMM="butyrate production I",
+                                 GMM.kos.df=GMM_matrix,
+                                 mtx.feature.names=c("K00248", "K00634"))
+
 }

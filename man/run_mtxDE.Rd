@@ -44,3 +44,49 @@ a dataframe with differential expression results
 \description{
 Regresses each feature using the formula provided and returns the statistical summary for each feature
 }
+\examples{
+feature.table <- data.frame(a=c(0.1, 0.0, 0.0, 0.0),
+                               b=c(0.5, 0.5, 0.5, 0.4),
+                               c=c(0.4, 0.5, 0.0, 0.0),
+                               d=c(0.0, 0.0, 0.5, 0.6))
+row.names(feature.table) <- paste0("sample_", 1:4)
+metadata <- data.frame(SampleID=paste0("sample_", 1:4),
+                          phenotype=c(0,0,1,1),
+                          participant=c(0,1,0,1),
+                          timepoint=c(0,0,1,1))
+
+zibr.no.random.fx <- run_mtxDE("phenotype",
+                               feature.table,
+                               metadata,
+                               sampleID="SampleID",
+                               show_progress=FALSE)
+
+# Use ZIBR with random effects
+zibr.with.random.fx <- run_mtxDE("phenotype + (1|participant)",
+                                 feature.table,
+                                 metadata, sampleID="SampleID",
+                                 zibr_time_ind="timepoint",
+                                 show_progress=FALSE)
+
+# Use gamlss zero inflated beta regression with no random effects
+gamlss.no.random.fx <- run_mtxDE("phenotype", feature.table,
+                                  metadata, sampleID="SampleID",
+                                  reg.method="gamlss",
+                                  show_progress=FALSE)
+
+# Use a linear model
+lm.res <- run_mtxDE("phenotype",
+                     feature.table,
+                     reg.method="lm",
+                     sampleID="SampleID",
+                     show_progress=FALSE)
+
+# Use a linear model with random effects for participant
+lmer.res <- run_mtxDE("phenotype + (1|participant)",
+                       feature.table,
+                       metadata,
+                       reg.method="lmer",
+                       sampleID="SampleID",
+                       show_progress=FALSE)
+
+}
