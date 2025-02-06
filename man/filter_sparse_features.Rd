@@ -7,11 +7,14 @@
 filter_sparse_features(df, threshold, zero_threshold = 0)
 }
 \arguments{
-\item{df}{A dataframe containing relative abundance data, where rows are samples and columns are features (genes).}
+\item{df}{A dataframe containing relative abundance data,
+where rows are samples and columns are features (genes).}
 
-\item{threshold}{The threshold for filtering sparse features. Any features more sparse than this will be removed.}
+\item{threshold}{The threshold for filtering sparse features.
+Any features more sparse than this will be removed.}
 
-\item{zero_threshold}{The threshold below which a sample is considered not present. Defaults to zero}
+\item{zero_threshold}{The threshold below which
+a sample is considered not present. Defaults to zero}
 }
 \value{
 A dataframe with sparse features filtered out.

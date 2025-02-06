@@ -78,7 +78,8 @@ colnames(d.partdownreg) <- paste0("partiallydownregulated_zeroes_", zero.props)
 results <- run_mtxDE("treated",
                      feature.table=as.data.frame(cbind(d, 
                                                        d.upreg, d.downreg,
-                                                       d.partupreg, d.partdownreg)),
+                                                       d.partupreg,
+                                                       d.partdownreg)),
                      metadata=metadata, sampleID="sampleID",
                      reg.method="gamlss",
                      ncores=4)
@@ -90,7 +91,7 @@ results$changing <- str_split(results$feature, pattern="_") %>%
                         vapply(FUN=function(x) x[1],
                                FUN.VALUE=character(1))
 results$changing <- results$changing %>% 
-                     factor(levels=c("downregulated", "partiallydownregulated", 
+                     factor(levels=c("downregulated", "partiallydownregulated",
                                      "nochange",
                                      "partiallyupregulated", "upregulated"))
 
@@ -114,4 +115,9 @@ ggplot(results %>% filter(term=="treated"),
 ggplot(as.data.frame(cbind(d.downreg, treated)), 
        mapping=aes(y=downregulated_zeroes_0.5, x=as.factor(treated))) +
     geom_jitter()
+```
+
+# Session info 
+```{r}
+sessionInfo()
 ```

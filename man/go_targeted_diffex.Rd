@@ -13,21 +13,31 @@ go_targeted_diffex(
 )
 }
 \arguments{
-\item{targeted.genes}{A character vector of host gene names to include in the analysis.}
+\item{targeted.genes}{A character vector of host gene names
+to include in the analysis.}
 
-\item{host.genes}{A matrix or data.frame containing host gene count data, with rows as genes and columns as samples.}
+\item{host.genes}{A matrix or data.frame containing host gene count data,
+with rows as genes and columns as samples.}
 
 \item{microbial.gene}{A string specifying the microbial gene of interest.}
 
-\item{microbial.genes}{A matrix or data.frame containing microbial gene count data.}
+\item{microbial.genes}{A matrix or data.frame containing microbial
+gene count data.}
 
-\item{verbose}{Logical indicating whether to print progress messages (default: TRUE).}
+\item{verbose}{Logical indicating whether to print progress messages
+(default: TRUE).}
 }
 \value{
-A data.frame with DESeq2 results, including columns for baseMean, log2FoldChange, standard error (lfcSE), statistical significance (stat), p-value, and adjusted p-value (padj).
+A data.frame with DESeq2 results,
+including columns for baseMean, log2FoldChange,
+standard error (lfcSE),
+statistical significance (stat),
+p-value, and adjusted p-value (padj).
 }
 \description{
-Performs differential expression analysis in DESeq2 on a subset of host genes, based on their association with microbial gene expression.
+Performs differential expression analysis in DESeq2
+on a subset of host genes,
+based on their association with microbial gene expression.
 }
 \examples{
 set.seed(123)

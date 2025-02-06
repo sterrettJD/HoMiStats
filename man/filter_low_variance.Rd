@@ -7,7 +7,8 @@
 filter_low_variance(df, threshold)
 }
 \arguments{
-\item{df}{A dataframe containing relative abundance data, where rows are samples and columns are features (genes).}
+\item{df}{A dataframe containing relative abundance data,
+where rows are samples and columns are features (genes).}
 
 \item{threshold}{The threshold for filtering low variance features.}
 }

@@ -9,15 +9,20 @@ arcsinh(vec, scaling.factor = 100, norm.by.scaling = TRUE)
 \arguments{
 \item{vec}{A numeric vector to be transformed.}
 
-\item{scaling.factor}{A scaling factor applied before transformation. Increasing this factor increases how much of the lower end of the data is treated linearly.}
+\item{scaling.factor}{A scaling factor applied before transformation.
+Increasing this factor increases how much of the lower end of the data
+is treated linearly.}
 
-\item{norm.by.scaling}{Boolean indicating whether transformed data should be normalized by the arcsinh of the scaling factor.}
+\item{norm.by.scaling}{Boolean indicating whether transformed data
+should be normalized by the arcsinh of the scaling factor.}
 }
 \value{
 A transformed numeric vector.
 }
 \description{
-Performs an arcsinh transformation with scaling. The arcsinh function behaves like a log transformation for large values but remains linear for small values and can handle zeros.
+Performs an arcsinh transformation with scaling.
+The arcsinh function behaves like a log transformation for large values
+but remains linear for small values and can handle zeros.
 }
 \examples{
 vec <- c(0.01, 0.1, 1, 10, 100)

@@ -7,13 +7,15 @@
 get_go_term_human_genes(go.term)
 }
 \arguments{
-\item{go.term}{A character string representing a GO term, such as "GO:0042110".}
+\item{go.term}{A character string representing a GO term,
+such as "GO:0042110".}
 }
 \value{
 A character vector of human gene symbols associated with the GO term.
 }
 \description{
-Fetches all human genes that are annotated with a given Gene Ontology (GO) term.
+Fetches all human genes that are annotated with a given
+Gene Ontology (GO) term.
 }
 \examples{
 genes <- get_go_term_human_genes("GO:0000009")

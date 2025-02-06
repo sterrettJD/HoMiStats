@@ -7,7 +7,8 @@
 filter_low_abundance_by_mean(df, threshold)
 }
 \arguments{
-\item{df}{A dataframe containing relative abundance data, where rows are samples and columns are features (genes).}
+\item{df}{A dataframe containing relative abundance data,
+where rows are samples and columns are features (genes).}
 
 \item{threshold}{The threshold for filtering low abundance features.}
 }
@@ -15,7 +16,8 @@ filter_low_abundance_by_mean(df, threshold)
 A dataframe with low abundance features filtered out.
 }
 \description{
-Filters low abundance features with means below a certain threshold.
+Filters low abundance features with
+means below a certain threshold.
 }
 \examples{
 df <- data.frame(

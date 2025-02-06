@@ -7,13 +7,17 @@
 filter_undetected(feature.table)
 }
 \arguments{
-\item{feature.table}{A dataframe, where rows are samples, and columns are genes/features. Row names should be sample IDs.}
+\item{feature.table}{A dataframe, where rows are samples,
+and columns are genes/features. Row names should be sample IDs.}
 }
 \value{
-A dataframe, with undetected features removed (where rows are samples, and columns are genes/features).
+A dataframe, with undetected features removed
+(where rows are samples, and columns are genes/features).
 }
 \description{
-The beta regression methods don't deal well with features that are entirely undetected. This filters them from the feature table.
+The beta regression methods don't deal well
+with features that are entirely undetected.
+This filters them from the feature table.
 }
 \examples{
 good.data <- data.frame(a=c(0.1, 0.2, 0.3, 0.4),

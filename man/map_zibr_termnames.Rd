@@ -7,15 +7,18 @@
 map_zibr_termnames(data, real.names)
 }
 \arguments{
-\item{data}{a character vector of the ZIBR terms (e.g. c("intercept", "var1", "var2"))}
+\item{data}{a character vector of the ZIBR terms
+(e.g. c("intercept", "var1", "var2"))}
 
-\item{real.names}{names of variables in the order they were passed to ZIBR. Do not include intercept}
+\item{real.names}{names of variables in the order they were passed to ZIBR.
+Do not include intercept}
 }
 \value{
 a character vector with the mapped variable names
 }
 \description{
-ZIBR outputs terms as "var1", "var2", etc in the results. This maps these to the original variable names
+ZIBR outputs terms as "var1", "var2", etc in the results.
+This maps these to the original variable names
 }
 \examples{
 data <- data.frame(y=c(0.1, 0, 0.3, 0.4),

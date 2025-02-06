@@ -7,17 +7,20 @@
 check_proportional(feature.table, tolerance = 0.001, soft = FALSE)
 }
 \arguments{
-\item{feature.table}{A dataframe where rows are samples and columns are features.}
+\item{feature.table}{A dataframe where rows are samples
+and columns are features.}
 
 \item{tolerance}{Numerical value for tolerance in checking if rows sum to 1.}
 
-\item{soft}{Boolean. If TRUE, the function only warns instead of stopping execution.}
+\item{soft}{Boolean.
+If TRUE, the function only warns instead of stopping execution.}
 }
 \value{
 Nothing; throws a warning or error if the check fails.
 }
 \description{
-Some transformations require proportional data where sample rows sum to 1. This function checks that condition.
+Some transformations require proportional data
+where sample rows sum to 1. This function checks that condition.
 }
 \examples{
 feature.table <- data.frame(gene1 = c(0.4, 0.5, 0.6),

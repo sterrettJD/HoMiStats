@@ -9,15 +9,20 @@ features_from_gmm_df(GMM, GMM.kos.df, mtx.feature.names)
 \arguments{
 \item{GMM}{A string specifying the gut metabolic module of interest.}
 
-\item{GMM.kos.df}{A data.frame with columns "Module" and "KEGG" mapping KOs to their respective gut metabolic modules. Can be generated using `get_GMM_matrix()`.}
+\item{GMM.kos.df}{A data.frame with columns "Module" and "KEGG"
+mapping KOs to their respective gut metabolic modules.
+This can be generated using `get_GMM_matrix()`.}
 
-\item{mtx.feature.names}{A character vector of all metatranscriptomic feature names, including KEGG Orthology (KO) identifiers.}
+\item{mtx.feature.names}{A character vector of all
+metatranscriptomic feature names, including KEGG Orthology (KO) identifiers.}
 }
 \value{
-A character vector of microbial features corresponding to the specified GMM.
+A character vector of microbial features
+corresponding to the specified GMM.
 }
 \description{
-Extracts all microbial transcriptomic (mtx) features associated with a given gut metabolic module.
+Extracts all microbial transcriptomic (mtx) features
+associated with a given gut metabolic module.
 }
 \examples{
 GMM.matrix <- suppressMessages(get_GMM_matrix())

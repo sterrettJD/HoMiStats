@@ -14,15 +14,28 @@ run_single_beta_reg_zibr(
 )
 }
 \arguments{
-\item{logistic_cov}{a string (or vector of strings) indicating the variables to be used as covariates predicting whether a value is 0 (in the logistic portion of ZIBR). Defaults to NULL, for which just an intercept will be fit for the logistic portion of ZIBR.}
+\item{logistic_cov}{a string (or vector of strings)
+indicating the variables to be used as covariates
+predicting whether a value is 0 (in the logistic portion of ZIBR).
+Defaults to NULL,
+for which just an intercept will be fit for the logistic portion of ZIBR.}
 
-\item{beta_cov}{a string (or vector of strings) indicating the variables to be used as covariates predicting the relative abundance of a non-zero value (in the beta portion of ZIBR)}
+\item{beta_cov}{a string (or vector of strings)
+indicating the variables to be used as covariates predicting
+the relative abundance of a non-zero value (in the beta portion of ZIBR)}
 
-\item{Y}{a string indicating the the column with zero-inflated relative abundance data}
+\item{Y}{a string indicating the the column
+with zero-inflated relative abundance data}
 
-\item{subject_ind}{a string indicating the column with participant ID information for longitudinal data. Defaults to NULL, which creates unique participant ID for each sample in the case of non-longitudinal, cross-sectional data}
+\item{subject_ind}{a string indicating the column
+with participant ID information for longitudinal data.
+Defaults to NULL,
+which creates unique participant ID for each sample
+in the case of non-longitudinal, cross-sectional data}
 
-\item{time_ind}{a string indication the column with timepoint data. Defaults to NULL, which creates a constant data column for non-longitudinal, cross-sectional data}
+\item{time_ind}{a string indication the column with timepoint data.
+Defaults to NULL, which creates a constant data column for non-longitudinal,
+cross-sectional data}
 
 \item{data}{A dataframe to be used in the regression}
 }

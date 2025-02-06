@@ -13,7 +13,8 @@ tidy_zibr_results(mod)
 a dataframe with the tidy model results
 }
 \description{
-ZIBR returns a list with lots of different kinds of entries. This tidies that up.
+ZIBR returns a list with lots of different kinds of entries.
+This tidies that up.
 }
 \examples{
 data <- data.frame(y=c(0.1, 0, 0.3, 0.4),

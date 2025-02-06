@@ -13,7 +13,8 @@ pull_GMMs_file(filepath, version = "v1.07", quietly = TRUE)
 Nothing
 }
 \description{
-Pulls the Raes lab gut metabolic modules file (v1.0.7). Will not overwrite an existing file.
+Pulls the Raes lab gut metabolic modules file (v1.0.7).
+This will not overwrite an existing file.
 }
 \examples{
 pull_GMMs_file("loc/to/download.txt")

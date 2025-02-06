@@ -14,23 +14,33 @@ GO_targeted_for_each_KO_within_GMM(
 )
 }
 \arguments{
-\item{go.terms}{A character vector containing the GO terms of interest (e.g., c("GO:0000009", "GO:0042110")).}
+\item{go.terms}{A character vector containing the GO terms of interest
+(e.g., c("GO:0000009", "GO:0042110")).}
 
-\item{host.genes}{A matrix or data.frame containing host gene count data, with rows as genes and columns as samples.}
+\item{host.genes}{A matrix or data.frame containing host gene count data,
+with rows as genes and columns as samples.}
 
-\item{mtx}{A data.frame containing normalized microbial gene count data, with rows as microbial genes and columns as samples.}
+\item{mtx}{A data.frame containing normalized microbial gene count data,
+with rows as microbial genes and columns as samples.}
 
-\item{mtx.features}{A character vector specifying the microbial gene features to use.}
+\item{mtx.features}{A character vector specifying the microbial gene
+features to use.}
 
-\item{padj}{A string specifying the p-value adjustment method. Available options can be checked using `p.adjust.methods` (default: "fdr").}
+\item{padj}{A string specifying the p-value adjustment method.
+Available options can be checked using `p.adjust.methods` (default: "fdr").}
 
-\item{verbose}{Logical indicating whether to print progress messages (default: FALSE).}
+\item{verbose}{Logical indicating whether to print progress messages
+(default: FALSE).}
 }
 \value{
-A data.frame with DESeq2 results for each microbial gene feature, including columns for baseMean, log2FoldChange, standard error (lfcSE), statistical significance (stat), p-value, and adjusted p-value (padj).
+A data.frame with DESeq2 results for each microbial gene feature,
+including columns for baseMean,
+log2FoldChange, standard error (lfcSE),
+statistical significance (stat), p-value, and adjusted p-value (padj).
 }
 \description{
-This function runs differential expression analysis on a subset of genes that are associated with specific Gene Ontology (GO) terms.
+This function runs differential expression analysis on a
+subset of genes that are associated with specific Gene Ontology (GO) terms.
 }
 \examples{
 set.seed(123)

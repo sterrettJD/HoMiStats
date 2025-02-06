@@ -7,7 +7,7 @@
 run_single_beta_reg_gamlss(
   formula,
   data,
-  controller = gamlss.control(trace = FALSE)
+  controller = gamlss::gamlss.control(trace = FALSE)
 )
 }
 \arguments{

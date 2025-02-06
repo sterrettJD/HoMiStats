@@ -19,33 +19,57 @@ run_HoMiCorr(
 )
 }
 \arguments{
-\item{mtx}{A dataframe of metatranscriptome gene counts, where rows are samples, and columns are metatranscriptome genes. Row names should be sample IDs.}
+\item{mtx}{A dataframe of metatranscriptome gene counts,
+where rows are samples, and columns are metatranscriptome genes.
+Row names should be sample IDs.}
 
-\item{host}{A dataframe of tpm-normalized host gene counts, where rows are samples, and columns are host genes. Row names should be sample IDs.}
+\item{host}{A dataframe of tpm-normalized host gene counts,
+where rows are samples, and columns are host genes.
+Row names should be sample IDs.}
 
-\item{covariates}{A string formula with covariates to be included in each regression. All variables in this formula should be of a numeric type (factors should be dummy coded, such that the reference value is 0).}
+\item{covariates}{A string formula with covariates to be included
+in each regression.
+All variables in this formula should be of a numeric type
+(factors should be dummy coded, such that the reference value is 0).}
 
-\item{metadata}{The metadata dataframe, where rows are samples and columns are features. Only needed if}
+\item{metadata}{The metadata dataframe,
+where rows are samples and columns are features.
+Only needed if passing covariates.}
 
-\item{sampleID}{A string denoting name of the column in metadata with sample IDs, which should be used to merge metadata with the feature table's rownames}
+\item{sampleID}{A string denoting name of the column in metadata with
+sample IDs,
+which should be used to merge metadata with the feature table's rownames}
 
-\item{reg.method}{A string denoting the method to use for regression. Options include "zibr" (Zero-inflated beta regression with random effects), "gamlss" (Zero-inflated beta regression implemented via GAMLSS), "lm" (linear regression), and "lmer" (linear mixed effects regression implemented via lme4 and lmerTest).}
+\item{reg.method}{A string denoting the method to use for regression.
+Options include "zibr" (Zero-inflated beta regression with random effects),
+"gamlss" (Zero-inflated beta regression implemented via GAMLSS),
+"lm" (linear regression),
+and "lmer" (linear mixed effects regression
+implemented via lme4 and lmerTest).}
 
-\item{padj}{A string denoting the p value adustment method. Options can be checked using 'p.adjust.methods'}
+\item{padj}{A string denoting the p value adustment method.
+Options can be checked using 'p.adjust.methods'}
 
-\item{zero_prop_from_formula}{In ZIBR zero-inflated beta regression, should the zeroes be modeled with the provided formula? Default is TRUE.}
+\item{zero_prop_from_formula}{In ZIBR zero-inflated beta regression,
+should the zeroes be modeled with the provided formula? Default is TRUE.}
 
-\item{ncores}{An integer denoting the number of cores to use if running in parallel. Defaults to 1 (not parallelized).}
+\item{ncores}{An integer denoting the number of cores to use if
+running in parallel. Defaults to 1 (not parallelized).}
 
 \item{show_progress}{A boolean denoting if a progress bar should be shown.}
 
-\item{zibr_zibr_time_ind}{A string denoting the name of the time column for ZIBR. Defaults to NULL, which is implemented as a constant time value in ZIBR to not fit a time effect. This argument does nothing if reg.method is not "zibr".}
+\item{zibr_zibr_time_ind}{A string denoting the name of the time column
+for ZIBR.
+Defaults to NULL, which is implemented as a constant time value in ZIBR
+to not fit a time effect.
+This argument does nothing if reg.method is not "zibr".}
 }
 \value{
 A dataframe with the model summaries as an adjacency list
 }
 \description{
-Runs regressions between all features and returns the model outputs
+Runs regressions between all features
+and returns the model outputs
 }
 \examples{
 # Simulate data
