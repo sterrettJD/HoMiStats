@@ -61,7 +61,7 @@ test_that("we can run DESeq2 for a KO", {
                                   host.genes=t(host.gene.counts),
                                   microbial.gene=microbial.gene,
                                   microbial.genes=microbial.gene.counts,
-                                  verbose=F)
+                                  verbose=FALSE)
                    )
                 )
 
