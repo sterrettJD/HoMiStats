@@ -3,7 +3,7 @@ test_that("check_proportional", {
                    feature_2=c(0, 0.6, 0.5),
                    feature_3=c(0, 0.199999, 0))
   expect_error(check_proportional(df),
-                                  "The following sample does not sum to 1: 3")
+                                  "The following samples do not sum to 1: 3")
 })
 
 test_that("arcsinh works",{
@@ -56,6 +56,6 @@ test_that("transform_feature_table warning for > 1",{
                      feature_2=c(0, 100))
 
     expect_warning(transform_feature_table(df, transformation="arcsinh_1_nonorm"),
-                 "The following sample does not sum to 1: 2 Please make sure this is intentional...")
+                 "The following samples do not sum to 1: 2\nPlease make sure this is intentional...")
 
 })

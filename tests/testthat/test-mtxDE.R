@@ -57,9 +57,7 @@ test_that("check_for_ones works", {
                                   b=c(1, 0))
 
     expect_error(check_for_ones(should.error.df),
-                 "The following rows contains a value of one which the zero-inflated beta regression cannot handle: 1")
-    expect_error(check_for_ones(should.error.df),
-                 "The following rows contains a value of one which the zero-inflated beta regression cannot handle: 2")
+                 "The following rows contains a value of one which the zero-inflated beta regression cannot handle: (1, 2|2, 1)")
 
     no.error.df <- data.frame(a=c(0.1, 0.2),
                               b=c(0.9, 0.8))
@@ -72,8 +70,8 @@ test_that("run_mtxDE works", {
                                 b=c(0.5, 0.5, 0.5, 0.4),
                                 c=c(0.4, 0.5, 0.0, 0.0),
                                 d=c(0.0, 0.0, 0.5, 0.6))
-    row.names(feature.table) <- paste0("sample_", 1:4)
-    metadata <- data.frame(SampleID=paste0("sample_", 1:4),
+    row.names(feature.table) <- paste0("sample_", seq_len(4))
+    metadata <- data.frame(SampleID=paste0("sample_", seq_len(4)),
                            phenotype=c(0,0,1,1),
                            participant=c(0,1,0,1),
                            timepoint=c(0,0,1,1))
@@ -145,11 +143,11 @@ test_that("ZIBR timepoint errors", {
                                 b=c(0.5, 0.5, 0.5, 0.4),
                                 c=c(0.4, 0.5, 0.0, 0.0),
                                 d=c(0.0, 0.0, 0.5, 0.6))
-    row.names(feature.table) <- paste0("sample_", 1:4)
-    metadata <- data.frame(SampleID=paste0("sample_", 1:4),
+    row.names(feature.table) <- paste0("sample_", seq_len(4))
+    metadata <- data.frame(SampleID=paste0("sample_", seq_len(4)),
                            phenotype=c(0,0,1,1),
                            participant=c(0,1,0,1),
-                           unique_participants=1:4,
+                           unique_participants=seq_len(4),
                            timepoint=c(0,0,1,1))
     # Longitudinal but no timepoint column
     expect_error(run_mtxDE("phenotype + (1|participant)",
@@ -174,8 +172,8 @@ test_that("run_mtxDE works linear models", {
                                 b=c(0.5, 0.5, 0.5, 0.4),
                                 c=c(0.4, 0.5, 0.0, 0.0),
                                 d=c(0.0, 0.0, 0.5, 0.6))
-    row.names(feature.table) <- paste0("sample_", 1:4)
-    metadata <- data.frame(SampleID=paste0("sample_", 1:4),
+    row.names(feature.table) <- paste0("sample_", seq_len(4))
+    metadata <- data.frame(SampleID=paste0("sample_", seq_len(4)),
                            phenotype=c(0,0,1,1),
                            participant=c(0,1,0,1),
                            timepoint=c(0,0,1,1))
@@ -234,8 +232,8 @@ test_that("run_mtxDE works with multiple cores", {
                                 b=c(0.5, 0.5, 0.5, 0.4),
                                 c=c(0.4, 0.5, 0.0, 0.0),
                                 d=c(0.0, 0.0, 0.5, 0.6))
-    row.names(feature.table) <- paste0("sample_", 1:4)
-    metadata <- data.frame(SampleID=paste0("sample_", 1:4),
+    row.names(feature.table) <- paste0("sample_", seq_len(4))
+    metadata <- data.frame(SampleID=paste0("sample_", seq_len(4)),
                            phenotype=c(0,0,1,1),
                            participant=c(0,1,0,1),
                            timepoint=c(0,0,1,1))
@@ -257,8 +255,8 @@ test_that("run_mtxDE warns about undetected features", {
                                 b=c(0.0, 0.0, 0.0, 0.0),
                                 c=c(0.0, 0.0, 0.0, 0.0),
                                 d=c(0.0, 0.0, 0.0, 0.0))
-    row.names(feature.table) <- paste0("sample_", 1:4)
-    metadata <- data.frame(SampleID=paste0("sample_", 1:4),
+    row.names(feature.table) <- paste0("sample_", seq_len(4))
+    metadata <- data.frame(SampleID=paste0("sample_", seq_len(4)),
                            phenotype=c(0,0,1,1),
                            participant=c(0,1,0,1),
                            timepoint=c(0,0,1,1))

@@ -7,9 +7,9 @@ test_that("HoMiCorr works", {
                       b2=c(0.5, 0.5, 0.5, 0.4),
                       c2=c(0.4, 0.5, 0.0, 0.0),
                       d2=c(0.0, 0.0, 0.5, 0.6))
-    row.names(mtx) <- paste0("sample_", 1:4)
-    row.names(host) <- paste0("sample_", 1:4)
-    metadata <- data.frame(SampleID=paste0("sample_", 1:4),
+    row.names(mtx) <- paste0("sample_", seq_len(4))
+    row.names(host) <- paste0("sample_", seq_len(4))
+    metadata <- data.frame(SampleID=paste0("sample_", seq_len(4)),
                            phenotype=c(0,0,1,1),
                            participant=c(0,1,0,1),
                            timepoint=c(0,0,1,1))
@@ -112,12 +112,12 @@ test_that("HoMiCorr errors with duplicated column names", {
                        b=c(0.5, 0.5, 0.5, 0.4),
                        c=c(0.4, 0.5, 0.0, 0.0),
                        d=c(0.0, 0.0, 0.5, 0.6))
-    row.names(mtx) <- paste0("sample_", 1:4)
-    row.names(host) <- paste0("sample_", 1:4)
+    row.names(mtx) <- paste0("sample_", seq_len(4))
+    row.names(host) <- paste0("sample_", seq_len(4))
 
     expect_error(actual <- run_HoMiCorr(mtx, host,
                                            reg.method="zibr",
                                            show_progress=FALSE),
-                 "a is found in both datasets.")
+                 "Columns found in both datasets: a, b, c, d")
 
 })

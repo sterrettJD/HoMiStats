@@ -40,20 +40,23 @@ test_that("we can run DESeq2 for a KO", {
     all.host.genes <- c(relevant.host.genes, nonrelevant.host.genes)
     # certain seeds were causing dispersion issues, so just manually setting that here
     set.seed(2)
-    host.gene.counts <- data.frame(sapply(X=all.host.genes,
-                                         FUN=function(x){
-                                             rnbinom(n=1000, size=400000, prob=runif(1))
-                                             }
-                                         )
-                                  )
+    host.gene.counts <- data.frame(vapply(X = all.host.genes,
+                                    FUN = function(x) {
+                                                        rnbinom(n = 1000,
+                                                                size = 400000,
+                                                                prob = runif(1))
+                                                        },
+                                    FUN.VALUE = numeric(1000)
+                                      )
+                               )
+
     # simulate some mtx data
     microbial.gene <- "k00248_butyrate_gene_1"
-    microbial.gene.counts <- data.frame(sapply(X=mtx.feature.names,
-                                         FUN=function(x){
-                                             rbinom(n=1000, size=1000, prob=0.05)
-                                             }
-                                         )
-                                  )
+    microbial.gene.counts <- data.frame(vapply(X=mtx.feature.names,
+                                            FUN=function(x){
+                                                rnorm(n=1000, mean=100)},
+                                            FUN.VALUE=numeric(1000))
+                                     )
 
     results <- suppressMessages(
                suppressWarnings(
@@ -87,20 +90,22 @@ test_that("we can run DESeq2 for KOs within a GMM", {
     nonrelevant.host.genes <- c("goofballgene", "sillygoosegene")
     all.host.genes <- c(relevant.host.genes, nonrelevant.host.genes)
     set.seed(1)
-    host.gene.counts <- data.frame(sapply(X=all.host.genes,
-                                          FUN=function(x){
-                                              rnbinom(n=1000, size=400000, prob=runif(1))
-                                          }
-    )
-    )
+    host.gene.counts <- data.frame(vapply(X = all.host.genes,
+                                    FUN = function(x) {
+                                                        rnbinom(n = 1000,
+                                                                size = 400000,
+                                                                prob = runif(1))
+                                                        },
+                                    FUN.VALUE = numeric(1000)
+                                      )
+                               )
     # simulate some mtx data
     microbial.gene <- "k00248_butyrate_gene_1"
-    microbial.gene.counts <- data.frame(sapply(X=mtx.feature.names,
-                                               FUN=function(x){
-                                                   rnorm(n=1000, mean=100)
-                                               }
-    )
-    )
+    microbial.gene.counts <- data.frame(vapply(X=mtx.feature.names,
+                                            FUN=function(x){
+                                                rnorm(n=1000, mean=100)},
+                                            FUN.VALUE=numeric(1000))
+                                     )
 
     mtx.features.to.test <- features_from_gmm_df("butyrate production I",
                                                  GMM.matrix,
