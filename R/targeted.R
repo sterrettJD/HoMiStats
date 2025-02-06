@@ -24,16 +24,19 @@
 #' relevant.host.genes <- c("PIGV","ALG12")
 #' nonrelevant.host.genes <- c("goofballgene", "sillygoosegene")
 #' all.host.genes <- c(relevant.host.genes, nonrelevant.host.genes)
-#' host.gene.counts <- data.frame(sapply(X=all.host.genes,
-#'                                       FUN=function(x){
-#'                                              rnbinom(n=1000,
-#'                                              size=400000, prob=runif(1))})
-#'                                    )
+#' host.gene.counts <- data.frame(vapply(X = all.host.genes,
+#'                                    FUN = function(x) {
+#'                                          rnbinom(n = 1000,
+#'                                          size = 400000, prob = runif(1))},
+#'                                    FUN.VALUE = numeric(1000)
+#'                                     )
+#'                             )
 #'
 #' # simulate some mtx data
-#' microbial.gene.counts <- data.frame(sapply(X=mtx.feature.names,
+#' microbial.gene.counts <- data.frame(vapply(X=mtx.feature.names,
 #'                                            FUN=function(x){
-#'                                                rnorm(n=1000, mean=100)})
+#'                                                rnorm(n=1000, mean=100)},
+#'                                            FUN.VALUE=numeric(1000))
 #'                                     )
 #'
 #' mtx.features.to.test <- features_from_gmm_df("butyrate production I",
@@ -161,17 +164,20 @@ get_go_term_human_genes <- function(go.term){
 #' relevant.host.genes <- c("PIGV","ALG12")
 #' nonrelevant.host.genes <- c("goofballgene", "sillygoosegene")
 #' all.host.genes <- c(relevant.host.genes, nonrelevant.host.genes)
-#' host.gene.counts <- data.frame(sapply(X=all.host.genes,
-#'                                       FUN=function(x){
-#'                                              rnbinom(n=1000,
-#'                                              size=400000, prob=runif(1))})
-#'                                    )
+#' host.gene.counts <- data.frame(vapply(X = all.host.genes,
+#'                                    FUN = function(x) {
+#'                                          rnbinom(n = 1000,
+#'                                          size = 400000, prob = runif(1))},
+#'                                    FUN.VALUE = numeric(1000)
+#'                                     )
+#'                             )
 #'
 #' # simulate some mtx data
 #' microbial.gene <- "k00248_butyrate_gene_1"
-#' microbial.gene.counts <- data.frame(sapply(X=mtx.feature.names,
+#' microbial.gene.counts <- data.frame(vapply(X=mtx.feature.names,
 #'                                            FUN=function(x){
-#'                                                rnorm(n=1000, mean=100)})
+#'                                                rnorm(n=1000, mean=100)},
+#'                                            FUN.VALUE=numeric(1000))
 #'                                     )
 #'
 #' results <- go_targeted_diffex(targeted.genes=relevant.host.genes,
@@ -188,8 +194,8 @@ go_targeted_diffex <- function(targeted.genes, host.genes,
         s1 <- paste0(length(targeted.genes), " genes identified from GO term")
         s2 <- paste0(nrow(targeted.data), " genes in DESeq2 dataset")
 
-        print(s1)
-        print(s2)
+        message(s1)
+        message(s2)
     }
 
     ds <- DESeq2::DESeqDataSetFromMatrix(

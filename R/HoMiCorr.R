@@ -30,9 +30,9 @@
 #'                    b2=c(0.5, 0.5, 0.5, 0.4),
 #'                    c2=c(0.4, 0.5, 0.0, 0.0),
 #'                    d2=c(0.0, 0.0, 0.5, 0.6))
-#' row.names(mtx) <- paste0("sample_", 1:4)
-#' row.names(host) <- paste0("sample_", 1:4)
-#' metadata <- data.frame(SampleID=paste0("sample_", 1:4),
+#' row.names(mtx) <- paste0("sample_", seq_len(4))
+#' row.names(host) <- paste0("sample_", seq_len(4))
+#' metadata <- data.frame(SampleID=paste0("sample_", seq_len(4)),
 #'                        phenotype=c(0,0,1,1),
 #'                        participant=c(0,1,0,1),
 #'                        timepoint=c(0,0,1,1))
@@ -90,7 +90,7 @@ run_HoMiCorr <- function(mtx, host,
     # calculate regressions to run
     all.featurenames <- c(colnames(mtx), colnames(host))
     n.feat <- length(all.featurenames)
-    feature.combos <- Rfast::comb_n(1:n.feat,
+    feature.combos <- Rfast::comb_n(seq_len(n.feat),
                                     k=2,
                                     simplify=FALSE)
     n.iterations <- length(feature.combos)
@@ -146,7 +146,7 @@ run_HoMiCorr <- function(mtx, host,
     doSNOW::registerDoSNOW(cl)
 
     if(show_progress){
-        print(paste("Running", n.iterations, "interations"))
+        message("Running ", n.iterations, " interations")
         # Initializes progress bar
 
         pb <- txtProgressBar(max=n.iterations-1, style=3)
@@ -295,7 +295,8 @@ run_HoMiCorr <- function(mtx, host,
 check_duplicated_colnames <- function(colnames1, colnames2){
     colnames.intersection <- intersect(colnames1, colnames2)
     if(length(colnames.intersection) > 0){
-        stop(paste0(colnames.intersection, " is found in both datasets."))
+        colnames.intersection.chr <- paste(colnames.intersection, collapse=", ")
+        stop("Columns found in both datasets: ", colnames.intersection.chr)
     }
 }
 

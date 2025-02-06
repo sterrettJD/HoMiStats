@@ -72,7 +72,7 @@ run_single_beta_reg_zibr <- function(logistic_cov=NULL, beta_cov, Y,
 
     # If no subject ID, make them up, assuming each sample comes from a unique participant
     if(is.null(subject_ind)){
-        subject_ind_dat <- as.matrix(1:nrow(data))
+        subject_ind_dat <- as.matrix(seq_len(nrow(data)))
     } else {
         subject_ind_dat <- as.matrix(data[,subject_ind])
     }
@@ -171,7 +171,7 @@ tidy_zibr_results <- function(mod){
 #' tidied.mod$term <- map_zibr_termnames(tidied.mod$term, c("treated"))
 #'
 map_zibr_termnames <- function(data, real.names){
-    names(real.names) <- paste0("var", 1:length(real.names))
+    names(real.names) <- paste0("var", seq_len(length(real.names)))
     real.names <- c(real.names, "intersept"="intercept")
     return(plyr::mapvalues(data, from=names(real.names), to=real.names))
 }
@@ -237,8 +237,10 @@ check_for_ones <- function(feature.table){
     unique.rows.with.ones <- unique(rows.with.ones)
     unique.rownames.with.ones <- rownames(feature.table)[unique.rows.with.ones]
     if(length(unique.rownames.with.ones) > 0){
-        stop(paste("The following rows contains a value of one which the zero-inflated beta regression cannot handle:",
-                   unique.rownames.with.ones))
+        rownames.string <- paste(unique.rownames.with.ones, collapse=", ")
+        stop("The following rows contains a value of one ",
+             "which the zero-inflated beta regression cannot handle: ",
+              rownames.string)
     }
 }
 
@@ -290,8 +292,10 @@ filter_undetected <- function(feature.table){
 #' get_random_fx(form.norand)
 #'
 get_random_fx <- function(form){
-    vars <- sapply(lme4::findbars(form),
-                    FUN=function(x) as.character(x)[3])
+    vars <- vapply(lme4::findbars(form),
+                   FUN = function(x) as.character(x)[3],
+                   FUN.VALUE = character(1))
+
 
     if(length(vars) == 0){
         return(NULL)
@@ -326,8 +330,8 @@ get_random_fx <- function(form){
 #'                                b=c(0.5, 0.5, 0.5, 0.4),
 #'                                c=c(0.4, 0.5, 0.0, 0.0),
 #'                                d=c(0.0, 0.0, 0.5, 0.6))
-#' row.names(feature.table) <- paste0("sample_", 1:4)
-#' metadata <- data.frame(SampleID=paste0("sample_", 1:4),
+#' row.names(feature.table) <- paste0("sample_", seq_len(4))
+#' metadata <- data.frame(SampleID=paste0("sample_", seq_len(4)),
 #'                           phenotype=c(0,0,1,1),
 #'                           participant=c(0,1,0,1),
 #'                           timepoint=c(0,0,1,1))

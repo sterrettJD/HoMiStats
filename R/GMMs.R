@@ -69,7 +69,7 @@ get_GMM_matrix <- function(filepath="GMMs.txt", version="v1.07",
     GMM.fileconts <- readLines(filepath)
 
     GMM.matrix <- matrix(data=c("KEGG","Module","Module ID"), nrow=1, ncol=3)
-    for(i in 1:length(GMM.fileconts)){
+    for(i in seq_len(length(GMM.fileconts))){
         line <- GMM.fileconts[i]
         # if new module, get its name and number
         if(grepl("^MF\\d{4}", line)){
@@ -92,7 +92,7 @@ get_GMM_matrix <- function(filepath="GMMs.txt", version="v1.07",
     GMM.matrix <- GMM.matrix[GMM.matrix$KEGG!="",]
 
     if(cleanup){
-        message(paste("Deleting", filepath))
+        message("Deleting ", filepath)
         file.remove(filepath)
     }
     return(GMM.matrix)

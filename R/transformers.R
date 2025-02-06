@@ -54,7 +54,8 @@ transform_feature_table <- function(feature.table, transformation){
 #' @return Nothing; throws a warning or error if the check fails.
 #' @export
 #' @examples
-#' feature.table <- data.frame(gene1 = c(0.4, 0.5, 0.6), gene2 = c(0.6, 0.5, 0.4))
+#' feature.table <- data.frame(gene1 = c(0.4, 0.5, 0.6),
+#'                             gene2 = c(0.6, 0.5, 0.4))
 #' rownames(feature.table) <- c("sample1", "sample2", "sample3")
 #' check_proportional(feature.table, soft=TRUE)
 #'
@@ -64,13 +65,14 @@ check_proportional <- function(feature.table, tolerance=1e-3, soft=FALSE){
     rownames.not.prop <- rownames(feature.table)[rows.not.prop]
 
     if(length(rownames.not.prop) > 0){
+        rownames.str <- paste(rownames.not.prop, collapse=", ")
         if(soft){
-            warning(paste("The following sample does not sum to 1:",
-                       rownames.not.prop,
-                       "Please make sure this is intentional..."))
+            warning("The following samples do not sum to 1: ",
+                    rownames.str,
+                    "\nPlease make sure this is intentional...")
         } else {
-            stop(paste("The following sample does not sum to 1:",
-                       rownames.not.prop))
+            stop("The following samples do not sum to 1: ",
+                 rownames.str)
         }
 
     }
