@@ -57,7 +57,9 @@ test_that("check_for_ones works", {
                                   b=c(1, 0))
 
     expect_error(check_for_ones(should.error.df),
-                 "The following rows contains a value of one which the zero-inflated beta regression cannot handle: (1, 2|2, 1)")
+                 paste0("The following rows contains a value of one ",
+                 "which the zero-inflated beta regression cannot handle: ",
+                 "(1, 2|2, 1)"))
 
     no.error.df <- data.frame(a=c(0.1, 0.2),
                               b=c(0.9, 0.8))
@@ -76,7 +78,8 @@ test_that("run_mtxDE works", {
                            participant=c(0,1,0,1),
                            timepoint=c(0,0,1,1))
 
-    expected.zibr.nolong <- read.csv("data/expected_mtxDE_results_zibrnolong.csv")
+    expected.zibr.nolong <- read.csv(
+                            "data/expected_mtxDE_results_zibrnolong.csv")
     expected.zibr.long <- read.csv("data/expected_mtxDE_results_zibrlong.csv")
     expected.gamlss <- read.csv("data/expected_mtxDE_results_gamlss.csv")
 
@@ -155,7 +158,9 @@ test_that("ZIBR timepoint errors", {
                            metadata, sampleID="SampleID",
                            zibr_time_ind=NULL,
                            show_progress=FALSE),
-                 "A timepoint column is necessary if there are longitudinal samples.")
+                 paste0("A timepoint column is necessary ",
+                        "if there are longitudinal samples.")
+                )
     # Not longitudinal with no timepoint column
     expect_no_error(suppressWarnings(
                 run_mtxDE("phenotype + (1|unique_participants)",

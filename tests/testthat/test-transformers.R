@@ -44,9 +44,11 @@ test_that("transform_feature_table errors",{
     df <- data.frame(feature_1=c(1, 0.2),
                      feature_2=c(0, 0.8))
 
-    expect_error(transform_feature_table(df, transformation="BAD_TRANSFORMATION"),
-                 "The requested transformation is not yet supported.
-             You are welcome to implement it via passing a function for the transformation argument.")
+    expect_error(transform_feature_table(df, 
+    transformation="BAD_TRANSFORMATION"),
+                 paste0("The requested transformation is not yet supported. ",
+                 "You are welcome to implement it via passing a function ",
+                 "for the transformation argument."))
 
 })
 
@@ -55,7 +57,9 @@ test_that("transform_feature_table warning for > 1",{
     df <- data.frame(feature_1=c(1, 0.2),
                      feature_2=c(0, 100))
 
-    expect_warning(transform_feature_table(df, transformation="arcsinh_1_nonorm"),
-                 "The following samples do not sum to 1: 2\nPlease make sure this is intentional...")
+    expect_warning(transform_feature_table(df,
+                   transformation="arcsinh_1_nonorm"),
+                   paste0("The following samples do not sum to 1: 2",
+                          "\nPlease make sure this is intentional..."))
 
 })

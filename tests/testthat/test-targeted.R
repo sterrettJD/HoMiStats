@@ -10,10 +10,10 @@ test_that("we can grab gene names from go terms", {
 test_that("we can grab KOs from GMM matrix", {
     GMM.matrix <- suppressMessages(get_GMM_matrix())
     mtx.feature.names <- c("k02005_hly_d_family_secretion_protein",
-                           "k02007_cobalt_nickel_transport_system_permease_protein",
-                           "k00248_butyrate_gene_1",
-                           "K00634_butyrate_gene_2",
-                           "K00929_butyrate_gene_3")
+                    "k02007_cobalt_nickel_transport_system_permease_protein",
+                    "k00248_butyrate_gene_1",
+                    "K00634_butyrate_gene_2",
+                    "K00929_butyrate_gene_3")
 
     actual.features <- features_from_gmm_df(GMM="butyrate production I",
                                             GMM.kos.df=GMM.matrix,
@@ -29,16 +29,17 @@ test_that("we can grab KOs from GMM matrix", {
 
 test_that("we can run DESeq2 for a KO", {
     mtx.feature.names <- c("k02005_hly_d_family_secretion_protein",
-                           "k02007_cobalt_nickel_transport_system_permease_protein",
-                           "k00248_butyrate_gene_1",
-                           "K00634_butyrate_gene_2",
-                           "K00929_butyrate_gene_3")
+                    "k02007_cobalt_nickel_transport_system_permease_protein",
+                    "k00248_butyrate_gene_1",
+                    "K00634_butyrate_gene_2",
+                    "K00929_butyrate_gene_3")
 
     # simulate some host data
     relevant.host.genes <- c("PIGV","ALG12")
     nonrelevant.host.genes <- c("goofballgene", "sillygoosegene")
     all.host.genes <- c(relevant.host.genes, nonrelevant.host.genes)
-    # certain seeds were causing dispersion issues, so just manually setting that here
+    # certain seeds were causing dispersion issues,
+    # so just manually setting that here
     set.seed(2)
     host.gene.counts <- data.frame(vapply(X = all.host.genes,
                                     FUN = function(x) {
@@ -80,10 +81,10 @@ test_that("we can run DESeq2 for a KO", {
 test_that("we can run DESeq2 for KOs within a GMM", {
     GMM.matrix <- suppressMessages(get_GMM_matrix())
     mtx.feature.names <- c("k02005_hly_d_family_secretion_protein",
-                           "k02007_cobalt_nickel_transport_system_permease_protein",
-                           "k00248_butyrate_gene_1",
-                           "K00634_butyrate_gene_2",
-                           "K00929_butyrate_gene_3")
+                    "k02007_cobalt_nickel_transport_system_permease_protein",
+                    "k00248_butyrate_gene_1",
+                    "K00634_butyrate_gene_2",
+                    "K00929_butyrate_gene_3")
 
     # simulate some host data
     relevant.host.genes <- c("PIGV","ALG12")
@@ -108,8 +109,8 @@ test_that("we can run DESeq2 for KOs within a GMM", {
                                      )
 
     mtx.features.to.test <- features_from_gmm_df("butyrate production I",
-                                                 GMM.matrix,
-                                                 mtx.feature.names=mtx.feature.names)
+                                            GMM.matrix,
+                                            mtx.feature.names=mtx.feature.names)
     results <- suppressMessages(
         suppressWarnings(
             GO_targeted_for_each_KO_within_GMM(go.terms=c("GO:0000009"),
