@@ -77,230 +77,162 @@
 #'                                 show_progress=FALSE)
 #'
 #'
-run_HoMiCorr <- function(mtx, host,
-                      covariates=NULL, metadata=NULL,
-                      sampleID=NULL,
-                      reg.method="zibr",
-                      padj="fdr",
-                      zero_prop_from_formula=TRUE,
-                      zibr_time_ind=NULL,
-                      ncores=1,
-                      show_progress=TRUE){
-
-    # Make sure there aren't duplicated column names between the two datasets
+run_HoMiCorr <- function(mtx, host, covariates=NULL, metadata=NULL,
+                      sampleID=NULL, reg.method="zibr", padj="fdr",
+                      zero_prop_from_formula=TRUE, zibr_time_ind=NULL,
+                      ncores=1, show_progress=TRUE) {
+    
     check_duplicated_colnames(colnames(mtx), colnames(host))
-    # Check for values of one, which the beta regression can't handle
-    if(reg.method %in% c("zibr", "gamlss")){
+    if (reg.method %in% c("zibr", "gamlss")) {
         check_for_ones(mtx)
         check_for_ones(host)
     }
-
-    # merge the feature table and metadata based on the rownames
-    if(!is.null(covariates)){
-        formula <- paste0(" ~ ", covariates)
-    } else {
-        formula <- NULL
-    }
-
-    metadata.vars <- c(all.vars(as.formula(formula)), sampleID)
-
-    data <- merge(mtx, host, by="row.names")
-    if(!is.null(metadata)){
-        data <- merge(data,
-                      metadata[,c(metadata.vars, zibr_time_ind)],
-                      by.x="Row.names", by.y=sampleID)
-    }
-
-    # calculate regressions to run
-    all.featurenames <- c(colnames(mtx), colnames(host))
-    n.feat <- length(all.featurenames)
-    feature.combos <- Rfast::comb_n(seq_len(n.feat),
-                                    k=2,
-                                    simplify=FALSE)
+    
+    data <- prepare_data(mtx, host, covariates, metadata, sampleID, zibr_time_ind)
+    feature.combos <- generate_feature_combinations(mtx, host)
+    mod.summaries <- initialize_model_summaries(feature.combos, reg.method)
     n.iterations <- length(feature.combos)
 
-    # initialize the model summaries df
-    if(reg.method == "gamlss"){
-        mod.summaries <- data.frame(matrix(nrow=n.iterations, ncol=7))
-        colnames(mod.summaries) <- c("parameter", "term",
-                                     "estimate", "std.error",
-                                     "statistic", "p.value",
-                                     "feature")
+    cl <- parallel::makeCluster(ncores)
+    doParallel::registerDoParallel(cl, cores=ncores)
+    doSNOW::registerDoSNOW(cl)
 
-    } else if(reg.method == "zibr"){
-        mod.summaries <- data.frame(matrix(nrow=n.iterations, ncol=6))
-        colnames(mod.summaries) <- c("parameter", "term",
-                                     "estimate",
-                                     "p.value", "joint.p",
-                                     "feature")
+    if (show_progress) {
+        message("Running ", n.iterations, " iterations")
+        pb <- txtProgressBar(max=n.iterations-1, style=3)
+        doSNOWopts <- list(progress = function(n) setTxtProgressBar(pb, n))
+    } else {
+        doSNOWopts <- list()
+    }
+    mod.summaries <- run_regressions(feature.combos, data, reg.method, 
+                                     covariates, zero_prop_from_formula, 
+                                     zibr_time_ind, show_progress, 
+                                     snowopts=doSNOWopts)
+    stop_parallel_processing(cl, show_progress)
+    
+    return(adjust_p_values(mod.summaries, reg.method,
+                           zero_prop_from_formula, padj))
+}
+
+prepare_data <- function(mtx, host, covariates, metadata, sampleID, zibr_time_ind) {
+    formula <- if (!is.null(covariates)) paste0(" ~ ", covariates) else NULL
+    metadata.vars <- c(all.vars(as.formula(formula)), sampleID)
+    data <- merge(mtx, host, by="row.names")
+    if (!is.null(metadata)) {
+        data <- merge(data, metadata[, c(metadata.vars, zibr_time_ind)], 
+                      by.x="Row.names", by.y=sampleID)
+    }
+    row.names(data) <- data$Row.names
+    data$Row.names <- NULL
+    return(data)
+}
+
+generate_feature_combinations <- function(mtx, host) {
+    all.featurenames <- c(colnames(mtx), colnames(host))
+    return(Rfast::comb_n(seq_len(length(all.featurenames)),
+                         k=2, simplify=FALSE))
+}
+
+initialize_model_summaries <- function(feature.combos, reg.method) {
+    n.iterations <- length(feature.combos)
+    summary.cols <- switch(reg.method,
+        "gamlss" = c("parameter", "term", "estimate",
+                     "std.error", "statistic", "p.value", "feature"),
+        "zibr" = c("parameter", "term", "estimate",
+                   "p.value", "joint.p", "feature"),
+        "lm" = c("term", "estimate", "std.error",
+                 "statistic", "p.value", "feature"),
+        "lmer" = c("effect", "group", "term", "estimate",
+                   "std.error", "statistic", "df", "p.value", "feature"))
+    
+    return(data.frame(matrix(nrow=n.iterations, 
+                            ncol=length(summary.cols), 
+                            dimnames=list(NULL, summary.cols))))
+}
+
+stop_parallel_processing <- function(cl, show_progress) {
+    if (show_progress) close(pb)
+    parallel::stopCluster(cl)
+}
+
+adjust_p_values <- function(mod.summaries, reg.method, zero_prop_from_formula, padj) {
+    term_filter <- mod.summaries$term != "(Intercept)"
+    if (reg.method == "zibr" & zero_prop_from_formula) {
+        term_filter <- term_filter & mod.summaries$parameter == "beta"
+        mod.summaries$q <- p.adjust(mod.summaries$joint.p[term_filter], method=padj)
+    } else {
+        mod.summaries$q <- p.adjust(mod.summaries$p.value[term_filter], method=padj)
+    }
+
+    return(mod.summaries)
+}
+
+run_regressions <- function(feature.combos, data, reg.method, covariates, zero_prop_from_formula, zibr_time_ind, show_progress, snowopts=doSNOWopts) {
+    mod.summaries <- foreach::foreach(cols=feature.combos, .combine=rbind, 
+        .options.snow=snowopts,
+        .export = c("run_single_model")) %dopar% {
+        col1 <- colnames(data)[cols[1]]
+        col2 <- colnames(data)[cols[2]]
+        mod.sum <- run_single_model(col1, col2, data, reg.method, covariates, zero_prop_from_formula, zibr_time_ind)
+        
+        if(nrow(mod.sum) > 0) {mod.sum$feature <- col1}
+        
+        return(mod.sum)
+    }
+    
+    return(mod.summaries)
+}
+
+run_single_model <- function(col1, col2, data, reg.method, covariates, zero_prop_from_formula, zibr_time_ind) {
+    if (reg.method == "gamlss") {
+        mod <- run_single_beta_reg_gamlss(paste0(col1, " ~ ", covariates, " + ", col2), data)
+        return(broom.mixed::tidy(mod)[broom.mixed::tidy(mod)$term == col2 & broom.mixed::tidy(mod)$parameter == "mu", ])
+    }
+    if (reg.method == "zibr") {
         if(!is.null(covariates)){
             # extract vars for zibr
-            vars <- all.vars(as.formula(formula))
+            form <- as.formula(paste0("~ ", covariates))
+            vars <- all.vars(form)
             # Extracts random effects from formula
-            random.effects.vars <- get_random_fx(as.formula(formula))
+            random.effects.vars <- get_random_fx(form)
             fixed.vars <- setdiff(vars, random.effects.vars)
         } else {
-            # extract vars for zibr
-            vars <- NULL
             # Extracts random effects from formula
             random.effects.vars <- NULL
             fixed.vars <- NULL
         }
 
+        mod <- run_single_beta_reg_zibr(logistic_cov=if (zero_prop_from_formula) c(fixed.vars, col2) else NULL,
+                                        beta_cov=c(fixed.vars, col2),
+                                        Y=col1,
+                                        subject_ind=random.effects.vars,
+                                        time_ind=zibr_time_ind,
+                                        data=data)
 
-    } else if(reg.method=="lm"){
-        mod.summaries <- data.frame(matrix(nrow=n.iterations, ncol=6))
-        colnames(mod.summaries) <- c("term", "estimate",
-                                     "std.error", "statistic",
-                                     "p.value", "feature")
-
-    } else if(reg.method=="lmer"){
-        mod.summaries <- data.frame(matrix(nrow=n.iterations, ncol=9))
-        colnames(mod.summaries) <- c("effect", "group",
-                                     "term", "estimate",
-                                     "std.error", "statistic",
-                                     "df", "p.value",
-                                     "feature")
-
+        mod.sum <- tidy_zibr_results(mod)
+        mod.sum$term <- map_zibr_termnames(mod.sum$term, c(fixed.vars, col2))
+        return(mod.sum[mod.sum$term == col2 & mod.sum$parameter == "beta", ])
     }
-
-    # Setup cluster for parallel running
-    cl <- parallel::makeCluster(ncores)
-    doParallel::registerDoParallel(cl, cores=ncores)
-    doSNOW::registerDoSNOW(cl)
-
-    if(show_progress){
-        message("Running ", n.iterations, " interations")
-        # Initializes progress bar
-
-        pb <- txtProgressBar(max=n.iterations-1, style=3)
-        progress <- function(n) setTxtProgressBar(pb, n)
-        doSNOWopts <- list(progress = progress)
-    } else {
-        doSNOWopts <- list()
+    if (reg.method == "lm") {
+        mod <- run_single_lm(paste0(col1, " ~ ", covariates, " + ", col2), data)
+        mod.sum <- broom::tidy(mod)
+        return(mod.sum[mod.sum$term == col2, ])
     }
-
-    # Loop through each combination of columns and run the regression
-    mod.summaries <- foreach::foreach(cols=feature.combos,
-                                      .combine=rbind,
-                                      .options.snow=doSNOWopts) %dopar% {
-        col1 <- all.featurenames[cols[1]]
-        col2 <- all.featurenames[cols[2]]
-
-      if(reg.method == "gamlss"){
-          mod <- run_single_beta_reg_gamlss(paste0(col1, "~",
-                                                   covariates, 
-                                                   " + ", col2),
-                                            data=data)
-          mod.sum <- broom.mixed::tidy(mod)
-          # grab only the col2 beta row
-          mod.sum <- mod.sum[mod.sum$term==col2 & mod.sum$parameter=="mu",]
-
-      } else if((reg.method == "zibr") & (zero_prop_from_formula==TRUE)){
-          mod <- run_single_beta_reg_zibr(logistic_cov=c(fixed.vars, col2),
-                                          beta_cov=c(fixed.vars, col2),
-                                          Y=col1,
-                                          subject_ind=random.effects.vars,
-                                          time_ind=zibr_time_ind,
-                                          data=data)
-
-          mod.sum <- tidy_zibr_results(mod)
-          mod.sum$term <- map_zibr_termnames(mod.sum$term, c(fixed.vars, col2))
-          # grab only the col2 beta row
-          mod.sum <- mod.sum[mod.sum$term==col2 & mod.sum$parameter=="beta",]
-
-      } else if((reg.method == "zibr") & (zero_prop_from_formula==FALSE)){
-
-          mod <- run_single_beta_reg_zibr(logistic_cov=NULL,
-                                          beta_cov=c(fixed.vars, col2),
-                                          Y=col1,
-                                          subject_ind=random.effects.vars,
-                                          time_ind=zibr_time_ind,
-                                          data=data)
-
-          mod.sum <- tidy_zibr_results(mod)
-          mod.sum$term <- map_zibr_termnames(mod.sum$term, c(fixed.vars, col2))
-          # grab only the col2 beta row
-          mod.sum <- mod.sum[mod.sum$term==col2 & mod.sum$parameter=="beta",]
-
-      } else if(reg.method == "lm"){
-          mod <- run_single_lm(paste0(col1, "~", covariates, " + ", col2), data)
-          mod.sum <- broom::tidy(mod)
-          # grab only the col2 row
-          mod.sum <- mod.sum[mod.sum$term==col2,]
-
-      } else if(reg.method == "lmer"){
-          # Some data will have issues, this catches that error and returns NA
-          tryCatch({
-             mod <- run_single_lmer(paste0(col1, "~", covariates, " + ", col2),
+    if (reg.method == "lmer") {
+        mod.sum <- tryCatch({
+            mod <- run_single_lmer(paste0(col1, " ~ ", covariates, " + ", col2),
                                    data)
-             mod.sum <- broom.mixed::tidy(mod)
-
+            broom.mixed::tidy(mod)
           }, error=function(e) {
-              if(e$message == paste0("not a positive definite matrix ",
-                                     "(and positive semidefiniteness ",
-                                     "is not checked)")){
-                  mod.sum <- data.frame("effect"=NA, "group"=NA,
-                                         "term"=col2, "estimate"=NA,
-                                          "std.error"=NA, "statistic"=NA,
-                                          "df"=NA, "p.value"=NA,
-                                          "feature"=col1)
-              }
-          }) # END trycatch block
-          # grab only the col2 beta row
-          mod.sum <- mod.sum[mod.sum$term==col2 & mod.sum$effect=="fixed",]
-      }
-
-      mod.sum$feature <- col1
-
-      mod.sum
-  }
-
-    if(show_progress){ close(pb) } # close the progress bar
-    parallel::stopCluster(cl) # close the cluster for parallel computation
-
-
-
-    mod.summaries <- as.data.frame(mod.summaries)
-    # adjust p value only for non-intercept terms
-    # and if we have a joint p, 
-    # only adjust it for the beta coefficient (it's copied for the logistic)
-    if((reg.method == "zibr") & zero_prop_from_formula){
-        mod.summaries[mod.summaries$term!="(Intercept)" &
-                      mod.summaries$parameter == "beta",
-                      "q"] <- p.adjust(
-                          mod.summaries[mod.summaries$term!="(Intercept)" &
-                          mod.summaries$parameter == "beta",
-                                        "joint.p"],
-                          method=padj)
-
-    } else if((reg.method == "gamlss") |
-              (reg.method == "zibr") & (zero_prop_from_formula == FALSE)){
-        mod.summaries[mod.summaries$term!="(Intercept)",
-                      "q"] <- p.adjust(
-                          mod.summaries[mod.summaries$term!="(Intercept)",
-                                        "p.value"],
-                          method=padj)
-
-    } else if(reg.method == "lmer"){
-        mod.summaries[mod.summaries$term!="(Intercept)" &
-        mod.summaries$effect == "fixed",
-                      "q"] <- p.adjust(
-                          mod.summaries[mod.summaries$term!="(Intercept)" &
-                          mod.summaries$effect == "fixed",
-                                        "p.value"],
-                          method=padj)
-
-    } else if(reg.method == "lm"){
-        mod.summaries[mod.summaries$term!="(Intercept)",
-                      "q"] <- p.adjust(
-                          mod.summaries[mod.summaries$term!="(Intercept)",
-                                        "p.value"],
-                          method=padj)
+            data.frame("effect"="error", "group"=NA,
+                                    "term"=col2, "estimate"=NA,
+                                    "std.error"=NA, "statistic"=NA,
+                                    "df"=NA, "p.value"=NA)})
+        # grab only the col2 beta row
+        return(mod.sum[mod.sum$term==col2 & mod.sum$effect=="fixed",])
     }
-
-    return(mod.summaries)
 }
+
 
 
 #' Check for duplicated values between 2 sets of column names
