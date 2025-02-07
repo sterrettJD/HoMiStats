@@ -2,7 +2,15 @@
 #' @description Pulls the Raes lab gut metabolic modules file (v1.0.7).
 #' This will not overwrite an existing file.
 #' @param filepath The filepath where the GMMs file should be downloaded
+#' @param version The version of GMMs to be used.
+#' As of April '24, the newest version is v1.07.
+#' This is used in pulling the data from the Raes lab GMMs github,
+#' so old versions that are not on the master branch
+#' may cause the filepath to not work.
+#' @param quietly A boolean denoting if the GMMs file
+#' should be downloaded quietly
 #' @return Nothing
+#'
 #' @examples
 #' pull_GMMs_file("loc/to/download.txt")
 #'
@@ -35,6 +43,9 @@ pull_GMMs_file <- function(filepath, version="v1.07", quietly=TRUE){
 #' @param mod.number A string containing the ID of the module
 #' for which current line is being parsed
 #' @return The updated matrix of GMMs, with the new line parsed and added
+#'
+#' @importFrom stringr str_split
+#'
 #' @noRd
 #'
 add_K_line_to_matrix <- function(GMM.matrix, line, mod.name, mod.number){
@@ -59,7 +70,7 @@ add_K_line_to_matrix <- function(GMM.matrix, line, mod.name, mod.number){
 #' This is used in pulling the data from the Raes lab GMMs github,
 #' so old versions that are not on the master branch
 #' may cause the filepath to not work.
-#' @param quietly A boolean denoting if the GMMs file
+#' @param quietly_download A boolean denoting if the GMMs file
 #' should be downloaded quietly
 #' @param cleanup A boolean denoting if the filepath
 #' should be removed at the end of this function.

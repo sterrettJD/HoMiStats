@@ -2,6 +2,8 @@
 #' @description runs a zero-inflated beta distribution GAM using gamlss
 #' @param formula the full formula to be used in the regression
 #' @param data A dataframe to be used in the regression
+#' @param controller The `gamlss::gamlss.control()` object to be used by
+#' the regression
 #' @return the resulting model
 #' @export
 #' @importFrom gamlss.dist BEZI
@@ -548,7 +550,7 @@ run_regressions_mtxDE <- function(data, reg.method,
 #' Options can be checked using 'p.adjust.methods'
 #' @param zero_prop_from_formula In ZIBR zero-inflated beta regression,
 #' should the zeroes be modeled with the provided formula? Default is TRUE.
-#' @param zibr_zibr_time_ind A string denoting the name of the time column
+#' @param zibr_time_ind A string denoting the name of the time column
 #' for ZIBR.
 #' Defaults to NULL, which is implemented as a constant time value in ZIBR
 #' to not fit a time effect.
