@@ -162,17 +162,30 @@ run_HoMiCorr <- function(mtx, host, covariates=NULL, metadata=NULL,
 #' # Run prepare_data function
 #' result <- prepare_data(mtx, host, "age + sex + (1|participantID)",
 #'                        metadata, "SampleID", "timepoint")
-#' @noRd 
+#' @noRd
 #'
 prepare_data <- function(mtx, host,
-                         covariates, metadata, sampleID, zibr_time_ind) {
+                         covariates=NULL, metadata=NULL,
+                         sampleID=NULL, zibr_time_ind=NULL) {
+    
+    # Check row names on mtx and host match each other
+    if (length(setdiff(rownames(mtx), rownames(host))) > 0) {
+        stop("mtx and host rownames do not match. ",
+             "Please only make sure all samples in one dataset ",
+             "exist in the other.")
+    }
     formula <- if (!is.null(covariates)) paste0(" ~ ", covariates) else NULL
     metadata.vars <- c(all.vars(as.formula(formula)), sampleID)
-
     data <- merge(mtx, host, by="row.names")
 
     # Merge with metadata if applicable
-    if (!is.null(metadata)) {
+    if ((!is.null(metadata)) && (!is.null(covariates))) {
+        if ((sampleID %in% colnames(metadata)) == FALSE) {
+            stop("sampleID column '", sampleID, "' not found in metadata.")
+        }
+        if (length(setdiff(rownames(mtx), metadata[, sampleID])) > 0) {
+            stop("Row names of `mtx` do not match `metadata$", sampleID, "`.")
+        }
         data <- merge(data, metadata[, c(metadata.vars, zibr_time_ind)],
                       by.x="Row.names", by.y=sampleID)
     }
@@ -273,7 +286,7 @@ initialize_model_summaries <- function(feature.combos, reg.method) {
 #'
 #' @noRd
 #'
-stop_parallel_processing <- function(cl, show_progress) {
+stop_parallel_processing <- function(cl, show_progress, pb) {
     if (show_progress) close(pb)
     parallel::stopCluster(cl)
 }
@@ -313,17 +326,43 @@ stop_parallel_processing <- function(cl, show_progress) {
 #'
 adjust_p_values <- function(mod.summaries, reg.method,
                             zero_prop_from_formula, padj) {
-    term_filter <- mod.summaries$term != "(Intercept)"
-    
-    if (reg.method == "zibr" && zero_prop_from_formula) {
-        term_filter <- term_filter & mod.summaries$parameter == "beta"
-        mod.summaries$q <- p.adjust(mod.summaries$joint.p[term_filter],
-                                    method=padj)
-    } else {
-        mod.summaries$q <- p.adjust(mod.summaries$p.value[term_filter],
-                                    method=padj)
-    }
+    mod.summaries <- as.data.frame(mod.summaries)
+    # adjust p value only for non-intercept terms
+    # and if we have a joint p, only adjust it for the beta coefficient
+    # (it's copied for the logistic)
+    if((reg.method == "zibr") & zero_prop_from_formula){
+        mod.summaries[mod.summaries$term!="(Intercept)" &
+                      mod.summaries$parameter == "beta",
+                      "q"] <- p.adjust(
+                          mod.summaries[mod.summaries$term!="(Intercept)" &
+                          mod.summaries$parameter == "beta",
+                                        "joint.p"],
+                          method=padj)
 
+    } else if((reg.method == "gamlss") |
+              (reg.method == "zibr") & (zero_prop_from_formula == FALSE)){
+        mod.summaries[mod.summaries$term!="(Intercept)",
+                      "q"] <- p.adjust(
+                          mod.summaries[mod.summaries$term!="(Intercept)",
+                                        "p.value"],
+                          method=padj)
+
+    } else if(reg.method == "lmer"){
+        mod.summaries[mod.summaries$term!="(Intercept)" &
+                      mod.summaries$effect == "fixed",
+                      "q"] <- p.adjust(
+                          mod.summaries[mod.summaries$term!="(Intercept)" &
+                          mod.summaries$effect == "fixed",
+                                        "p.value"],
+                          method=padj)
+
+    } else if(reg.method == "lm"){
+        mod.summaries[mod.summaries$term!="(Intercept)",
+                      "q"] <- p.adjust(
+                          mod.summaries[mod.summaries$term!="(Intercept)",
+                                        "p.value"],
+                          method=padj)
+    }
     return(mod.summaries)
 }
 
@@ -368,7 +407,7 @@ adjust_p_values <- function(mod.summaries, reg.method,
 run_regressions <- function(feature.combos, data, reg.method,
                             covariates, zero_prop_from_formula,
                             zibr_time_ind, show_progress, snowopts=doSNOWopts) {
-    mod.summaries <- foreach::foreach(cols=feature.combos, .combine=rbind, 
+    mod.summaries <- foreach::foreach(cols=feature.combos, .combine=rbind,
         .options.snow=snowopts,
         .export = c("run_single_model")) %dopar% {
         col1 <- colnames(data)[cols[1]]
@@ -497,5 +536,3 @@ check_duplicated_colnames <- function(colnames1, colnames2){
         stop("Columns found in both datasets: ", colnames.intersection.chr)
     }
 }
-
-
