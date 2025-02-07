@@ -21,11 +21,11 @@ This is used in pulling the data from the Raes lab GMMs github,
 so old versions that are not on the master branch
 may cause the filepath to not work.}
 
+\item{quietly_download}{A boolean denoting if the GMMs file
+should be downloaded quietly}
+
 \item{cleanup}{A boolean denoting if the filepath
 should be removed at the end of this function.}
-
-\item{quietly}{A boolean denoting if the GMMs file
-should be downloaded quietly}
 }
 \value{
 A tabular version of the GMMs as a dataframe

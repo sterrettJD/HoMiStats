@@ -14,6 +14,9 @@ run_single_beta_reg_gamlss(
 \item{formula}{the full formula to be used in the regression}
 
 \item{data}{A dataframe to be used in the regression}
+
+\item{controller}{The `gamlss::gamlss.control()` object to be used by
+the regression}
 }
 \value{
 the resulting model

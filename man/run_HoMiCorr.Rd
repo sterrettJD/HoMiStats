@@ -53,16 +53,16 @@ Options can be checked using 'p.adjust.methods'}
 \item{zero_prop_from_formula}{In ZIBR zero-inflated beta regression,
 should the zeroes be modeled with the provided formula? Default is TRUE.}
 
-\item{ncores}{An integer denoting the number of cores to use if
-running in parallel. Defaults to 1 (not parallelized).}
-
-\item{show_progress}{A boolean denoting if a progress bar should be shown.}
-
-\item{zibr_zibr_time_ind}{A string denoting the name of the time column
+\item{zibr_time_ind}{A string denoting the name of the time column
 for ZIBR.
 Defaults to NULL, which is implemented as a constant time value in ZIBR
 to not fit a time effect.
 This argument does nothing if reg.method is not "zibr".}
+
+\item{ncores}{An integer denoting the number of cores to use if
+running in parallel. Defaults to 1 (not parallelized).}
+
+\item{show_progress}{A boolean denoting if a progress bar should be shown.}
 }
 \value{
 A dataframe with the model summaries as an adjacency list

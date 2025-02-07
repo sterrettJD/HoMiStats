@@ -8,6 +8,15 @@ pull_GMMs_file(filepath, version = "v1.07", quietly = TRUE)
 }
 \arguments{
 \item{filepath}{The filepath where the GMMs file should be downloaded}
+
+\item{version}{The version of GMMs to be used.
+As of April '24, the newest version is v1.07.
+This is used in pulling the data from the Raes lab GMMs github,
+so old versions that are not on the master branch
+may cause the filepath to not work.}
+
+\item{quietly}{A boolean denoting if the GMMs file
+should be downloaded quietly}
 }
 \value{
 Nothing

@@ -31,6 +31,6 @@ host <- data.frame(a2=c(0.5, 0.0, 0.0, 0.0),
 # This should not raise an error
 check_duplicated_colnames(colnames(mtx), colnames(host))
 # This should raise an error
-check_duplicated_colnames(colnames(mtx), c("a1"))
+try(check_duplicated_colnames(colnames(mtx), c("a1")))
 
 }
