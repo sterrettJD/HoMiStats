@@ -88,7 +88,8 @@ run_HoMiCorr <- function(mtx, host, covariates=NULL, metadata=NULL,
         check_for_ones(host)
     }
     
-    data <- prepare_data(mtx, host, covariates, metadata, sampleID, zibr_time_ind)
+    data <- prepare_data(mtx, host, covariates, metadata,
+                        sampleID, zibr_time_ind)
     feature.combos <- generate_feature_combinations(mtx, host)
     mod.summaries <- initialize_model_summaries(feature.combos, reg.method)
     n.iterations <- length(feature.combos)
@@ -114,25 +115,129 @@ run_HoMiCorr <- function(mtx, host, covariates=NULL, metadata=NULL,
                            zero_prop_from_formula, padj))
 }
 
-prepare_data <- function(mtx, host, covariates, metadata, sampleID, zibr_time_ind) {
+
+#' Prepare Data for HoMiCorr (internal)
+#'
+#' @description This function merges microbiome data (`mtx`),
+#' host data (`host`), and optional metadata (`metadata`)
+#' while selecting relevant covariates and sample identifiers.
+#'
+#' @param mtx A data frame containing microbiome data with row names as
+#' sample identifiers and gene names as columns.
+#' @param host A data frame containing host data with row names as
+#' sample identifiers and gene names as columns.
+#' @param covariates A character string specifying covariates to include
+#' in the model formula (e.g., `"age + sex"`).
+#' Random effects can also be passed (e.g., `"age + (1|participantID)"`).
+#' If NULL, no covariates are used.
+#' @param metadata A data frame containing metadata, including sample
+#' identifiers and covariates.
+#' Rows should correspond to samples, and covariates should be columns.
+#' Can be NULL if no additional metadata is needed.
+#' @param sampleID A character string specifying the column name in
+#' `metadata` that contains sample identifiers.
+#' @param zibr_time_ind A character string specifying a column in `metadata`
+#' to be included in the merged data.
+#'
+#' @return A merged data frame containing microbiome data, host data,
+#' and relevant metadata. The row names are set to sample identifiers.
+#'
+#' @examples
+#' # Simulate data with samples as rows and genes as columns
+#' mtx <- data.frame(a1 = c(0.1, 0.0, 0.0, 0.0),
+#'                   b1 = c(0.5, 0.5, 0.5, 0.4))
+#' rownames(mtx) <- paste0("sample_", seq_len(4))
+#'
+#' host <- data.frame(a2 = c(0.5, 0.0, 0.0, 0.0),
+#'                    b2 = c(0.5, 0.5, 0.5, 0.4))
+#' rownames(host) <- paste0("sample_", seq_len(4))
+#'
+#' metadata <- data.frame(SampleID = paste0("sample_", seq_len(4)),
+#'                        age = c(25, 30, 35, 40),
+#'                        sex = c("M", "F", "M", "F"),
+#'                        participantID = c(0, 1, 0, 1),
+#'                        timepoint = c(0, 0, 1, 1))
+#' rownames(metadata) <- metadata$SampleID
+#'
+#' # Run prepare_data function
+#' result <- prepare_data(mtx, host, "age + sex + (1|participantID)",
+#'                        metadata, "SampleID", "timepoint")
+#' @noRd 
+#'
+prepare_data <- function(mtx, host,
+                         covariates, metadata, sampleID, zibr_time_ind) {
     formula <- if (!is.null(covariates)) paste0(" ~ ", covariates) else NULL
     metadata.vars <- c(all.vars(as.formula(formula)), sampleID)
+
     data <- merge(mtx, host, by="row.names")
+
+    # Merge with metadata if applicable
     if (!is.null(metadata)) {
-        data <- merge(data, metadata[, c(metadata.vars, zibr_time_ind)], 
+        data <- merge(data, metadata[, c(metadata.vars, zibr_time_ind)],
                       by.x="Row.names", by.y=sampleID)
     }
+
+    # Clean up output file
     row.names(data) <- data$Row.names
     data$Row.names <- NULL
     return(data)
 }
 
+#' Generate Feature Combinations for Regression Analysis (internal)
+#'
+#' @description This function generates all possible pairwise combinations
+#' of microbial and host gene features.
+#'
+#' @param mtx A data frame containing microbial gene expression data,
+#' where rows represent samples and columns represent genes.
+#' @param host A data frame containing host gene expression data,
+#' where rows represent samples and columns represent genes.
+#'
+#' @return A list of feature index pairs, representing all unique
+#' combinations of microbial and host genes.
+#'
+#' @examples
+#' # Simulated data
+#' mtx <- data.frame(a1 = c(0.1, 0.0, 0.0, 0.0),
+#'                   b1 = c(0.5, 0.5, 0.5, 0.4))
+#' host <- data.frame(a2 = c(0.5, 0.0, 0.0, 0.0),
+#'                    b2 = c(0.5, 0.5, 0.5, 0.4))
+#'
+#' # Generate feature combinations
+#' feature_combos <- generate_feature_combinations(mtx, host)
+#'
+#' @noRd
+#'
 generate_feature_combinations <- function(mtx, host) {
     all.featurenames <- c(colnames(mtx), colnames(host))
     return(Rfast::comb_n(seq_len(length(all.featurenames)),
                          k=2, simplify=FALSE))
 }
 
+
+#' Initialize Data Frame for Model Summaries (internal)
+#'
+#' @description Creates an empty data frame to store regression model summaries.
+#' The columns included in the data frame depend on the selected
+#' regression method.
+#'
+#' @param feature.combos A list of feature combinations to be analyzed.
+#' @param reg.method A string specifying the regression method to be used.
+#' Supported options: "gamlss", "zibr", "lm", "lmer".
+#'
+#' @return A data frame initialized with appropriate columns for the chosen
+#' regression method, with the number of rows equal to the number of feature
+#' combinations.
+#'
+#' @examples
+#' # Simulated feature combinations
+#' feature_combos <- list(c("a1", "b2"), c("b1", "a2"))
+#'
+#' # Initialize model summaries for linear regression
+#' summaries <- initialize_model_summaries(feature_combos, "lm")
+#'
+#' @noRd
+#'
 initialize_model_summaries <- function(feature.combos, reg.method) {
     n.iterations <- length(feature.combos)
     summary.cols <- switch(reg.method,
@@ -149,60 +254,186 @@ initialize_model_summaries <- function(feature.combos, reg.method) {
                             ncol=length(summary.cols), 
                             dimnames=list(NULL, summary.cols))))
 }
-
+#' Stop Parallel Processing and Clean Up (internal)
+#'
+#' @description This function stops the parallel processing cluster
+#' and closes the progress bar if `show_progress` is enabled.
+#'
+#' @param cl A parallel cluster object created by `parallel::makeCluster`.
+#' @param show_progress A boolean indicating whether a progress bar was shown.
+#' If TRUE, the function attempts to close the progress bar.
+#'
+#' @return This function does not return a value. It stops the cluster
+#' and cleans up resources.
+#'
+#' @examples
+#' # Example usage (not run):
+#' # cl <- parallel::makeCluster(2)
+#' # stop_parallel_processing(cl, show_progress = TRUE)
+#'
+#' @noRd
+#'
 stop_parallel_processing <- function(cl, show_progress) {
     if (show_progress) close(pb)
     parallel::stopCluster(cl)
 }
 
-adjust_p_values <- function(mod.summaries, reg.method, zero_prop_from_formula, padj) {
+
+#' Adjust P-values for Multiple Comparisons (internal)
+#'
+#' @description This function applies multiple testing correction
+#' to the p-values from regression model summaries. The method used for
+#' adjustment is specified by the user.
+#'
+#' @param mod.summaries A data frame containing model summary results,
+#' including p-values.
+#' @param reg.method A string indicating the regression method used.
+#' Options include "zibr", "gamlss", "lm", and "lmer".
+#' @param zero_prop_from_formula A boolean indicating whether zeroes
+#' were modeled using the provided formula (relevant for ZIBR regression).
+#' @param padj A string specifying the multiple testing correction method.
+#' Supported methods can be checked with `p.adjust.methods`.
+#'
+#' @return A modified version of `mod.summaries` with an additional column
+#' `q`, containing the adjusted p-values.
+#'
+#' @examples
+#' # Example model summary
+#' mod.summaries <- data.frame(term = c("(Intercept)", "GeneX"),
+#'                             parameter = c("beta", "beta"),
+#'                             p.value = c(0.01, 0.002),
+#'                             joint.p = c(0.02, 0.005))
+#'
+#' # Adjust p-values using FDR correction
+#' mod.summaries <- adjust_p_values(mod.summaries, "zibr",
+#'                                  zero_prop_from_formula = TRUE,
+#'                                  padj = "fdr")
+#'
+#' @noRd
+#'
+adjust_p_values <- function(mod.summaries, reg.method,
+                            zero_prop_from_formula, padj) {
     term_filter <- mod.summaries$term != "(Intercept)"
-    if (reg.method == "zibr" & zero_prop_from_formula) {
+    
+    if (reg.method == "zibr" && zero_prop_from_formula) {
         term_filter <- term_filter & mod.summaries$parameter == "beta"
-        mod.summaries$q <- p.adjust(mod.summaries$joint.p[term_filter], method=padj)
+        mod.summaries$q <- p.adjust(mod.summaries$joint.p[term_filter],
+                                    method=padj)
     } else {
-        mod.summaries$q <- p.adjust(mod.summaries$p.value[term_filter], method=padj)
+        mod.summaries$q <- p.adjust(mod.summaries$p.value[term_filter],
+                                    method=padj)
     }
 
     return(mod.summaries)
 }
 
-run_regressions <- function(feature.combos, data, reg.method, covariates, zero_prop_from_formula, zibr_time_ind, show_progress, snowopts=doSNOWopts) {
+#' Run Pairwise Regressions Across Features (internal)
+#'
+#' @description This function iterates over all specified feature pairs
+#' and performs regression analyses in parallel. The regression method
+#' is determined by `reg.method`, and the function supports multiple
+#' modeling approaches, including ZIBR, GAMLSS, linear models,
+#' and linear mixed-effects models.
+#'
+#' @param feature.combos A list of feature index pairs to be analyzed.
+#' Each pair specifies two columns in `data` to be used as dependent and
+#' independent variables.
+#' @param data A data frame containing the feature columns and covariates
+#' for modeling.
+#' @param reg.method A string specifying the regression method to use.
+#' Options include `"zibr"`, `"gamlss"`, `"lm"`, and `"lmer"`.
+#' @param covariates A string specifying the covariates to include
+#' in the model formula.
+#' @param zero_prop_from_formula A boolean indicating whether
+#' zero proportions should be modeled
+#' using the specified formula (relevant for ZIBR regression).
+#' @param zibr_time_ind A string specifying the time variable for ZIBR models.
+#' @param show_progress A boolean indicating whether to
+#' display progress updates.
+#' @param snowopts Options passed to `foreach::foreach()`
+#' for parallel execution using the `doSNOW` backend.
+#'
+#' @return A data frame summarizing the regression results
+#' for each feature pair.
+#'
+#' @examples
+#' # Example usage (not run):
+#' # feature.combos <- list(c(1, 2), c(3, 4))
+#' # results <- run_regressions(feature.combos, data,
+#' #                             "lm", "age + sex",
+#' #                             NULL, NULL, TRUE)
+#'
+#' @noRd
+#'
+run_regressions <- function(feature.combos, data, reg.method,
+                            covariates, zero_prop_from_formula,
+                            zibr_time_ind, show_progress, snowopts=doSNOWopts) {
     mod.summaries <- foreach::foreach(cols=feature.combos, .combine=rbind, 
         .options.snow=snowopts,
         .export = c("run_single_model")) %dopar% {
         col1 <- colnames(data)[cols[1]]
         col2 <- colnames(data)[cols[2]]
-        mod.sum <- run_single_model(col1, col2, data, reg.method, covariates, zero_prop_from_formula, zibr_time_ind)
-        
-        if(nrow(mod.sum) > 0) {mod.sum$feature <- col1}
-        
+        mod.sum <- run_single_model(col1, col2, data, reg.method, covariates,
+                                    zero_prop_from_formula, zibr_time_ind)
+        if(nrow(mod.sum) > 0) {
+            mod.sum$feature <- col1
+        }
         return(mod.sum)
     }
     
     return(mod.summaries)
 }
 
-run_single_model <- function(col1, col2, data, reg.method, covariates, zero_prop_from_formula, zibr_time_ind) {
+
+
+#' Run a Single Regression Model
+#'
+#' @description This function performs a single regression analysis
+#' for a given pair of features using the specified regression method.
+#'
+#' @param col1 A string specifying the dependent variable (feature) in `data`.
+#' @param col2 A string specifying the independent variable (feature) in `data`.
+#' @param data A data frame containing the feature columns and covariates.
+#' @param reg.method A string indicating the type of regression to run.
+#' Options include `"gamlss"`, `"zibr"`, `"lm"`, and `"lmer"`.
+#' @param covariates A string specifying the covariates to
+#' include in the model formula.
+#' @param zero_prop_from_formula A boolean indicating whether
+#' zero proportions should be modeled using the provided formula
+#' (relevant for ZIBR regression).
+#' @param zibr_time_ind A string specifying the time variable for ZIBR models.
+#'
+#' @return A data frame containing the regression summary for `col2`,
+#' including coefficient estimates, standard errors, and p-values.
+#' If the model fails to converge (for mixed-effects models), an error message
+#' is returned instead.
+#'
+#' @examples
+#' # Example usage (not run):
+#' # result <- run_single_model("geneA", "geneB", data, "lm",
+#' #                            "age + sex", FALSE, NULL)
+#'
+#' @noRd
+#'
+run_single_model <- function(col1, col2, data, reg.method, covariates,
+                             zero_prop_from_formula, zibr_time_ind) {
     if (reg.method == "gamlss") {
-        mod <- run_single_beta_reg_gamlss(paste0(col1, " ~ ", covariates, " + ", col2), data)
-        return(broom.mixed::tidy(mod)[broom.mixed::tidy(mod)$term == col2 & broom.mixed::tidy(mod)$parameter == "mu", ])
+        mod <- run_single_beta_reg_gamlss(paste0(col1, " ~ ", 
+                                                covariates, " + ", col2), data)
+        mod.sum <- broom.mixed::tidy(mod)
+        return(mod.sum[mod.sum$term == col2 & mod.sum$parameter == "mu", ])
     }
     if (reg.method == "zibr") {
-        if(!is.null(covariates)){
-            # extract vars for zibr
+        if(!is.null(covariates)) {
             form <- as.formula(paste0("~ ", covariates))
-            vars <- all.vars(form)
-            # Extracts random effects from formula
             random.effects.vars <- get_random_fx(form)
-            fixed.vars <- setdiff(vars, random.effects.vars)
+            fixed.vars <- setdiff(all.vars(form), random.effects.vars)
         } else {
-            # Extracts random effects from formula
             random.effects.vars <- NULL
             fixed.vars <- NULL
         }
-
-        mod <- run_single_beta_reg_zibr(logistic_cov=if (zero_prop_from_formula) c(fixed.vars, col2) else NULL,
+        log.cov <- if (zero_prop_from_formula) c(fixed.vars, col2) else NULL
+        mod <- run_single_beta_reg_zibr(logistic_cov=log.cov,
                                         beta_cov=c(fixed.vars, col2),
                                         Y=col1,
                                         subject_ind=random.effects.vars,
@@ -219,15 +450,17 @@ run_single_model <- function(col1, col2, data, reg.method, covariates, zero_prop
         return(mod.sum[mod.sum$term == col2, ])
     }
     if (reg.method == "lmer") {
+        # This try catch block is used for convergence (or similar) errors
+        # But maybe should be more specific
         mod.sum <- tryCatch({
             mod <- run_single_lmer(paste0(col1, " ~ ", covariates, " + ", col2),
                                    data)
             broom.mixed::tidy(mod)
           }, error=function(e) {
             data.frame("effect"="error", "group"=NA,
-                                    "term"=col2, "estimate"=NA,
-                                    "std.error"=NA, "statistic"=NA,
-                                    "df"=NA, "p.value"=NA)})
+                       "term"=col2, "estimate"=NA,
+                       "std.error"=NA, "statistic"=NA,
+                       "df"=NA, "p.value"=NA)}) # END TRYCATCH
         # grab only the col2 beta row
         return(mod.sum[mod.sum$term==col2 & mod.sum$effect=="fixed",])
     }
