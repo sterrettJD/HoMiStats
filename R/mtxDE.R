@@ -335,6 +335,194 @@ get_random_fx <- function(form){
     return(vars)
 }
 
+#' Prepare Data for Differential Expression Analysis (internal)
+#'
+#' @description This function prepares the data by merging the feature table
+#' with metadata based on the sample IDs.
+#' It ensures that the sample IDs in the feature table match the
+#' sample IDs in the metadata and validates the input for any inconsistencies.
+#'
+#' @param feature.table A data frame where rows are samples and
+#' columns are features (e.g., genes).
+#' Row names should correspond to sample IDs.
+#' @param metadata A data frame containing metadata for the samples,
+#' where rows are samples
+#' and columns are metadata variables (e.g., phenotype, timepoint).
+#' @param formula A string representing the right-hand side of the
+#' regression formula to be used
+#' in the analysis. All variables in this formula should be numeric.
+#' @param sampleID A string representing the column name in `metadata`
+#' that contains the sample IDs.
+#' This column is used to merge the metadata with the feature table.
+#' @param zibr_time_ind A string representing the time column in `metadata` for
+#' Zero-Inflated Beta Regression (ZIBR).
+#' This is used only when the regression method involves ZIBR.
+#'
+#' @return A merged data frame containing the feature table and metadata,
+#' ready for regression analysis.
+#'
+#' @noRd
+#'
+prepare_data_mtxDE <- function(feature.table, metadata,
+                               formula, sampleID, zibr_time_ind){
+    # merge the feature table and metadata based on the rownames
+    metadata.vars <- c(all.vars(as.formula(formula)), sampleID)
+
+    if ((!is.null(metadata)) && (!is.null(sampleID))) {
+        if ((sampleID %in% colnames(metadata)) == FALSE) {
+            stop("sampleID column '", sampleID, "' not found in metadata.")
+        }
+        if (length(setdiff(rownames(feature.table),
+                    metadata[, sampleID])) > 0) {
+            stop("Row names of `feature.table` do not match `metadata$",
+                sampleID, "`.")
+        }
+    }
+
+    data <- merge(feature.table,
+                  metadata[,c(metadata.vars, zibr_time_ind)],
+                  by.x="row.names", by.y=sampleID)
+    return(data)
+}
+
+#' Run a Single Regression for a Feature (internal)
+#'
+#' @description This function runs a single regression model for
+#' a given feature using the specified regression method.
+#' It handles different types of regression methods, including
+#' Zero-Inflated Beta Regression (ZIBR),
+#' Generalized Additive Models for Location Scale and Shape
+#' (GAMLSS),linear regression (LM), and linear mixed effects regression (LME).
+#'
+#' @param data A data frame containing the merged feature table and metadata,
+#' ready for regression.
+#' @param reg.method A string indicating the regression method to be used.
+#' Options include "zibr", "gamlss", "lm", and "lmer".
+#' @param col A string representing the name of the feature (column)
+#' in `data` to be analyzed.
+#' @param formula A string representing the formula for the regression model.
+#' @param fixed.vars A vector of strings representing the fixed effect
+#' variables to include in the regression.
+#' @param random.effects.vars A vector of strings representing the
+#' random effect variables to include in the regression.
+#' @param zibr_time_ind A string representing the time column in `data`
+#' for ZIBR, or NULL if not applicable.
+#' @param zero_prop_from_formula A boolean indicating whether zeroes should
+#' be modeled using the provided formula (for ZIBR).
+#'
+#' @return A data frame containing the summary of the regression results
+#' for the specified feature.
+#' The summary includes terms, estimates, standard errors, statistics,
+#' p-values, and feature information.
+#'
+#' @noRd
+#'
+run_single_regression_mtxDE <- function(data, reg.method,
+                                        col, formula,
+                                        fixed.vars=NULL, 
+                                        random.effects.vars=NULL,
+                                        zibr_time_ind=NULL,
+                                        zero_prop_from_formula=NULL){
+    if (reg.method == "gamlss"){
+        mod <- run_single_beta_reg_gamlss(paste0(col, formula),
+                                            data=data)
+        mod.sum <- broom.mixed::tidy(mod)
+    } else if ((reg.method == "zibr") && (zero_prop_from_formula==TRUE)) {
+        mod <- run_single_beta_reg_zibr(logistic_cov=fixed.vars,
+                                        beta_cov=fixed.vars, Y=col,
+                                        subject_ind=random.effects.vars,
+                                        time_ind=zibr_time_ind, data=data)
+        mod.sum <- tidy_zibr_results(mod)
+        mod.sum$term <- map_zibr_termnames(mod.sum$term, fixed.vars)
+    } else if ((reg.method == "zibr") && (zero_prop_from_formula==FALSE)) {
+        mod <- run_single_beta_reg_zibr(logistic_cov=NULL,
+                                        beta_cov=fixed.vars, Y=col,
+                                        subject_ind=random.effects.vars,
+                                        time_ind=zibr_time_ind, data=data)
+        mod.sum <- tidy_zibr_results(mod)
+        mod.sum$term <- map_zibr_termnames(mod.sum$term, fixed.vars)
+    } else if (reg.method == "lm") {
+        mod <- run_single_lm(paste0(col, formula), data)
+        mod.sum <- broom::tidy(mod)
+    } else if (reg.method == "lmer") {
+        mod <- run_single_lmer(paste0(col, formula), data)
+        mod.sum <- broom.mixed::tidy(mod)
+    }
+    mod.sum$feature <- col
+    return(mod.sum)
+}
+
+#' Run Multiple Regressions for Features in Parallel (internal)
+#'
+#' @description This function runs regressions for each feature (column)
+#' in the `feature.table` using the specified regression method.
+#' The function handles different regression methods such as
+#' Zero-Inflated Beta Regression (ZIBR),
+#' Generalized Additive Models for Location Scale and Shape (GAMLSS),
+#' linear regression (LM), and linear mixed effects regression (LME).
+#'
+#' @param data A data frame containing the merged feature table
+#' and metadata, prepared for regression.
+#' @param reg.method A string indicating the regression method to be used.
+#' Options include
+#' "zibr", "gamlss", "lm", and "lmer".
+#' @param feature.table A data frame where rows represent samples and
+#' columns represent features.
+#' @param formula A string representing the formula for the regression model.
+#' @param zero_prop_from_formula A boolean indicating whether zeroes
+#' should be modeled using the provided formula (for ZIBR).
+#' @param zibr_time_ind A string representing the time column in `data`
+#' for ZIBR, or NULL if not applicable.
+#' @param ncores An integer specifying the number of cores to use
+#' for parallel processing.
+#' @param show_progress A boolean indicating whether a progress bar
+#' should be shown during parallel computation.
+#'
+#' @return A data frame containing the regression summaries for all features.
+#' The summaries include terms,
+#' estimates, standard errors, statistics, p-values, and feature information.
+#'
+#' @noRd
+#'
+run_regressions_mtxDE <- function(data, reg.method,
+                                  feature.table, formula,
+                                  zero_prop_from_formula,
+                                  zibr_time_ind, ncores, show_progress){
+    if(reg.method=="zibr"){
+        form.as.form <- as.formula(formula)
+        random.effects.vars <- get_random_fx(form.as.form)
+        fixed.vars <- setdiff(all.vars(form.as.form), random.effects.vars)
+    }
+    # Setup cluster for parallel running
+    cl <- parallel::makeCluster(ncores)
+    doParallel::registerDoParallel(cl, cores=ncores)
+    doSNOW::registerDoSNOW(cl)
+    if(show_progress){
+        # Initializes progress bar
+        n_iter <- ncol(feature.table)
+        pb <- txtProgressBar(max=n_iter-1, style=3)
+        progress <- function(n) setTxtProgressBar(pb, n)
+        doSNOWopts <- list(progress = progress)
+    } else {
+        doSNOWopts <- list()
+    }
+    # Loop through each column and run the regression
+    mod.summaries <- foreach::foreach(col=colnames(feature.table),
+                                      .combine=rbind,
+                                      .options.snow = doSNOWopts) %dopar% {
+    run_single_regression_mtxDE(data, reg.method,
+                                col, formula,
+                                fixed.vars, random.effects.vars,
+                                zibr_time_ind,
+                                zero_prop_from_formula)
+    }
+
+    if(show_progress){ close(pb) } # close the progress bar
+    parallel::stopCluster(cl) # close the cluster for parallel computation
+    mod.summaries <- as.data.frame(mod.summaries)
+    return(mod.summaries)
+}
+
 
 #' Run differential expression analysis for metatranscriptomics data
 #' @description Regresses each feature using the formula provided and
@@ -429,161 +617,21 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
                       ncores=1,
                       show_progress=TRUE
                       ){
-    # Check for values of one, which the beta regression can't handle
     if(reg.method %in% c("zibr", "gamlss")){
-        check_for_ones(feature.table)
-        # gamlss can't handle undetected features
-        feature.table <- filter_undetected(feature.table)
+        check_for_ones(feature.table) # Beta regression can't handle ones
+        feature.table <- filter_undetected(feature.table) # or undetected feats
     }
-
-
-    # merge the feature table and metadata based on the rownames
     formula <- paste0(" ~ ", formula)
-    metadata.vars <- c(all.vars(as.formula(formula)), sampleID)
-
-    data <- merge(feature.table,
-                  metadata[,c(metadata.vars, zibr_time_ind)],
-                  by.x="row.names", by.y=sampleID)
-
-    # initialize the model summaries df
-    if(reg.method == "gamlss"){
-        mod.summaries <- data.frame(matrix(nrow=0, ncol=7))
-        colnames(mod.summaries) <- c("parameter", "term",
-                                     "estimate", "std.error",
-                                     "statistic", "p.value",
-                                     "feature")
-
-    } else if(reg.method == "zibr"){
-        mod.summaries <- data.frame(matrix(nrow=0, ncol=6))
-        colnames(mod.summaries) <- c("parameter", "term",
-                                     "estimate",
-                                     "p.value", "joint.p",
-                                     "feature")
-        # extract vars for zibr
-        vars <- all.vars(as.formula(formula))
-        # Extracts random effects from formula
-        random.effects.vars <- get_random_fx(as.formula(formula))
-        fixed.vars <- setdiff(vars, random.effects.vars)
-
-    } else if(reg.method=="lm"){
-        mod.summaries <- data.frame(matrix(nrow=0, ncol=6))
-        colnames(mod.summaries) <- c("term", "estimate",
-                                     "std.error", "statistic",
-                                     "p.value", "feature")
-
-    } else if(reg.method=="lmer"){
-        mod.summaries <- data.frame(matrix(nrow=0, ncol=9))
-        colnames(mod.summaries) <- c("effect", "group",
-                                     "term", "estimate",
-                                     "std.error", "statistic",
-                                     "df", "p.value",
-                                     "feature")
-
-    }
-
-    # Setup cluster for parallel running
-    cl <- parallel::makeCluster(ncores)
-    doParallel::registerDoParallel(cl, cores=ncores)
-    doSNOW::registerDoSNOW(cl)
-
-    if(show_progress){
-        # Initializes progress bar
-        n_iter <- ncol(feature.table)
-        i <- 0
-
-        pb <- txtProgressBar(max=n_iter-1, style=3)
-        progress <- function(n) setTxtProgressBar(pb, n)
-        doSNOWopts <- list(progress = progress)
-    } else {
-        doSNOWopts <- list()
-    }
+    data <- prepare_data_mtxDE(feature.table, metadata,
+                               formula, sampleID, zibr_time_ind)
 
     # Loop through each column and run the regression
-    mod.summaries <- foreach::foreach(col=colnames(feature.table),
-                                      .combine=rbind,
-                                      .options.snow = doSNOWopts) %dopar% {
-
-        if(reg.method == "gamlss"){
-            mod <- run_single_beta_reg_gamlss(paste0(col, formula),
-                                              data=data)
-            mod.sum <- broom.mixed::tidy(mod)
-        } else if((reg.method == "zibr") & (zero_prop_from_formula==TRUE)){
-            mod <- run_single_beta_reg_zibr(logistic_cov=fixed.vars,
-                                            beta_cov=fixed.vars,
-                                            Y=col,
-                                            subject_ind=random.effects.vars,
-                                            time_ind=zibr_time_ind,
-                                            data=data)
-
-            mod.sum <- tidy_zibr_results(mod)
-            mod.sum$term <- map_zibr_termnames(mod.sum$term, fixed.vars)
-
-        } else if((reg.method == "zibr") & (zero_prop_from_formula==FALSE)){
-
-            mod <- run_single_beta_reg_zibr(logistic_cov=NULL,
-                                            beta_cov=fixed.vars,
-                                            Y=col,
-                                            subject_ind=random.effects.vars,
-                                            time_ind=zibr_time_ind,
-                                            data=data)
-
-            mod.sum <- tidy_zibr_results(mod)
-            mod.sum$term <- map_zibr_termnames(mod.sum$term, fixed.vars)
-
-        } else if(reg.method == "lm"){
-            mod <- run_single_lm(paste0(col, formula), data)
-            mod.sum <- broom::tidy(mod)
-
-        } else if(reg.method == "lmer"){
-            mod <- run_single_lmer(paste0(col, formula), data)
-            mod.sum <- broom.mixed::tidy(mod)
-        }
-
-        mod.sum$feature <- col
-
-        mod.sum
-    }
-
-    if(show_progress){ close(pb) } # close the progress bar
-    parallel::stopCluster(cl) # close the cluster for parallel computation
-
-    mod.summaries <- as.data.frame(mod.summaries)
-    # adjust p value only for non-intercept terms
-    # and if we have a joint p, only adjust it for the beta coefficient 
-    # (it's copied for the logistic)
-    if((reg.method == "zibr") & zero_prop_from_formula){
-        mod.summaries[mod.summaries$term!="(Intercept)" &
-        mod.summaries$parameter == "beta",
-                      "q"] <- p.adjust(
-                            mod.summaries[mod.summaries$term!="(Intercept)" &
-                            mod.summaries$parameter == "beta",
-                                              "joint.p"],
-                            method=padj)
-
-    } else if((reg.method == "gamlss") |
-              (reg.method == "zibr") & (zero_prop_from_formula == FALSE)){
-        mod.summaries[mod.summaries$term!="(Intercept)",
-                      "q"] <- p.adjust(
-                                mod.summaries[mod.summaries$term!="(Intercept)",
-                                              "p.value"],
-                                method=padj)
-
-    } else if(reg.method == "lmer"){
-        mod.summaries[mod.summaries$term!="(Intercept)" & 
-                      mod.summaries$effect == "fixed",
-                      "q"] <- p.adjust(
-                            mod.summaries[mod.summaries$term!="(Intercept)" &
-                            mod.summaries$effect == "fixed",
-                                            "p.value"],
-                            method=padj)
-
-    } else if(reg.method == "lm"){
-        mod.summaries[mod.summaries$term!="(Intercept)",
-                      "q"] <- p.adjust(
-                          mod.summaries[mod.summaries$term!="(Intercept)",
-                                        "p.value"],
-                          method=padj)
-    }
-
-    return(mod.summaries)
+    mod.summaries <- run_regressions_mtxDE(data, reg.method,
+                                  feature.table, formula,
+                                  zero_prop_from_formula,
+                                  zibr_time_ind, ncores, show_progress)
+    # Calling this from HoMiCorr
+    adjusted.mod.summaries <- adjust_p_values(mod.summaries, reg.method,
+                                              zero_prop_from_formula, padj)
+    return(adjusted.mod.summaries)
 }
