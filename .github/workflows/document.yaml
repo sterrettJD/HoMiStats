@@ -31,11 +31,16 @@ jobs:
       - name: Specific Rfast dependency
         run: |
           install.packages("remotes")
-          remotes::install_version("Rfast", version = "2.0.8")  # Ensure Rfast is installed
+          remotes::install_version("Rfast", version = "2.0.8")
+          print(.libPaths())  # Debugging
+          installed_pkgs <- installed.packages()[, "Package"]
+          print(installed_pkgs)  # Debugging
         shell: Rscript {0}
 
       - name: Document
-        run: roxygen2::roxygenise()
+        run: |
+          library(Rfast)  # Ensure it loads
+          roxygen2::roxygenise()
         shell: Rscript {0}
 
       - name: commit
