@@ -37,8 +37,4 @@ parses this file to return a table with the GMMs and corresponding KOs
 \examples{
 GMM.df <- get_GMM_matrix()
 
-# If you want to download GMMs from a different version verbosely:
-GMM.df <- get_GMM_matrix("loc/to/download.txt", version="v1.06",
-                         quietly_download=FALSE)
-
 }

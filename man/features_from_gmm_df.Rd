@@ -27,7 +27,7 @@ associated with a given gut metabolic module.
 \examples{
 GMM.matrix <- suppressMessages(get_GMM_matrix())
 features <- features_from_gmm_df(GMM="butyrate production I",
-                                 GMM.kos.df=GMM_matrix,
+                                 GMM.kos.df=GMM.matrix,
                                  mtx.feature.names=c("K00248", "K00634"))
 
 }

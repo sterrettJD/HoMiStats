@@ -97,6 +97,7 @@ gamlss.no.random.fx <- run_mtxDE("phenotype", feature.table,
 # Use a linear model
 lm.res <- run_mtxDE("phenotype",
                      feature.table,
+                     metadata,
                      reg.method="lm",
                      sampleID="SampleID",
                      show_progress=FALSE)
