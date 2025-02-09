@@ -17,8 +17,8 @@
 #'                            data=data)
 #'
 run_single_beta_reg_gamlss <- function(formula,
-                                       data,
-                                       controller=gamlss::gamlss.control(
+                                        data,
+                                        controller=gamlss::gamlss.control(
                                                 trace=FALSE)){
     mod <- gamlss::gamlss(as.formula(formula),
                         data=data,
@@ -80,7 +80,7 @@ run_single_beta_reg_gamlss <- function(formula,
 #'                          data=data)
 #'
 run_single_beta_reg_zibr <- function(logistic_cov=NULL, beta_cov, Y,
-                                     subject_ind=NULL, time_ind=NULL, data){
+                                    subject_ind=NULL, time_ind=NULL, data){
     # If no logistic covariate is passed,
     # make constant data for fitting just an intercept
     if(is.null(logistic_cov)){
@@ -113,12 +113,12 @@ run_single_beta_reg_zibr <- function(logistic_cov=NULL, beta_cov, Y,
     colnames(beta_cov_dat) <- beta_cov
 
     mod <- ZIBR::zibr(
-               logistic_cov=logistic_cov_dat,
-               beta_cov=beta_cov_dat,
-               Y=as.matrix(data[,Y]),
-               subject_ind=subject_ind_dat,
-               time_ind=time_ind_dat,
-               verbose=TRUE)
+                logistic_cov=logistic_cov_dat,
+                beta_cov=beta_cov_dat,
+                Y=as.matrix(data[,Y]),
+                subject_ind=subject_ind_dat,
+                time_ind=time_ind_dat,
+                verbose=TRUE)
 
     return(mod)
 }
@@ -151,11 +151,11 @@ tidy_zibr_results <- function(mod){
         parameter=c(rep("logistic", nrow(mod$logistic_est_table)),
                     rep("beta", nrow(mod$beta_est_table))),
         term=c(row.names(mod$logistic_est_table),
-               row.names(mod$beta_est_table)),
+                row.names(mod$beta_est_table)),
         estimate=c(mod$logistic_est_table[,"Estimate"],
-                   mod$beta_est_table[,"Estimate"]),
+                    mod$beta_est_table[,"Estimate"]),
         p.value=c(mod$logistic_est_table[,"Pvalue"],
-                  mod$beta_est_table[,"Pvalue"]),
+                    mod$beta_est_table[,"Pvalue"]),
         joint.p=rep(NA,
                     nrow(mod$logistic_est_table) + nrow(mod$beta_est_table))
         )
@@ -219,7 +219,7 @@ map_zibr_termnames <- function(data, real.names){
 #'
 run_single_lm <- function(formula, data){
     mod <- lm(as.formula(formula),
-              data=data)
+                data=data)
     return(mod)
 }
 
@@ -241,7 +241,7 @@ run_single_lm <- function(formula, data){
 #'
 run_single_lmer <- function(formula, data){
     mod <- lmerTest::lmer(as.formula(formula),
-              data=data)
+                data=data)
     return(mod)
 }
 
@@ -255,7 +255,7 @@ run_single_lmer <- function(formula, data){
 #' @export
 #' @examples
 #' data <- data.frame(a=c(0.1, 0.2, 0.3, 0.4),
-#'                    b=c(0, 0, 1, 1))
+#'                  b=c(0, 0, 1, 1))
 #'
 #' # This would raise an error about rows 3 and 4
 #' try(check_for_ones(data))
@@ -267,8 +267,8 @@ check_for_ones <- function(feature.table){
     if(length(unique.rownames.with.ones) > 0){
         rownames.string <- paste(unique.rownames.with.ones, collapse=", ")
         stop("The following rows contains a value of one ",
-             "which the zero-inflated beta regression cannot handle: ",
-              rownames.string)
+            "which the zero-inflated beta regression cannot handle: ",
+            rownames.string)
     }
 }
 
@@ -326,9 +326,8 @@ filter_undetected <- function(feature.table){
 #'
 get_random_fx <- function(form){
     vars <- vapply(lme4::findbars(form),
-                   FUN = function(x) as.character(x)[3],
-                   FUN.VALUE = character(1))
-
+                    FUN = function(x) as.character(x)[3],
+                    FUN.VALUE = character(1))
 
     if(length(vars) == 0){
         return(NULL)
@@ -366,7 +365,7 @@ get_random_fx <- function(form){
 #' @keywords internal
 #'
 .prepare_data_mtxDE <- function(feature.table, metadata,
-                               formula, sampleID, zibr_time_ind){
+                                formula, sampleID, zibr_time_ind){
     # merge the feature table and metadata based on the rownames
     metadata.vars <- c(all.vars(as.formula(formula)), sampleID)
 
@@ -382,8 +381,8 @@ get_random_fx <- function(form){
     }
 
     data <- merge(feature.table,
-                  metadata[,c(metadata.vars, zibr_time_ind)],
-                  by.x="row.names", by.y=sampleID)
+                metadata[,c(metadata.vars, zibr_time_ind)],
+                by.x="row.names", by.y=sampleID)
     return(data)
 }
 
@@ -419,7 +418,7 @@ get_random_fx <- function(form){
 #'
 #' @keywords internal
 #'
-.run_single_regssion_mtxDE <- function(data, reg.method,
+.run_single_regression_mtxDE <- function(data, reg.method,
                                         col, formula,
                                         fixed.vars=NULL, 
                                         random.effects.vars=NULL,
@@ -487,9 +486,9 @@ get_random_fx <- function(form){
 #' @keywords internal
 #'
 .run_regressions_mtxDE <- function(data, reg.method,
-                                  feature.table, formula,
-                                  zero_prop_from_formula,
-                                  zibr_time_ind, ncores, show_progress){
+                                    feature.table, formula,
+                                    zero_prop_from_formula,
+                                    zibr_time_ind, ncores, show_progress){
     if(reg.method=="zibr"){
         form.as.form <- as.formula(formula)
         random.effects.vars <- get_random_fx(form.as.form)
@@ -510,9 +509,9 @@ get_random_fx <- function(form){
     }
     # Loop through each column and run the regression
     mod.summaries <- foreach::foreach(col=colnames(feature.table),
-                                      .combine=rbind,
-                                      .options.snow = doSNOWopts) %dopar% {
-    .run_single_regssion_mtxDE(data, reg.method,
+                                        .combine=rbind,
+                                        .options.snow = doSNOWopts) %dopar% {
+    .run_single_regression_mtxDE(data, reg.method,
                                 col, formula,
                                 fixed.vars, random.effects.vars,
                                 zibr_time_ind,
@@ -613,27 +612,27 @@ get_random_fx <- function(form){
 #'                        show_progress=FALSE)
 #'
 run_mtxDE <- function(formula, feature.table, metadata, sampleID,
-                      reg.method="zibr", padj="fdr",
-                      zero_prop_from_formula=TRUE,
-                      zibr_time_ind=NULL,
-                      ncores=1,
-                      show_progress=TRUE
-                      ){
+                        reg.method="zibr", padj="fdr",
+                        zero_prop_from_formula=TRUE,
+                        zibr_time_ind=NULL,
+                        ncores=1,
+                        show_progress=TRUE){
     if(reg.method %in% c("zibr", "gamlss")){
         check_for_ones(feature.table) # Beta regression can't handle ones
         feature.table <- filter_undetected(feature.table) # or undetected feats
     }
     formula <- paste0(" ~ ", formula)
     data <- .prepare_data_mtxDE(feature.table, metadata,
-                               formula, sampleID, zibr_time_ind)
+                                formula, sampleID, zibr_time_ind)
 
     # Loop through each column and run the regression
     mod.summaries <- .run_regressions_mtxDE(data, reg.method,
-                                  feature.table, formula,
-                                  zero_prop_from_formula,
-                                  zibr_time_ind, ncores, show_progress)
+                                            feature.table, formula,
+                                            zero_prop_from_formula,
+                                            zibr_time_ind, 
+                                            ncores, show_progress)
     # Calling this from HoMiCorr
     adjusted.mod.summaries <- .adjust_p_values(mod.summaries, reg.method,
-                                              zero_prop_from_formula, padj)
+                                                zero_prop_from_formula, padj)
     return(adjusted.mod.summaries)
 }
