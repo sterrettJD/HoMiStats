@@ -7,11 +7,21 @@
 check_for_ones(feature.table)
 }
 \arguments{
-\item{feature.table}{A dataframe, where rows are samples, and columns are genes/features. Row names should be sample IDs.}
+\item{feature.table}{A dataframe, where rows are samples,
+and columns are genes/features. Row names should be sample IDs.}
 }
 \value{
 Nothing
 }
 \description{
-The zero-inflated beta regression can't handle values of 1. This checks for them and raises an error if they exist.
+The zero-inflated beta regression can't handle values of 1.
+This checks for them and raises an error if they exist.
+}
+\examples{
+data <- data.frame(a=c(0.1, 0.2, 0.3, 0.4),
+                 b=c(0, 0, 1, 1))
+
+# This would raise an error about rows 3 and 4
+try(check_for_ones(data))
+
 }

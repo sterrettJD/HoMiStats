@@ -1,2 +1,11 @@
-^.*\.Rproj$
+^benchmarking/
+^.*\.pdf$
+^.*\.tar\.gz$
+^\.DS_Store$
+^\.git$
+^\.github$
+^\.gitignore$
+^\.Rhistory$
 ^\.Rproj\.user$
+^HoMiStats\.Rproj$
+^notes/

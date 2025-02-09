@@ -2,16 +2,22 @@
 % Please edit documentation in R/targeted.R
 \name{get_go_term_human_genes}
 \alias{get_go_term_human_genes}
-\title{Pull all human genes corresponding to a GO term of interest}
+\title{Retrieve human genes associated with a GO term}
 \usage{
 get_go_term_human_genes(go.term)
 }
 \arguments{
-\item{go.term}{A string version of a GO term, such as "GO:0042110"}
+\item{go.term}{A character string representing a GO term,
+such as "GO:0042110".}
 }
 \value{
-a vector of gene names corresponding to the GO term of interest
+A character vector of human gene symbols associated with the GO term.
 }
 \description{
-Looks for all genes corresponding to the GO term of interest
+Fetches all human genes that are annotated with a given
+Gene Ontology (GO) term.
+}
+\examples{
+genes <- get_go_term_human_genes("GO:0000009")
+
 }

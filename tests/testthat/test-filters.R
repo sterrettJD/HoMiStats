@@ -4,7 +4,8 @@ test_that("filter_low_abundance_by_mean filters low abundance features", {
         sample2 = c(0.2, 0.3, 0.4, 0.5),
         sample3 = c(0.3, 0.4, 0.5, 0.6)
     )
-    df <- data.frame(t(df)) #originally wrote this transposed and would rather just have R flip it
+    # originally wrote this transposed and would rather just have R flip it
+    df <- data.frame(t(df)) 
     colnames(df) <- c("feature1", "feature2", "feature3", "feature4")
 
     threshold <- 0.3
@@ -36,7 +37,8 @@ test_that("filter_low_variance filters low variance features", {
     threshold <- 0.01
     filtered_df <- filter_low_variance(df, threshold)
 
-    # Check that the filtered dataframe has the correct number of rows and columns
+    # Check that the filtered dataframe 
+    # has the correct number of rows and columns
     expect_equal(ncol(filtered_df), 3)
 
     # Check that the filtered dataframe has the correct values
@@ -58,7 +60,8 @@ test_that("filter_sparse_features filters low variance features", {
     threshold <- 0.1
     filtered_df <- filter_sparse_features(df, threshold)
 
-    # Check that the filtered dataframe has the correct number of rows and columns
+    # Check that the filtered dataframe has 
+    # the correct number of rows and columns
     expect_equal(ncol(filtered_df), 2)
 
     # Check that the filtered dataframe has the correct values

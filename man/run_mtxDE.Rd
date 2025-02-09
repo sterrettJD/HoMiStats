@@ -11,36 +11,103 @@ run_mtxDE(
   sampleID,
   reg.method = "zibr",
   padj = "fdr",
-  zero_prop_from_formula = T,
+  zero_prop_from_formula = TRUE,
   zibr_time_ind = NULL,
   ncores = 1,
   show_progress = TRUE
 )
 }
 \arguments{
-\item{formula}{the right hand side of the regression formula to be used for each feature. All variables in this formula should be of a numeric type (factors should be dummy coded, such that the reference value is 0).}
+\item{formula}{the right hand side of the regression formula to be used
+for each feature.
+All variables in this formula should be of a numeric type
+(factors should be dummy coded, such that the reference value is 0).}
 
-\item{feature.table}{A dataframe, where rows are samples, and columns are genes/features. Row names should be sample IDs.}
+\item{feature.table}{A dataframe, where rows are samples,
+and columns are genes/features.
+Row names should be sample IDs.}
 
-\item{metadata}{The metadata dataframe, where rows are samples and columns are features}
+\item{metadata}{The metadata dataframe,
+where rows are samples and columns are features}
 
-\item{sampleID}{A string denoting name of the column in metadata with sample IDs, which should be used to merge metadata with the feature table's rownames}
+\item{sampleID}{A string denoting name of the column in metadata
+with sample IDs,
+which should be used to merge metadata with the feature table's rownames}
 
-\item{reg.method}{A string denoting the method to use for regression. Options include "zibr" (Zero-inflated beta regression with random effects), "gamlss" (Zero-inflated beta regression implemented via GAMLSS), "lm" (linear regression), and "lmer" (linear mixed effects regression implemented via lme4 and lmerTest).}
+\item{reg.method}{A string denoting the method to use for regression.
+Options include "zibr" (Zero-inflated beta regression with random effects),
+"gamlss" (Zero-inflated beta regression implemented via GAMLSS),
+"lm" (linear regression), and
+"lmer" (linear mixed effects regression implemented via lme4 and lmerTest).}
 
-\item{padj}{A string denoting the p value adustment method. Options can be checked using 'p.adjust.methods'}
+\item{padj}{A string denoting the p value adustment method.
+Options can be checked using 'p.adjust.methods'}
 
-\item{zero_prop_from_formula}{In ZIBR zero-inflated beta regression, should the zeroes be modeled with the provided formula? Default is TRUE.}
+\item{zero_prop_from_formula}{In ZIBR zero-inflated beta regression,
+should the zeroes be modeled with the provided formula? Default is TRUE.}
 
-\item{ncores}{An integer denoting the number of cores to use if running in parallel. Defaults to 1 (not parallelized).}
+\item{zibr_time_ind}{A string denoting the name of the time column
+for ZIBR.
+Defaults to NULL, which is implemented as a constant time value in ZIBR
+to not fit a time effect.
+This argument does nothing if reg.method is not "zibr".}
+
+\item{ncores}{An integer denoting the number of cores to use
+if running in parallel. Defaults to 1 (not parallelized).}
 
 \item{show_progress}{A boolean denoting if a progress bar should be shown.}
-
-\item{zibr_zibr_time_ind}{A string denoting the name of the time column for ZIBR. Defaults to NULL, which is implemented as a constant time value in ZIBR to not fit a time effect. This argument does nothing if reg.method is not "zibr".}
 }
 \value{
 a dataframe with differential expression results
 }
 \description{
-Regresses each feature using the formula provided and returns the statistical summary for each feature
+Regresses each feature using the formula provided and
+returns the statistical summary for each feature
+}
+\examples{
+feature.table <- data.frame(a=c(0.1, 0.0, 0.0, 0.0),
+                               b=c(0.5, 0.5, 0.5, 0.4),
+                               c=c(0.4, 0.5, 0.0, 0.0),
+                               d=c(0.0, 0.0, 0.5, 0.6))
+row.names(feature.table) <- paste0("sample_", seq_len(4))
+metadata <- data.frame(SampleID=paste0("sample_", seq_len(4)),
+                          phenotype=c(0,0,1,1),
+                          participant=c(0,1,0,1),
+                          timepoint=c(0,0,1,1))
+
+zibr.no.random.fx <- run_mtxDE("phenotype",
+                               feature.table,
+                               metadata,
+                               sampleID="SampleID",
+                               show_progress=FALSE)
+
+# Use ZIBR with random effects
+zibr.with.random.fx <- run_mtxDE("phenotype + (1|participant)",
+                                 feature.table,
+                                 metadata, sampleID="SampleID",
+                                 zibr_time_ind="timepoint",
+                                 show_progress=FALSE)
+
+# Use gamlss zero inflated beta regression with no random effects
+gamlss.no.random.fx <- run_mtxDE("phenotype", feature.table,
+                                  metadata, sampleID="SampleID",
+                                  reg.method="gamlss",
+                                  show_progress=FALSE)
+
+# Use a linear model
+lm.res <- run_mtxDE("phenotype",
+                     feature.table,
+                     metadata,
+                     reg.method="lm",
+                     sampleID="SampleID",
+                     show_progress=FALSE)
+
+# Use a linear model with random effects for participant
+lmer.res <- run_mtxDE("phenotype + (1|participant)",
+                       feature.table,
+                       metadata,
+                       reg.method="lmer",
+                       sampleID="SampleID",
+                       show_progress=FALSE)
+
 }

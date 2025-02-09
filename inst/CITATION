@@ -1,0 +1,8 @@
+citHeader("To cite HoMiStats in publications, or otherwise credit, please use:")
+
+citEntry(entry = "Unpublished",
+  author = "John D. Sterrett",
+  title = "Host-microbiome dual transcriptome analysis with HoMi profiles host-microbe crosstalk at the colonic mucosa",
+  note = "HoMiStats",
+  year = 2025
+)

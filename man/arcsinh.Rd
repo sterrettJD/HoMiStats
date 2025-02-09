@@ -2,20 +2,31 @@
 % Please edit documentation in R/transformers.R
 \name{arcsinh}
 \alias{arcsinh}
-\title{Perform a inverse hyperbolic sin transformation}
+\title{Apply arcsinh transformation to a numeric vector}
 \usage{
 arcsinh(vec, scaling.factor = 100, norm.by.scaling = TRUE)
 }
 \arguments{
-\item{vec}{The numerical vector to be transformed}
+\item{vec}{A numeric vector to be transformed.}
 
-\item{scaling.factor}{A scaling factor by which to multiply the values prior to transforming. Increasing this scaling factor increases how much of the lower end of the data is treated linearly by the transformation. This is the opposite of the standard "cofactor" used with the arcsinh transformation in flow cyotmetry, as we're working with input data < 1, so we likely need to scale our values up.}
+\item{scaling.factor}{A scaling factor applied before transformation.
+Increasing this factor increases how much of the lower end of the data
+is treated linearly.}
 
-\item{norm.by.scaling}{Boolean defining whether transformed data should be normalized (divided) by the arcsinh of the scaling factor. This is useful if you're using a model such as the beta regression implemented in mtxDE, which cannot handle values >= 1.}
+\item{norm.by.scaling}{Boolean indicating whether transformed data
+should be normalized by the arcsinh of the scaling factor.}
 }
 \value{
-The transformed vector.
+A transformed numeric vector.
 }
 \description{
-Performs an arcsinh transformation, with scaling and adjustment. The arcsinh transformation behaves like a log transformation for large values but linearly for small values, and it can handle 0s.
+Performs an arcsinh transformation with scaling.
+The arcsinh function behaves like a log transformation for large values
+but remains linear for small values and can handle zeros.
+}
+\examples{
+vec <- c(0.01, 0.1, 1, 10, 100)
+arcsinh(vec, scaling.factor=100, norm.by.scaling=TRUE)
+arcsinh(vec, scaling.factor=50, norm.by.scaling=FALSE)
+
 }

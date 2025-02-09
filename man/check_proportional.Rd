@@ -2,20 +2,30 @@
 % Please edit documentation in R/transformers.R
 \name{check_proportional}
 \alias{check_proportional}
-\title{Make sure data are proportional within a row}
+\title{Check if feature table rows sum to 1}
 \usage{
 check_proportional(feature.table, tolerance = 0.001, soft = FALSE)
 }
 \arguments{
-\item{feature.table}{A dataframe, where rows are samples, and columns are genes/features. Row names should be sample IDs.}
+\item{feature.table}{A dataframe where rows are samples
+and columns are features.}
 
-\item{tolerance}{Numerical value for tolerance in checking if samples sum to 1.}
+\item{tolerance}{Numerical value for tolerance in checking if rows sum to 1.}
 
-\item{soft}{Boolean. If true, this function only warns.}
+\item{soft}{Boolean.
+If TRUE, the function only warns instead of stopping execution.}
 }
 \value{
-Nothing
+Nothing; throws a warning or error if the check fails.
 }
 \description{
-Some transformations are based on proportional data, where samples sum to 1. This checks that that's the case.
+Some transformations require proportional data
+where sample rows sum to 1. This function checks that condition.
+}
+\examples{
+feature.table <- data.frame(gene1 = c(0.4, 0.5, 0.6),
+                            gene2 = c(0.6, 0.5, 0.4))
+rownames(feature.table) <- c("sample1", "sample2", "sample3")
+check_proportional(feature.table, soft=TRUE)
+
 }

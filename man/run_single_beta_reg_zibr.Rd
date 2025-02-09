@@ -14,15 +14,28 @@ run_single_beta_reg_zibr(
 )
 }
 \arguments{
-\item{logistic_cov}{a string (or vector of strings) indicating the variables to be used as covariates predicting whether a value is 0 (in the logistic portion of ZIBR). Defaults to NULL, for which just an intercept will be fit for the logistic portion of ZIBR.}
+\item{logistic_cov}{a string (or vector of strings)
+indicating the variables to be used as covariates
+predicting whether a value is 0 (in the logistic portion of ZIBR).
+Defaults to NULL,
+for which just an intercept will be fit for the logistic portion of ZIBR.}
 
-\item{beta_cov}{a string (or vector of strings) indicating the variables to be used as covariates predicting the relative abundance of a non-zero value (in the beta portion of ZIBR)}
+\item{beta_cov}{a string (or vector of strings)
+indicating the variables to be used as covariates predicting
+the relative abundance of a non-zero value (in the beta portion of ZIBR)}
 
-\item{Y}{a string indicating the the column with zero-inflated relative abundance data}
+\item{Y}{a string indicating the the column
+with zero-inflated relative abundance data}
 
-\item{subject_ind}{a string indicating the column with participant ID information for longitudinal data. Defaults to NULL, which creates unique participant ID for each sample in the case of non-longitudinal, cross-sectional data}
+\item{subject_ind}{a string indicating the column
+with participant ID information for longitudinal data.
+Defaults to NULL,
+which creates unique participant ID for each sample
+in the case of non-longitudinal, cross-sectional data}
 
-\item{time_ind}{a string indication the column with timepoint data. Defaults to NULL, which creates a constant data column for non-longitudinal, cross-sectional data}
+\item{time_ind}{a string indication the column with timepoint data.
+Defaults to NULL, which creates a constant data column for non-longitudinal,
+cross-sectional data}
 
 \item{data}{A dataframe to be used in the regression}
 }
@@ -31,4 +44,32 @@ the resulting model
 }
 \description{
 runs a zero-inflated beta regression using ZIBR
+}
+\examples{
+data <- data.frame(y=c(0.1, 0, 0.3, 0.4),
+                   treated=c(0, 0, 0, 1),
+                   participant=c(1, 2, 1, 2),
+                   timepoint=c(0, 0, 1, 1))
+
+# This runs ZIBR with a constant amount of zero-inflation
+# for all participants and random intercepts for participant
+run_single_beta_reg_zibr(beta_cov="treated", Y="y",
+                         subject_ind="participant",
+                         time_ind="timepoint",
+                         data=data)
+
+# This runs ZIBR where treatment impacts both whether a feature might be zero
+# and the abundance of that feature (and random intercepts for participant)
+run_single_beta_reg_zibr(logistic_cov="treated",
+                         beta_cov="treated",
+                         Y="y",
+                         subject_ind="participant",
+                         time_ind="timepoint",
+                         data=data)
+
+# This can also be run without random effects
+# by not specifying participant or timepoint
+run_single_beta_reg_zibr(beta_cov="treated", Y="y",
+                         data=data)
+
 }

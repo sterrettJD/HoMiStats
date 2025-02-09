@@ -2,28 +2,76 @@
 % Please edit documentation in R/targeted.R
 \name{go_targeted_diffex}
 \alias{go_targeted_diffex}
-\title{Run targeted differential expression analysis in DESeq2 for a subset of genes}
+\title{Run targeted differential expression analysis using DESeq2}
 \usage{
 go_targeted_diffex(
   targeted.genes,
   host.genes,
   microbial.gene,
   microbial.genes,
-  verbose = T
+  verbose = TRUE
 )
 }
 \arguments{
-\item{targeted.genes}{A vector of host gene names}
+\item{targeted.genes}{A character vector of host gene names
+to include in the analysis.}
 
-\item{host.genes}{A matrix or data.frame with the host gene count data}
+\item{host.genes}{A matrix or data.frame containing host gene count data,
+with rows as genes and columns as samples.}
 
-\item{microbial.gene}{The name of the microbial gene to be used}
+\item{microbial.gene}{A string specifying the microbial gene of interest.}
 
-\item{microbial.genes}{A matrix or data.frame with the microbial gene count data}
+\item{microbial.genes}{A matrix or data.frame containing microbial
+gene count data.}
+
+\item{verbose}{Logical indicating whether to print progress messages
+(default: TRUE).}
 }
 \value{
-A dataframe of DESeq2 results
+A data.frame with DESeq2 results,
+including columns for baseMean, log2FoldChange,
+standard error (lfcSE),
+statistical significance (stat),
+p-value, and adjusted p-value (padj).
 }
 \description{
-Uses the vector of genes provided to subset the data then run DESeq2
+Performs differential expression analysis in DESeq2
+on a subset of host genes,
+based on their association with microbial gene expression.
+}
+\examples{
+set.seed(123)
+GMM.matrix <- suppressMessages(get_GMM_matrix())
+mtx.feature.names <- c("k02005_hly_d_family_secretion_protein",
+                  "k02007_cobalt_nickel_transport_system_permease_protein",
+                  "k00248_butyrate_gene_1",
+                  "K00634_butyrate_gene_2",
+                  "K00929_butyrate_gene_3")
+
+# simulate some host data
+relevant.host.genes <- c("PIGV","ALG12")
+nonrelevant.host.genes <- c("goofballgene", "sillygoosegene")
+all.host.genes <- c(relevant.host.genes, nonrelevant.host.genes)
+host.gene.counts <- data.frame(vapply(X = all.host.genes,
+                                   FUN = function(x) {
+                                         rnbinom(n = 1000,
+                                         size = 400000, prob = runif(1))},
+                                   FUN.VALUE = numeric(1000)
+                                    )
+                            )
+
+# simulate some mtx data
+microbial.gene <- "k00248_butyrate_gene_1"
+microbial.gene.counts <- data.frame(vapply(X=mtx.feature.names,
+                                           FUN=function(x){
+                                               rnorm(n=1000, mean=100)},
+                                           FUN.VALUE=numeric(1000))
+                                    )
+
+results <- go_targeted_diffex(targeted.genes=relevant.host.genes,
+                              host.genes=t(host.gene.counts),
+                              microbial.gene=microbial.gene,
+                              microbial.genes=microbial.gene.counts,
+                              verbose=FALSE)
+
 }

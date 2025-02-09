@@ -17,3 +17,20 @@ Nothing
 \description{
 Ensures there are no intersecting values between two vectors
 }
+\examples{
+# Simulate data
+mtx <- data.frame(a1=c(0.1, 0.0, 0.0, 0.0),
+                 b1=c(0.5, 0.5, 0.5, 0.4),
+                 c1=c(0.4, 0.5, 0.0, 0.0),
+                 d1=c(0.0, 0.0, 0.5, 0.6))
+host <- data.frame(a2=c(0.5, 0.0, 0.0, 0.0),
+                 b2=c(0.5, 0.5, 0.5, 0.4),
+                 c2=c(0.4, 0.5, 0.0, 0.0),
+                 d2=c(0.0, 0.0, 0.5, 0.6))
+
+# This should not raise an error
+check_duplicated_colnames(colnames(mtx), colnames(host))
+# This should raise an error
+try(check_duplicated_colnames(colnames(mtx), c("a1")))
+
+}

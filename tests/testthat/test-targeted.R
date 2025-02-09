@@ -10,10 +10,10 @@ test_that("we can grab gene names from go terms", {
 test_that("we can grab KOs from GMM matrix", {
     GMM.matrix <- suppressMessages(get_GMM_matrix())
     mtx.feature.names <- c("k02005_hly_d_family_secretion_protein",
-                           "k02007_cobalt_nickel_transport_system_permease_protein",
-                           "k00248_butyrate_gene_1",
-                           "K00634_butyrate_gene_2",
-                           "K00929_butyrate_gene_3")
+                    "k02007_cobalt_nickel_transport_system_permease_protein",
+                    "k00248_butyrate_gene_1",
+                    "K00634_butyrate_gene_2",
+                    "K00929_butyrate_gene_3")
 
     actual.features <- features_from_gmm_df(GMM="butyrate production I",
                                             GMM.kos.df=GMM.matrix,
@@ -29,31 +29,35 @@ test_that("we can grab KOs from GMM matrix", {
 
 test_that("we can run DESeq2 for a KO", {
     mtx.feature.names <- c("k02005_hly_d_family_secretion_protein",
-                           "k02007_cobalt_nickel_transport_system_permease_protein",
-                           "k00248_butyrate_gene_1",
-                           "K00634_butyrate_gene_2",
-                           "K00929_butyrate_gene_3")
+                    "k02007_cobalt_nickel_transport_system_permease_protein",
+                    "k00248_butyrate_gene_1",
+                    "K00634_butyrate_gene_2",
+                    "K00929_butyrate_gene_3")
 
     # simulate some host data
     relevant.host.genes <- c("PIGV","ALG12")
     nonrelevant.host.genes <- c("goofballgene", "sillygoosegene")
     all.host.genes <- c(relevant.host.genes, nonrelevant.host.genes)
-    # certain seeds were causing dispersion issues, so just manually setting that here
+    # certain seeds were causing dispersion issues,
+    # so just manually setting that here
     set.seed(2)
-    host.gene.counts <- data.frame(sapply(X=all.host.genes,
-                                         FUN=function(x){
-                                             rnbinom(n=1000, size=400000, prob=runif(1))
-                                             }
-                                         )
-                                  )
+    host.gene.counts <- data.frame(vapply(X = all.host.genes,
+                                    FUN = function(x) {
+                                                        rnbinom(n = 1000,
+                                                                size = 400000,
+                                                                prob = runif(1))
+                                                        },
+                                    FUN.VALUE = numeric(1000)
+                                      )
+                               )
+
     # simulate some mtx data
     microbial.gene <- "k00248_butyrate_gene_1"
-    microbial.gene.counts <- data.frame(sapply(X=mtx.feature.names,
-                                         FUN=function(x){
-                                             rbinom(n=1000, size=1000, prob=0.05)
-                                             }
-                                         )
-                                  )
+    microbial.gene.counts <- data.frame(vapply(X=mtx.feature.names,
+                                            FUN=function(x){
+                                                rnorm(n=1000, mean=100)},
+                                            FUN.VALUE=numeric(1000))
+                                     )
 
     results <- suppressMessages(
                suppressWarnings(
@@ -61,7 +65,7 @@ test_that("we can run DESeq2 for a KO", {
                                   host.genes=t(host.gene.counts),
                                   microbial.gene=microbial.gene,
                                   microbial.genes=microbial.gene.counts,
-                                  verbose=F)
+                                  verbose=FALSE)
                    )
                 )
 
@@ -77,34 +81,36 @@ test_that("we can run DESeq2 for a KO", {
 test_that("we can run DESeq2 for KOs within a GMM", {
     GMM.matrix <- suppressMessages(get_GMM_matrix())
     mtx.feature.names <- c("k02005_hly_d_family_secretion_protein",
-                           "k02007_cobalt_nickel_transport_system_permease_protein",
-                           "k00248_butyrate_gene_1",
-                           "K00634_butyrate_gene_2",
-                           "K00929_butyrate_gene_3")
+                    "k02007_cobalt_nickel_transport_system_permease_protein",
+                    "k00248_butyrate_gene_1",
+                    "K00634_butyrate_gene_2",
+                    "K00929_butyrate_gene_3")
 
     # simulate some host data
     relevant.host.genes <- c("PIGV","ALG12")
     nonrelevant.host.genes <- c("goofballgene", "sillygoosegene")
     all.host.genes <- c(relevant.host.genes, nonrelevant.host.genes)
     set.seed(1)
-    host.gene.counts <- data.frame(sapply(X=all.host.genes,
-                                          FUN=function(x){
-                                              rnbinom(n=1000, size=400000, prob=runif(1))
-                                          }
-    )
-    )
+    host.gene.counts <- data.frame(vapply(X = all.host.genes,
+                                    FUN = function(x) {
+                                                        rnbinom(n = 1000,
+                                                                size = 400000,
+                                                                prob = runif(1))
+                                                        },
+                                    FUN.VALUE = numeric(1000)
+                                      )
+                               )
     # simulate some mtx data
     microbial.gene <- "k00248_butyrate_gene_1"
-    microbial.gene.counts <- data.frame(sapply(X=mtx.feature.names,
-                                               FUN=function(x){
-                                                   rnorm(n=1000, mean=100)
-                                               }
-    )
-    )
+    microbial.gene.counts <- data.frame(vapply(X=mtx.feature.names,
+                                            FUN=function(x){
+                                                rnorm(n=1000, mean=100)},
+                                            FUN.VALUE=numeric(1000))
+                                     )
 
     mtx.features.to.test <- features_from_gmm_df("butyrate production I",
-                                                 GMM.matrix,
-                                                 mtx.feature.names=mtx.feature.names)
+                                            GMM.matrix,
+                                            mtx.feature.names=mtx.feature.names)
     results <- suppressMessages(
         suppressWarnings(
             GO_targeted_for_each_KO_within_GMM(go.terms=c("GO:0000009"),

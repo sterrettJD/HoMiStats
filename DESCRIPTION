@@ -1,19 +1,28 @@
 Package: HoMiStats
 Type: Package
 Title: Stats for host-microbiome dual transcriptomics
-Version: 0.1.0
-Author: John Sterrett
-Maintainer: John Sterrett <john.sterrett@colorado.edu>
-Description: Stats for host-microbiome dual transcriptomics
-    Contains tools for metatranscriptome differential expression and
-    for creating co-occurrence networks between host and microbial transcripts
-Imports: gamlss, gamlss.dist, broom, broom.mixed, ggplot2, tidyverse, lme4, ZIBR, dplyr, lmerTest, Matrix, parallel, foreach, doParallel, doSNOW, plyr, Rfast, AnnotationDbi, org.Hs.eg.db, DESeq2
-License: MIT
+Version: 0.99.0
+Authors@R: person("John", "Sterrett", 
+                email = "sterrettjd@protonmail.com", 
+                role = c("aut", "cre"),
+                comment = c(ORCID = "0000-0002-0931-7181"))
+Description: Statistical tooling for host-microbiome dual transcriptomics.
+    HoMiStats contains tools for metatranscriptome differential expression and
+    for creating co-occurrence networks between host and microbial transcripts.
+    Additionally, there are tools for transforming data and 
+    performing targeted (knowledge-guided) analyses to look for 
+    biologically-plausible associations in gene expression between 
+    hosts and microbes.
+Imports: gamlss, gamlss.dist, broom, broom.mixed, ggplot2, tidyverse, lme4, ZIBR, dplyr, lmerTest, Matrix, parallel, foreach, doParallel, doSNOW, plyr, Rfast, AnnotationDbi, org.Hs.eg.db, DESeq2, stats, utils, stringr
+License: MIT + file LICENSE
 Encoding: UTF-8
-LazyData: true
 Suggests: 
     knitr,
     rmarkdown,
     testthat (>= 3.0.0)
 VignetteBuilder: knitr
 Config/testthat/edition: 3
+URL: https://github.com/sterrettJD/HoMiStats
+BugReports: https://github.com/sterrettJD/HoMiStats/issues
+biocViews: GeneExpression, Regression, DifferentialExpression, Transcriptomics, Metagenomics, Microbiome, KEGG
+RoxygenNote: 7.3.2

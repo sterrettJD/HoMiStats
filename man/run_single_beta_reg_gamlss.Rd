@@ -7,17 +7,28 @@
 run_single_beta_reg_gamlss(
   formula,
   data,
-  controller = gamlss.control(trace = FALSE)
+  controller = gamlss::gamlss.control(trace = FALSE)
 )
 }
 \arguments{
 \item{formula}{the full formula to be used in the regression}
 
 \item{data}{A dataframe to be used in the regression}
+
+\item{controller}{The `gamlss::gamlss.control()` object to be used by
+the regression}
 }
 \value{
 the resulting model
 }
 \description{
 runs a zero-inflated beta distribution GAM using gamlss
+}
+\examples{
+data <- data.frame(a=c(0.1, 0.2, 0.3, 0.4),
+                   b=c(0, 0, 1, 1))
+
+run_single_beta_reg_gamlss("a ~ b",
+                           data=data)
+
 }

@@ -12,17 +12,29 @@ get_GMM_matrix(
 )
 }
 \arguments{
-\item{filepath}{The filepath at which the GMMs file should be downloaded or found.}
+\item{filepath}{The filepath at which
+the GMMs file should be downloaded or found.}
 
-\item{version}{The version of GMMs to be used. As of April '24, the newest version is v1.07. This is used in pulling the data from the Raes lab GMMs github, so old versions that are not on the master branch may cause the filepath to not work.}
+\item{version}{The version of GMMs to be used.
+As of April '24, the newest version is v1.07.
+This is used in pulling the data from the Raes lab GMMs github,
+so old versions that are not on the master branch
+may cause the filepath to not work.}
 
-\item{cleanup}{A boolean denoting if the filepath should be removed at the end of this function.}
+\item{quietly_download}{A boolean denoting if the GMMs file
+should be downloaded quietly}
 
-\item{quietly}{A boolean denoting if the GMMs file should be downloaded quietly}
+\item{cleanup}{A boolean denoting if the filepath
+should be removed at the end of this function.}
 }
 \value{
 A tabular version of the GMMs as a dataframe
 }
 \description{
-Download the GMM data (if needed) and parses this file to return a table with the GMMs and corresponding KOs
+Download the GMM data (if needed) and
+parses this file to return a table with the GMMs and corresponding KOs
+}
+\examples{
+GMM.df <- get_GMM_matrix()
+
 }

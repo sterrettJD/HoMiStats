@@ -57,9 +57,9 @@ test_that("check_for_ones works", {
                                   b=c(1, 0))
 
     expect_error(check_for_ones(should.error.df),
-                 "The following rows contains a value of one which the zero-inflated beta regression cannot handle: 1")
-    expect_error(check_for_ones(should.error.df),
-                 "The following rows contains a value of one which the zero-inflated beta regression cannot handle: 2")
+                 paste0("The following rows contains a value of one ",
+                 "which the zero-inflated beta regression cannot handle: ",
+                 "(1, 2|2, 1)"))
 
     no.error.df <- data.frame(a=c(0.1, 0.2),
                               b=c(0.9, 0.8))
@@ -72,13 +72,14 @@ test_that("run_mtxDE works", {
                                 b=c(0.5, 0.5, 0.5, 0.4),
                                 c=c(0.4, 0.5, 0.0, 0.0),
                                 d=c(0.0, 0.0, 0.5, 0.6))
-    row.names(feature.table) <- paste0("sample_", 1:4)
-    metadata <- data.frame(SampleID=paste0("sample_", 1:4),
+    row.names(feature.table) <- paste0("sample_", seq_len(4))
+    metadata <- data.frame(SampleID=paste0("sample_", seq_len(4)),
                            phenotype=c(0,0,1,1),
                            participant=c(0,1,0,1),
                            timepoint=c(0,0,1,1))
 
-    expected.zibr.nolong <- read.csv("data/expected_mtxDE_results_zibrnolong.csv")
+    expected.zibr.nolong <- read.csv(
+                            "data/expected_mtxDE_results_zibrnolong.csv")
     expected.zibr.long <- read.csv("data/expected_mtxDE_results_zibrlong.csv")
     expected.gamlss <- read.csv("data/expected_mtxDE_results_gamlss.csv")
 
@@ -145,11 +146,11 @@ test_that("ZIBR timepoint errors", {
                                 b=c(0.5, 0.5, 0.5, 0.4),
                                 c=c(0.4, 0.5, 0.0, 0.0),
                                 d=c(0.0, 0.0, 0.5, 0.6))
-    row.names(feature.table) <- paste0("sample_", 1:4)
-    metadata <- data.frame(SampleID=paste0("sample_", 1:4),
+    row.names(feature.table) <- paste0("sample_", seq_len(4))
+    metadata <- data.frame(SampleID=paste0("sample_", seq_len(4)),
                            phenotype=c(0,0,1,1),
                            participant=c(0,1,0,1),
-                           unique_participants=1:4,
+                           unique_participants=seq_len(4),
                            timepoint=c(0,0,1,1))
     # Longitudinal but no timepoint column
     expect_error(run_mtxDE("phenotype + (1|participant)",
@@ -157,7 +158,9 @@ test_that("ZIBR timepoint errors", {
                            metadata, sampleID="SampleID",
                            zibr_time_ind=NULL,
                            show_progress=FALSE),
-                 "A timepoint column is necessary if there are longitudinal samples.")
+                 paste0("A timepoint column is necessary ",
+                        "if there are longitudinal samples.")
+                )
     # Not longitudinal with no timepoint column
     expect_no_error(suppressWarnings(
                 run_mtxDE("phenotype + (1|unique_participants)",
@@ -174,8 +177,8 @@ test_that("run_mtxDE works linear models", {
                                 b=c(0.5, 0.5, 0.5, 0.4),
                                 c=c(0.4, 0.5, 0.0, 0.0),
                                 d=c(0.0, 0.0, 0.5, 0.6))
-    row.names(feature.table) <- paste0("sample_", 1:4)
-    metadata <- data.frame(SampleID=paste0("sample_", 1:4),
+    row.names(feature.table) <- paste0("sample_", seq_len(4))
+    metadata <- data.frame(SampleID=paste0("sample_", seq_len(4)),
                            phenotype=c(0,0,1,1),
                            participant=c(0,1,0,1),
                            timepoint=c(0,0,1,1))
@@ -234,8 +237,8 @@ test_that("run_mtxDE works with multiple cores", {
                                 b=c(0.5, 0.5, 0.5, 0.4),
                                 c=c(0.4, 0.5, 0.0, 0.0),
                                 d=c(0.0, 0.0, 0.5, 0.6))
-    row.names(feature.table) <- paste0("sample_", 1:4)
-    metadata <- data.frame(SampleID=paste0("sample_", 1:4),
+    row.names(feature.table) <- paste0("sample_", seq_len(4))
+    metadata <- data.frame(SampleID=paste0("sample_", seq_len(4)),
                            phenotype=c(0,0,1,1),
                            participant=c(0,1,0,1),
                            timepoint=c(0,0,1,1))
@@ -250,3 +253,37 @@ test_that("run_mtxDE works with multiple cores", {
                               show_progress=FALSE))
 })
 
+
+
+test_that("run_mtxDE warns about undetected features", {
+    feature.table <- data.frame(a=c(0.0, 0.0, 0.0, 0.0),
+                                b=c(0.0, 0.0, 0.0, 0.0),
+                                c=c(0.0, 0.0, 0.0, 0.0),
+                                d=c(0.0, 0.0, 0.0, 0.0))
+    row.names(feature.table) <- paste0("sample_", seq_len(4))
+    metadata <- data.frame(SampleID=paste0("sample_", seq_len(4)),
+                           phenotype=c(0,0,1,1),
+                           participant=c(0,1,0,1),
+                           timepoint=c(0,0,1,1))
+
+
+    expect_warning(run_mtxDE("phenotype",
+                              feature.table,
+                              metadata,
+                              reg.method="gamlss",
+                              sampleID="SampleID",
+                              ncores=2,
+                              show_progress=FALSE),
+                   "Undetected features",
+                   perl=TRUE)
+
+    expect_warning(run_mtxDE("phenotype",
+                             feature.table,
+                             metadata,
+                             reg.method="zibr",
+                             sampleID="SampleID",
+                             ncores=2,
+                             show_progress=FALSE),
+                   "Undetected features",
+                   perl=TRUE)
+})

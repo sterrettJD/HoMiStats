@@ -2,15 +2,15 @@
 title: "mtxDE Tutorial and Demonstration"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{my-vignette}
+  %\VignetteIndexEntry{mtxDE Tutorial and Demonstration}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>"
+    collapse = TRUE,
+    comment = "#>"
 )
 ```
 
@@ -24,17 +24,17 @@ library(tidyverse)
 ```{r}
 # Set params
 set.seed(42)
-N <- 5000
+N <- 500
 
 # make the metadata var (effect size is zero)
 treated <- c(rep(0, N/2), rep(1, N/2))
-metadata <- data.frame(sampleID=1:N, treated=treated)
+metadata <- data.frame(sampleID=seq_len(N), treated=treated)
 
 zero.props <- seq(from=0, to=0.99, by=0.01)
 d <- matrix(nrow=N, ncol=100)
-i <- 1
 const.dat <- rnbinom(n=N, size=10, prob=0.1)
 
+i <- 1
 for(zero.prop in zero.props){
     d[,i] <- const.dat
     is.zero <- rbinom(n=N, size=1, prob=zero.prop)
@@ -76,38 +76,48 @@ colnames(d.partdownreg) <- paste0("partiallydownregulated_zeroes_", zero.props)
 # Run mtxDE
 ```{r}
 results <- run_mtxDE("treated",
-                     feature.table=as.data.frame(cbind(d, 
-                                                       d.upreg, d.downreg,
-                                                       d.partupreg, d.partdownreg)),
-                     metadata=metadata, sampleID="sampleID")
+                    feature.table=as.data.frame(cbind(d,
+                                                      d.upreg, d.downreg,
+                                                      d.partupreg,
+                                                      d.partdownreg)),
+                     metadata=metadata, sampleID="sampleID",
+                     reg.method="gamlss",
+                     ncores=1)
 ```
 
 # Visualize results
-```{r}
+```{r fig.width=8, fig.height=8}
 results$changing <- str_split(results$feature, pattern="_") %>%
-                        sapply(FUN=function(x) x[1])
+                        vapply(FUN=function(x) x[1],
+                               FUN.VALUE=character(1))
 results$changing <- results$changing %>% 
-                     factor(levels=c("downregulated", "partiallydownregulated", 
-                                     "nochange",
-                                     "partiallyupregulated", "upregulated"))
+                    factor(levels=c("downregulated", "partiallydownregulated",
+                                    "nochange",
+                                    "partiallyupregulated", "upregulated"))
 
 results$percent_zero <- str_split(results$feature, pattern="_") %>%
-                        sapply(FUN=function(x) as.numeric(x[3]))
+                        vapply(FUN=function(x) as.numeric(x[3]),
+                                FUN.VALUE=numeric(1))
 
 head(results)
 
 ggplot(results,
-       mapping=aes(x=percent_zero, y=estimate)) +
+        mapping=aes(x=percent_zero, y=estimate)) +
     geom_point() +
     facet_wrap(changing~parameter*term, scales="free_y", ncol=4)
 
 ggplot(results %>% filter(term=="treated"),
-       mapping=aes(x=changing, y=q)) +
+        mapping=aes(x=changing, y=q)) +
     geom_jitter() +
     geom_hline(yintercept=0.05)
 
 
 ggplot(as.data.frame(cbind(d.downreg, treated)), 
-       mapping=aes(y=downregulated_zeroes_0.5, x=as.factor(treated))) +
+        mapping=aes(y=downregulated_zeroes_0.5, x=as.factor(treated))) +
     geom_jitter()
+```
+
+# Session info 
+```{r}
+sessionInfo()
 ```
