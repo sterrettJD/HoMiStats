@@ -30,5 +30,82 @@ null.feature.table <- null.df[3:nrow(null.df),]
 null.feature.table <- as.data.frame(t(null.feature.table))
 colnames(null.feature.table) <- null.feature.table["#",]
 null.feature.table <- null.feature.table[2:nrow(null.feature.table),]
+null.feature.table <- dplyr::mutate_all(null.feature.table, as.numeric)
+
+diff.df <- data.table::fread("synth_mgx_mtx/true-exp-med.mtx_abunds_groups.tsv",
+                             data.table=F)
+diff.feature.table <- diff.df[3:nrow(diff.df),]
+diff.feature.table <- as.data.frame(t(diff.feature.table))
+colnames(diff.feature.table) <- diff.feature.table["#",]
+diff.feature.table <- diff.feature.table[2:nrow(diff.feature.table),]
+diff.feature.table <- dplyr::mutate_all(diff.feature.table, as.numeric)
+```
+
+# Null dataset {.tabset}
+
+## Process data
+```{r}
+# transform to relative abundance
+null.feature.table.rel <- null.feature.table/rowSums(null.feature.table)
+```
+
+## Run mxtDE
+```{r}
+null.res <- run_mtxDE(formula="phenotype", 
+                      feature.table=null.feature.table.rel,
+                      metadata=metadata, sampleID="SampleID")
+```
+
+## Inspect results
+```{r}
+hist(null.res$q)
+
+expected <- rep(FALSE, ncol(null.feature.table.rel)) %>% as.factor()
+null.res.pheno <- null.res[null.res$term=="phenotype1" & null.res$parameter=="mu",]
+null.res.pheno.sig <- (null.res.pheno$q < 0.05)  %>%
+    as.factor()
+
+# Should be NA since there are no true positives
+caret::sensitivity(null.res.pheno.sig, expected, negative="FALSE", positive="TRUE")
+
+caret::specificity(null.res.pheno.sig, expected, negative="FALSE", positive="TRUE")
+
+fdr <- nrow(null.res[null.res$q<0.05 & complete.cases(null.res$q),])/sum(complete.cases(null.res))
+print(paste("False discovery rate:", fdr))
+
+```
+
+# Diff dataset {.tabset}
+
+## Process data
+```{r}
+# transform to relative abundance
+diff.feature.table.rel <- diff.feature.table/rowSums(diff.feature.table)
+```
+
+## Run mxtDE
+```{r}
+diff.res <- run_mtxDE(formula="phenotype", 
+                      feature.table=diff.feature.table.rel,
+                      metadata=metadata, sampleID="SampleID")
+```
+
+## Inspect results
+```{r}
+hist(diff.res$q)
+
+expected <- rep(FALSE, ncol(diff.feature.table.rel)) %>% as.factor()
+diff.res.pheno <- diff.res[diff.res$term=="phenotype1" & diff.res$parameter=="mu",]
+diff.res.pheno.sig <- (diff.res.pheno$q < 0.05)  %>%
+    as.factor()
+summary(diff.res.pheno.sig)
+
+# Should be NA since there are no true positives
+caret::sensitivity(diff.res.pheno.sig, expected, negative="FALSE", positive="TRUE")
+
+caret::specificity(diff.res.pheno.sig, expected, negative="FALSE", positive="TRUE")
+
+fdr <- nrow(diff.res[diff.res$q<0.05 & complete.cases(diff.res$q),])/sum(complete.cases(diff.res))
+print(paste("False discovery rate:", fdr))
 
 ```
