@@ -78,30 +78,30 @@ mtx <- data.frame(a1=c(0.1, 0.0, 0.0, 0.0),
                   c1=c(0.4, 0.5, 0.0, 0.0),
                   d1=c(0.0, 0.0, 0.5, 0.6))
 host <- data.frame(a2=c(0.5, 0.0, 0.0, 0.0),
-                   b2=c(0.5, 0.5, 0.5, 0.4),
-                   c2=c(0.4, 0.5, 0.0, 0.0),
-                   d2=c(0.0, 0.0, 0.5, 0.6))
+                  b2=c(0.5, 0.5, 0.5, 0.4),
+                  c2=c(0.4, 0.5, 0.0, 0.0),
+                  d2=c(0.0, 0.0, 0.5, 0.6))
 row.names(mtx) <- paste0("sample_", seq_len(4))
 row.names(host) <- paste0("sample_", seq_len(4))
 metadata <- data.frame(SampleID=paste0("sample_", seq_len(4)),
-                       phenotype=c(0,0,1,1),
-                       participant=c(0,1,0,1),
-                       timepoint=c(0,0,1,1))
+                      phenotype=c(0,0,1,1),
+                      participant=c(0,1,0,1),
+                      timepoint=c(0,0,1,1))
 
 # Run HoMiCorr using a zero inflated beta regression
 # with random effects
 homicorr.res.zibr <- run_HoMiCorr(mtx, host,
-                                reg.method="zibr",
-                                covariates="(1|participant)",
-                                metadata=metadata,
-                                sampleID="SampleID",
-                                zibr_time_ind="timepoint")
+                                  reg.method="zibr",
+                                  covariates="(1|participant)",
+                                  metadata=metadata,
+                                  sampleID="SampleID",
+                                  zibr_time_ind="timepoint")
 
 # Run HoMiCorr using a (faster) zero inflated beta regression
 # without random effects
 homicorr.res.gamlss <- run_HoMiCorr(mtx, host,
-                                reg.method="gamlss",
-                                show_progress=FALSE)
+                                  reg.method="gamlss",
+                                  show_progress=FALSE)
 
 
 }

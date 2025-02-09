@@ -31,14 +31,14 @@ adjustment is specified by the user.
 \examples{
 # Example model summary
 mod.summaries <- data.frame(term = c("(Intercept)", "GeneX"),
-                            parameter = c("beta", "beta"),
-                            p.value = c(0.01, 0.002),
-                            joint.p = c(0.02, 0.005))
+                           parameter = c("beta", "beta"),
+                           p.value = c(0.01, 0.002),
+                           joint.p = c(0.02, 0.005))
 
 # Adjust p-values using FDR correction
 mod.summaries <- HoMiStats:::.adjust_p_values(mod.summaries, "zibr",
-                                 zero_prop_from_formula = TRUE,
-                                 padj = "fdr")
+                               zero_prop_from_formula = TRUE,
+                               padj = "fdr")
 
 }
 \keyword{internal}
