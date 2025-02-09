@@ -27,7 +27,7 @@
 #' Options can be checked using 'p.adjust.methods'
 #' @param zero_prop_from_formula In ZIBR zero-inflated beta regression,
 #' should the zeroes be modeled with the provided formula? Default is TRUE.
-#' @param zibr_zibr_time_ind A string denoting the name of the time column
+#' @param zibr_time_ind A string denoting the name of the time column
 #' for ZIBR.
 #' Defaults to NULL, which is implemented as a constant time value in ZIBR
 #' to not fit a time effect.
@@ -88,10 +88,10 @@ run_HoMiCorr <- function(mtx, host, covariates=NULL, metadata=NULL,
         check_for_ones(host)
     }
     
-    data <- prepare_data(mtx, host, covariates, metadata,
+    data <- .prepare_data(mtx, host, covariates, metadata,
                         sampleID, zibr_time_ind)
-    feature.combos <- generate_feature_combinations(mtx, host)
-    mod.summaries <- initialize_model_summaries(feature.combos, reg.method)
+    feature.combos <- .generate_feature_combinations(mtx, host)
+    mod.summaries <- .initialize_model_summaries(feature.combos, reg.method)
     n.iterations <- length(feature.combos)
 
     cl <- parallel::makeCluster(ncores)
@@ -103,15 +103,16 @@ run_HoMiCorr <- function(mtx, host, covariates=NULL, metadata=NULL,
         pb <- txtProgressBar(max=n.iterations-1, style=3)
         doSNOWopts <- list(progress = function(n) setTxtProgressBar(pb, n))
     } else {
+        pb <- NULL
         doSNOWopts <- list()
     }
-    mod.summaries <- run_regressions(feature.combos, data, reg.method, 
+    mod.summaries <- .run_regressions(feature.combos, data, reg.method, 
                                      covariates, zero_prop_from_formula, 
                                      zibr_time_ind, show_progress, 
                                      snowopts=doSNOWopts)
-    stop_parallel_processing(cl, show_progress)
+    .stop_parallel_processing(cl, show_progress, pb)
     
-    return(adjust_p_values(mod.summaries, reg.method,
+    return(.adjust_p_values(mod.summaries, reg.method,
                            zero_prop_from_formula, padj))
 }
 
@@ -159,12 +160,13 @@ run_HoMiCorr <- function(mtx, host, covariates=NULL, metadata=NULL,
 #'                        timepoint = c(0, 0, 1, 1))
 #' rownames(metadata) <- metadata$SampleID
 #'
-#' # Run prepare_data function
-#' result <- prepare_data(mtx, host, "age + sex + (1|participantID)",
-#'                        metadata, "SampleID", "timepoint")
-#' @noRd
+#' # Run .prepare_data function
+#' result <- HoMiStats:::.prepare_data(mtx, host,
+#'                                      "age + sex + (1|participantID)",
+#'                                      metadata, "SampleID", "timepoint")
+#' @keywords internal
 #'
-prepare_data <- function(mtx, host,
+.prepare_data <- function(mtx, host,
                          covariates=NULL, metadata=NULL,
                          sampleID=NULL, zibr_time_ind=NULL) {
     
@@ -217,11 +219,11 @@ prepare_data <- function(mtx, host,
 #'                    b2 = c(0.5, 0.5, 0.5, 0.4))
 #'
 #' # Generate feature combinations
-#' feature_combos <- generate_feature_combinations(mtx, host)
+#' feature_combos <- HoMiStats:::.generate_feature_combinations(mtx, host)
 #'
-#' @noRd
+#' @keywords internal⁠
 #'
-generate_feature_combinations <- function(mtx, host) {
+.generate_feature_combinations <- function(mtx, host) {
     all.featurenames <- c(colnames(mtx), colnames(host))
     return(Rfast::comb_n(seq_len(length(all.featurenames)),
                          k=2, simplify=FALSE))
@@ -247,11 +249,11 @@ generate_feature_combinations <- function(mtx, host) {
 #' feature_combos <- list(c("a1", "b2"), c("b1", "a2"))
 #'
 #' # Initialize model summaries for linear regression
-#' summaries <- initialize_model_summaries(feature_combos, "lm")
+#' summaries <- HoMiStats:::.initialize_model_summaries(feature_combos, "lm")
 #'
-#' @noRd
+#' @keywords internal⁠
 #'
-initialize_model_summaries <- function(feature.combos, reg.method) {
+.initialize_model_summaries <- function(feature.combos, reg.method) {
     n.iterations <- length(feature.combos)
     summary.cols <- switch(reg.method,
         "gamlss" = c("parameter", "term", "estimate",
@@ -282,11 +284,11 @@ initialize_model_summaries <- function(feature.combos, reg.method) {
 #' @examples
 #' # Example usage (not run):
 #' # cl <- parallel::makeCluster(2)
-#' # stop_parallel_processing(cl, show_progress = TRUE)
+#' # HoMiStats:::.stop_parallel_processing(cl, show_progress = FALSE)
 #'
-#' @noRd
+#' @keywords internal
 #'
-stop_parallel_processing <- function(cl, show_progress, pb) {
+.stop_parallel_processing <- function(cl, show_progress, pb) {
     if (show_progress) close(pb)
     parallel::stopCluster(cl)
 }
@@ -318,13 +320,13 @@ stop_parallel_processing <- function(cl, show_progress, pb) {
 #'                             joint.p = c(0.02, 0.005))
 #'
 #' # Adjust p-values using FDR correction
-#' mod.summaries <- adjust_p_values(mod.summaries, "zibr",
+#' mod.summaries <- HoMiStats:::.adjust_p_values(mod.summaries, "zibr",
 #'                                  zero_prop_from_formula = TRUE,
 #'                                  padj = "fdr")
 #'
-#' @noRd
+#' @keywords internal
 #'
-adjust_p_values <- function(mod.summaries, reg.method,
+.adjust_p_values <- function(mod.summaries, reg.method,
                             zero_prop_from_formula, padj) {
     mod.summaries <- as.data.frame(mod.summaries)
     # adjust p value only for non-intercept terms
@@ -398,21 +400,21 @@ adjust_p_values <- function(mod.summaries, reg.method,
 #' @examples
 #' # Example usage (not run):
 #' # feature.combos <- list(c(1, 2), c(3, 4))
-#' # results <- run_regressions(feature.combos, data,
+#' # results <- HoMiStats:::.run_regressions(feature.combos, data,
 #' #                             "lm", "age + sex",
 #' #                             NULL, NULL, TRUE)
 #'
-#' @noRd
+#' @keywords internal
 #'
-run_regressions <- function(feature.combos, data, reg.method,
+.run_regressions <- function(feature.combos, data, reg.method,
                             covariates, zero_prop_from_formula,
                             zibr_time_ind, show_progress, snowopts=doSNOWopts) {
     mod.summaries <- foreach::foreach(cols=feature.combos, .combine=rbind,
         .options.snow=snowopts,
-        .export = c("run_single_model")) %dopar% {
+        .export = c(".run_single_model")) %dopar% {
         col1 <- colnames(data)[cols[1]]
         col2 <- colnames(data)[cols[2]]
-        mod.sum <- run_single_model(col1, col2, data, reg.method, covariates,
+        mod.sum <- .run_single_model(col1, col2, data, reg.method, covariates,
                                     zero_prop_from_formula, zibr_time_ind)
         if(nrow(mod.sum) > 0) {
             mod.sum$feature <- col1
@@ -449,12 +451,12 @@ run_regressions <- function(feature.combos, data, reg.method,
 #'
 #' @examples
 #' # Example usage (not run):
-#' # result <- run_single_model("geneA", "geneB", data, "lm",
+#' # result <- HoMiStats:::.run_single_model("geneA", "geneB", data, "lm",
 #' #                            "age + sex", FALSE, NULL)
 #'
-#' @noRd
+#' @keywords internal
 #'
-run_single_model <- function(col1, col2, data, reg.method, covariates,
+.run_single_model <- function(col1, col2, data, reg.method, covariates,
                              zero_prop_from_formula, zibr_time_ind) {
     if (reg.method == "gamlss") {
         mod <- run_single_beta_reg_gamlss(paste0(col1, " ~ ", 
@@ -527,7 +529,7 @@ run_single_model <- function(col1, col2, data, reg.method, covariates,
 #' # This should not raise an error
 #' check_duplicated_colnames(colnames(mtx), colnames(host))
 #' # This should raise an error
-#' check_duplicated_colnames(colnames(mtx), c("a1"))
+#' try(check_duplicated_colnames(colnames(mtx), c("a1")))
 #'
 check_duplicated_colnames <- function(colnames1, colnames2){
     colnames.intersection <- intersect(colnames1, colnames2)

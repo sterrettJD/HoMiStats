@@ -12,11 +12,10 @@
 #' @return Nothing
 #'
 #' @examples
-#' pull_GMMs_file("loc/to/download.txt")
+#' pull_GMMs_file("loc_to_download.txt")
 #'
-#' # If you want to download GMMs from a different version verbosely:
-#' pull_GMMs_file("loc/to/download.txt", version="v1.06", quietly=FALSE)
-#'
+#' # cleanup
+#' file.remove("loc_to_download.txt")
 #' @export
 #'
 pull_GMMs_file <- function(filepath, version="v1.07", quietly=TRUE){
@@ -46,9 +45,9 @@ pull_GMMs_file <- function(filepath, version="v1.07", quietly=TRUE){
 #'
 #' @importFrom stringr str_split
 #'
-#' @noRd
+#' @keywords internal
 #'
-add_K_line_to_matrix <- function(GMM.matrix, line, mod.name, mod.number){
+.add_K_line_to_matrix <- function(GMM.matrix, line, mod.name, mod.number){
     # Splits line on either a comma or tab
     split.line <- stringr::str_split(line, "[,\t]")[[1]]
     new.GMM.matrix <- GMM.matrix
@@ -79,10 +78,6 @@ add_K_line_to_matrix <- function(GMM.matrix, line, mod.name, mod.number){
 #' @examples
 #' GMM.df <- get_GMM_matrix()
 #'
-#' # If you want to download GMMs from a different version verbosely:
-#' GMM.df <- get_GMM_matrix("loc/to/download.txt", version="v1.06",
-#'                          quietly_download=FALSE)
-#'
 #' @export
 #'
 get_GMM_matrix <- function(filepath="GMMs.txt", version="v1.07",
@@ -105,7 +100,7 @@ get_GMM_matrix <- function(filepath="GMMs.txt", version="v1.07",
         }
         # If KO line, add that info to the matrix
         else if(grepl("^K\\d{5}", line)){
-            GMM.matrix <- add_K_line_to_matrix(GMM.matrix, line, 
+            GMM.matrix <- .add_K_line_to_matrix(GMM.matrix, line, 
                                                mod.name, mod.number)
         }
     }

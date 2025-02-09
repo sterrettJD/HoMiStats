@@ -363,9 +363,9 @@ get_random_fx <- function(form){
 #' @return A merged data frame containing the feature table and metadata,
 #' ready for regression analysis.
 #'
-#' @noRd
+#' @keywords internal
 #'
-prepare_data_mtxDE <- function(feature.table, metadata,
+.prepare_data_mtxDE <- function(feature.table, metadata,
                                formula, sampleID, zibr_time_ind){
     # merge the feature table and metadata based on the rownames
     metadata.vars <- c(all.vars(as.formula(formula)), sampleID)
@@ -417,9 +417,9 @@ prepare_data_mtxDE <- function(feature.table, metadata,
 #' The summary includes terms, estimates, standard errors, statistics,
 #' p-values, and feature information.
 #'
-#' @noRd
+#' @keywords internal
 #'
-run_single_regression_mtxDE <- function(data, reg.method,
+.run_single_regssion_mtxDE <- function(data, reg.method,
                                         col, formula,
                                         fixed.vars=NULL, 
                                         random.effects.vars=NULL,
@@ -484,9 +484,9 @@ run_single_regression_mtxDE <- function(data, reg.method,
 #' The summaries include terms,
 #' estimates, standard errors, statistics, p-values, and feature information.
 #'
-#' @noRd
+#' @keywords internal
 #'
-run_regressions_mtxDE <- function(data, reg.method,
+.run_regressions_mtxDE <- function(data, reg.method,
                                   feature.table, formula,
                                   zero_prop_from_formula,
                                   zibr_time_ind, ncores, show_progress){
@@ -512,7 +512,7 @@ run_regressions_mtxDE <- function(data, reg.method,
     mod.summaries <- foreach::foreach(col=colnames(feature.table),
                                       .combine=rbind,
                                       .options.snow = doSNOWopts) %dopar% {
-    run_single_regression_mtxDE(data, reg.method,
+    .run_single_regssion_mtxDE(data, reg.method,
                                 col, formula,
                                 fixed.vars, random.effects.vars,
                                 zibr_time_ind,
@@ -599,7 +599,7 @@ run_regressions_mtxDE <- function(data, reg.method,
 #' # Use a linear model
 #' lm.res <- run_mtxDE("phenotype",
 #'                      feature.table,
-#                       metadata,
+#'                      metadata,
 #'                      reg.method="lm",
 #'                      sampleID="SampleID",
 #'                      show_progress=FALSE)
@@ -624,16 +624,16 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
         feature.table <- filter_undetected(feature.table) # or undetected feats
     }
     formula <- paste0(" ~ ", formula)
-    data <- prepare_data_mtxDE(feature.table, metadata,
+    data <- .prepare_data_mtxDE(feature.table, metadata,
                                formula, sampleID, zibr_time_ind)
 
     # Loop through each column and run the regression
-    mod.summaries <- run_regressions_mtxDE(data, reg.method,
+    mod.summaries <- .run_regressions_mtxDE(data, reg.method,
                                   feature.table, formula,
                                   zero_prop_from_formula,
                                   zibr_time_ind, ncores, show_progress)
     # Calling this from HoMiCorr
-    adjusted.mod.summaries <- adjust_p_values(mod.summaries, reg.method,
+    adjusted.mod.summaries <- .adjust_p_values(mod.summaries, reg.method,
                                               zero_prop_from_formula, padj)
     return(adjusted.mod.summaries)
 }
