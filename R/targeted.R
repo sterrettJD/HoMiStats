@@ -109,7 +109,7 @@ GO_targeted_for_each_KO_within_GMM <- function(go.terms, host.genes,
 #' @examples
 #' GMM.matrix <- suppressMessages(get_GMM_matrix())
 #' features <- features_from_gmm_df(GMM="butyrate production I",
-#'                                  GMM.kos.df=GMM_matrix,
+#'                                  GMM.kos.df=GMM.matrix,
 #'                                  mtx.feature.names=c("K00248", "K00634"))
 #'
 features_from_gmm_df <- function(GMM, GMM.kos.df, mtx.feature.names){
