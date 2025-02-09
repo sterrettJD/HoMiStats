@@ -74,18 +74,17 @@ GO_targeted_for_each_KO_within_GMM <- function(go.terms, host.genes,
 
     # Initialize results object
     results <- data.frame(row.names=c("baseMean", "log2FoldChange", "lfcSE",
-                                      "stat", "pvalue", "padj"))
+                                        "stat", "pvalue", "padj"))
     # This is kinda slow because it still relies on
     # pulling the GO terms each time
     for(feature in mtx.features){
         res <- go_targeted_diffex(targeted.genes=full.targeted.genes,
-                                  host.genes=host.genes,
-                                  microbial.gene=feature,
-                                  microbial.genes=mtx,
-                                  verbose=verbose)
+                                    host.genes=host.genes,
+                                    microbial.gene=feature,
+                                    microbial.genes=mtx,
+                                    verbose=verbose)
         res$term <- feature
         results <- rbind(results, as.data.frame(res))
-
     }
 
     results$padj <- p.adjust(results$pvalue, method=padj)
@@ -118,7 +117,7 @@ features_from_gmm_df <- function(GMM, GMM.kos.df, mtx.feature.names){
     mtx.features <- c()
     for(ko in module.kos){
         ko.feature <- mtx.feature.names[grepl(pattern=ko, x=mtx.feature.names,
-                                              ignore.case=TRUE)]
+                                                ignore.case=TRUE)]
         mtx.features <- c(mtx.features, ko.feature)
     }
     return(mtx.features)
@@ -143,9 +142,9 @@ features_from_gmm_df <- function(GMM, GMM.kos.df, mtx.feature.names){
 #'
 get_go_term_human_genes <- function(go.term){
     gene.data <- AnnotationDbi::select(org.Hs.eg.db::org.Hs.eg.db,
-                                       keys=c(go.term),
-                                       columns=c('SYMBOL'),
-                                       keytype="GOALL") # uses human
+                                        keys=c(go.term),
+                                        columns=c('SYMBOL'),
+                                        keytype="GOALL") # uses human
                                                         # ensembl annotations
     # gets gene symbol,
     # transcript_id and go_id for all genes annotated with the go term
@@ -217,8 +216,8 @@ get_go_term_human_genes <- function(go.term){
 #'                               verbose=FALSE)
 #'
 go_targeted_diffex <- function(targeted.genes, host.genes,
-                               microbial.gene, microbial.genes,
-                               verbose=TRUE){
+                                microbial.gene, microbial.genes,
+                                verbose=TRUE){
     targeted.data <- host.genes[targeted.genes,]
     if(verbose){
         s1 <- paste0(length(targeted.genes), " genes identified from GO term")

@@ -21,11 +21,11 @@
 pull_GMMs_file <- function(filepath, version="v1.07", quietly=TRUE){
     if(!file.exists(filepath)){
         gmm.url <- paste0("https://raw.githubusercontent.com/",
-                          "raeslab/GMMs/master/GMMs.",
-                          version, ".txt")
+                            "raeslab/GMMs/master/GMMs.",
+                            version, ".txt")
         download.file(gmm.url,
-                      filepath,
-                      quiet=quietly)
+                        filepath,
+                        quiet=quietly)
     } else {
         warning("File already exists.")
     }
@@ -81,15 +81,15 @@ pull_GMMs_file <- function(filepath, version="v1.07", quietly=TRUE){
 #' @export
 #'
 get_GMM_matrix <- function(filepath="GMMs.txt", version="v1.07",
-                           quietly_download=TRUE, cleanup=TRUE){
+                            quietly_download=TRUE, cleanup=TRUE){
     if(!file.exists(filepath)){
-        pull_GMMs_file(filepath=filepath, version=version, 
-                       quietly=quietly_download)
+        pull_GMMs_file(filepath=filepath, version=version,
+                        quietly=quietly_download)
     }
 
     GMM.fileconts <- readLines(filepath)
 
-    GMM.matrix <- matrix(data=c("KEGG","Module","Module ID"), nrow=1, ncol=3)
+    GMM.matrix <- matrix(data=c("KEGG", "Module", "Module ID"), nrow=1, ncol=3)
     for(i in seq_len(length(GMM.fileconts))){
         line <- GMM.fileconts[i]
         # if new module, get its name and number
@@ -101,7 +101,7 @@ get_GMM_matrix <- function(filepath="GMMs.txt", version="v1.07",
         # If KO line, add that info to the matrix
         else if(grepl("^K\\d{5}", line)){
             GMM.matrix <- .add_K_line_to_matrix(GMM.matrix, line, 
-                                               mod.name, mod.number)
+                                                mod.name, mod.number)
         }
     }
 

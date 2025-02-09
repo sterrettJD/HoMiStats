@@ -51,36 +51,36 @@
 #'                   c1=c(0.4, 0.5, 0.0, 0.0),
 #'                   d1=c(0.0, 0.0, 0.5, 0.6))
 #' host <- data.frame(a2=c(0.5, 0.0, 0.0, 0.0),
-#'                    b2=c(0.5, 0.5, 0.5, 0.4),
-#'                    c2=c(0.4, 0.5, 0.0, 0.0),
-#'                    d2=c(0.0, 0.0, 0.5, 0.6))
+#'                   b2=c(0.5, 0.5, 0.5, 0.4),
+#'                   c2=c(0.4, 0.5, 0.0, 0.0),
+#'                   d2=c(0.0, 0.0, 0.5, 0.6))
 #' row.names(mtx) <- paste0("sample_", seq_len(4))
 #' row.names(host) <- paste0("sample_", seq_len(4))
 #' metadata <- data.frame(SampleID=paste0("sample_", seq_len(4)),
-#'                        phenotype=c(0,0,1,1),
-#'                        participant=c(0,1,0,1),
-#'                        timepoint=c(0,0,1,1))
+#'                       phenotype=c(0,0,1,1),
+#'                       participant=c(0,1,0,1),
+#'                       timepoint=c(0,0,1,1))
 #'
 #' # Run HoMiCorr using a zero inflated beta regression
 #' # with random effects
 #' homicorr.res.zibr <- run_HoMiCorr(mtx, host,
-#'                                 reg.method="zibr",
-#'                                 covariates="(1|participant)",
-#'                                 metadata=metadata,
-#'                                 sampleID="SampleID",
-#'                                 zibr_time_ind="timepoint")
+#'                                   reg.method="zibr",
+#'                                   covariates="(1|participant)",
+#'                                   metadata=metadata,
+#'                                   sampleID="SampleID",
+#'                                   zibr_time_ind="timepoint")
 #'
 #' # Run HoMiCorr using a (faster) zero inflated beta regression
 #' # without random effects
 #' homicorr.res.gamlss <- run_HoMiCorr(mtx, host,
-#'                                 reg.method="gamlss",
-#'                                 show_progress=FALSE)
+#'                                   reg.method="gamlss",
+#'                                   show_progress=FALSE)
 #'
 #'
 run_HoMiCorr <- function(mtx, host, covariates=NULL, metadata=NULL,
-                      sampleID=NULL, reg.method="zibr", padj="fdr",
-                      zero_prop_from_formula=TRUE, zibr_time_ind=NULL,
-                      ncores=1, show_progress=TRUE) {
+                        sampleID=NULL, reg.method="zibr", padj="fdr",
+                        zero_prop_from_formula=TRUE, zibr_time_ind=NULL,
+                        ncores=1, show_progress=TRUE) {
     
     check_duplicated_colnames(colnames(mtx), colnames(host))
     if (reg.method %in% c("zibr", "gamlss")) {
@@ -106,14 +106,14 @@ run_HoMiCorr <- function(mtx, host, covariates=NULL, metadata=NULL,
         pb <- NULL
         doSNOWopts <- list()
     }
-    mod.summaries <- .run_regressions(feature.combos, data, reg.method, 
-                                     covariates, zero_prop_from_formula, 
-                                     zibr_time_ind, show_progress, 
-                                     snowopts=doSNOWopts)
+    mod.summaries <- .run_regressions(feature.combos, data, reg.method,
+                                    covariates, zero_prop_from_formula,
+                                    zibr_time_ind, show_progress,
+                                    snowopts=doSNOWopts)
     .stop_parallel_processing(cl, show_progress, pb)
     
     return(.adjust_p_values(mod.summaries, reg.method,
-                           zero_prop_from_formula, padj))
+                            zero_prop_from_formula, padj))
 }
 
 
@@ -167,14 +167,14 @@ run_HoMiCorr <- function(mtx, host, covariates=NULL, metadata=NULL,
 #' @keywords internal
 #'
 .prepare_data <- function(mtx, host,
-                         covariates=NULL, metadata=NULL,
-                         sampleID=NULL, zibr_time_ind=NULL) {
+                        covariates=NULL, metadata=NULL,
+                        sampleID=NULL, zibr_time_ind=NULL) {
     
     # Check row names on mtx and host match each other
     if (length(setdiff(rownames(mtx), rownames(host))) > 0) {
         stop("mtx and host rownames do not match. ",
-             "Please only make sure all samples in one dataset ",
-             "exist in the other.")
+            "Please only make sure all samples in one dataset ",
+            "exist in the other.")
     }
     formula <- if (!is.null(covariates)) paste0(" ~ ", covariates) else NULL
     metadata.vars <- c(all.vars(as.formula(formula)), sampleID)
@@ -189,7 +189,7 @@ run_HoMiCorr <- function(mtx, host, covariates=NULL, metadata=NULL,
             stop("Row names of `mtx` do not match `metadata$", sampleID, "`.")
         }
         data <- merge(data, metadata[, c(metadata.vars, zibr_time_ind)],
-                      by.x="Row.names", by.y=sampleID)
+                    by.x="Row.names", by.y=sampleID)
     }
 
     # Clean up output file
@@ -226,7 +226,7 @@ run_HoMiCorr <- function(mtx, host, covariates=NULL, metadata=NULL,
 .generate_feature_combinations <- function(mtx, host) {
     all.featurenames <- c(colnames(mtx), colnames(host))
     return(Rfast::comb_n(seq_len(length(all.featurenames)),
-                         k=2, simplify=FALSE))
+                        k=2, simplify=FALSE))
 }
 
 
@@ -257,13 +257,13 @@ run_HoMiCorr <- function(mtx, host, covariates=NULL, metadata=NULL,
     n.iterations <- length(feature.combos)
     summary.cols <- switch(reg.method,
         "gamlss" = c("parameter", "term", "estimate",
-                     "std.error", "statistic", "p.value", "feature"),
+                    "std.error", "statistic", "p.value", "feature"),
         "zibr" = c("parameter", "term", "estimate",
-                   "p.value", "joint.p", "feature"),
+                    "p.value", "joint.p", "feature"),
         "lm" = c("term", "estimate", "std.error",
-                 "statistic", "p.value", "feature"),
+                    "statistic", "p.value", "feature"),
         "lmer" = c("effect", "group", "term", "estimate",
-                   "std.error", "statistic", "df", "p.value", "feature"))
+                    "std.error", "statistic", "df", "p.value", "feature"))
     
     return(data.frame(matrix(nrow=n.iterations, 
                             ncol=length(summary.cols), 
@@ -315,14 +315,14 @@ run_HoMiCorr <- function(mtx, host, covariates=NULL, metadata=NULL,
 #' @examples
 #' # Example model summary
 #' mod.summaries <- data.frame(term = c("(Intercept)", "GeneX"),
-#'                             parameter = c("beta", "beta"),
-#'                             p.value = c(0.01, 0.002),
-#'                             joint.p = c(0.02, 0.005))
+#'                            parameter = c("beta", "beta"),
+#'                            p.value = c(0.01, 0.002),
+#'                            joint.p = c(0.02, 0.005))
 #'
 #' # Adjust p-values using FDR correction
 #' mod.summaries <- HoMiStats:::.adjust_p_values(mod.summaries, "zibr",
-#'                                  zero_prop_from_formula = TRUE,
-#'                                  padj = "fdr")
+#'                                zero_prop_from_formula = TRUE,
+#'                                padj = "fdr")
 #'
 #' @keywords internal
 #'
@@ -334,36 +334,36 @@ run_HoMiCorr <- function(mtx, host, covariates=NULL, metadata=NULL,
     # (it's copied for the logistic)
     if((reg.method == "zibr") & zero_prop_from_formula){
         mod.summaries[mod.summaries$term!="(Intercept)" &
-                      mod.summaries$parameter == "beta",
-                      "q"] <- p.adjust(
-                          mod.summaries[mod.summaries$term!="(Intercept)" &
-                          mod.summaries$parameter == "beta",
-                                        "joint.p"],
-                          method=padj)
+                    mod.summaries$parameter == "beta",
+                    "q"] <- p.adjust(
+                        mod.summaries[mod.summaries$term!="(Intercept)" &
+                            mod.summaries$parameter == "beta",
+                            "joint.p"],
+                        method=padj)
 
     } else if((reg.method == "gamlss") |
-              (reg.method == "zibr") & (zero_prop_from_formula == FALSE)){
+                (reg.method == "zibr") & (zero_prop_from_formula == FALSE)){
         mod.summaries[mod.summaries$term!="(Intercept)",
-                      "q"] <- p.adjust(
-                          mod.summaries[mod.summaries$term!="(Intercept)",
-                                        "p.value"],
-                          method=padj)
+                    "q"] <- p.adjust(
+                        mod.summaries[mod.summaries$term!="(Intercept)",
+                                    "p.value"],
+                        method=padj)
 
     } else if(reg.method == "lmer"){
         mod.summaries[mod.summaries$term!="(Intercept)" &
-                      mod.summaries$effect == "fixed",
-                      "q"] <- p.adjust(
-                          mod.summaries[mod.summaries$term!="(Intercept)" &
-                          mod.summaries$effect == "fixed",
-                                        "p.value"],
-                          method=padj)
+                    mod.summaries$effect == "fixed",
+                    "q"] <- p.adjust(
+                        mod.summaries[mod.summaries$term!="(Intercept)" &
+                        mod.summaries$effect == "fixed",
+                                    "p.value"],
+                        method=padj)
 
     } else if(reg.method == "lm"){
         mod.summaries[mod.summaries$term!="(Intercept)",
-                      "q"] <- p.adjust(
-                          mod.summaries[mod.summaries$term!="(Intercept)",
-                                        "p.value"],
-                          method=padj)
+                    "q"] <- p.adjust(
+                        mod.summaries[mod.summaries$term!="(Intercept)",
+                                    "p.value"],
+                        method=padj)
     }
     return(mod.summaries)
 }
@@ -457,7 +457,7 @@ run_HoMiCorr <- function(mtx, host, covariates=NULL, metadata=NULL,
 #' @keywords internal
 #'
 .run_single_model <- function(col1, col2, data, reg.method, covariates,
-                             zero_prop_from_formula, zibr_time_ind) {
+                            zero_prop_from_formula, zibr_time_ind) {
     if (reg.method == "gamlss") {
         mod <- run_single_beta_reg_gamlss(paste0(col1, " ~ ", 
                                                 covariates, " + ", col2), data)
@@ -495,13 +495,13 @@ run_HoMiCorr <- function(mtx, host, covariates=NULL, metadata=NULL,
         # But maybe should be more specific
         mod.sum <- tryCatch({
             mod <- run_single_lmer(paste0(col1, " ~ ", covariates, " + ", col2),
-                                   data)
+                                    data)
             broom.mixed::tidy(mod)
-          }, error=function(e) {
+        }, error=function(e) {
             data.frame("effect"="error", "group"=NA,
-                       "term"=col2, "estimate"=NA,
-                       "std.error"=NA, "statistic"=NA,
-                       "df"=NA, "p.value"=NA)}) # END TRYCATCH
+                        "term"=col2, "estimate"=NA,
+                        "std.error"=NA, "statistic"=NA,
+                        "df"=NA, "p.value"=NA)}) # END TRYCATCH
         # grab only the col2 beta row
         return(mod.sum[mod.sum$term==col2 & mod.sum$effect=="fixed",])
     }
@@ -518,13 +518,13 @@ run_HoMiCorr <- function(mtx, host, covariates=NULL, metadata=NULL,
 #' @examples
 #' # Simulate data
 #' mtx <- data.frame(a1=c(0.1, 0.0, 0.0, 0.0),
-#'                   b1=c(0.5, 0.5, 0.5, 0.4),
-#'                   c1=c(0.4, 0.5, 0.0, 0.0),
-#'                   d1=c(0.0, 0.0, 0.5, 0.6))
+#'                  b1=c(0.5, 0.5, 0.5, 0.4),
+#'                  c1=c(0.4, 0.5, 0.0, 0.0),
+#'                  d1=c(0.0, 0.0, 0.5, 0.6))
 #' host <- data.frame(a2=c(0.5, 0.0, 0.0, 0.0),
-#'                    b2=c(0.5, 0.5, 0.5, 0.4),
-#'                    c2=c(0.4, 0.5, 0.0, 0.0),
-#'                    d2=c(0.0, 0.0, 0.5, 0.6))
+#'                  b2=c(0.5, 0.5, 0.5, 0.4),
+#'                  c2=c(0.4, 0.5, 0.0, 0.0),
+#'                  d2=c(0.0, 0.0, 0.5, 0.6))
 #'
 #' # This should not raise an error
 #' check_duplicated_colnames(colnames(mtx), colnames(host))

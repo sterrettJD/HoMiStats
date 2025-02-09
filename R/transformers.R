@@ -36,9 +36,9 @@ transform_feature_table <- function(feature.table, transformation){
             scaling.factor <- as.numeric(arcsinh.args[2])
 
             return(dplyr::mutate_all(feature.table,
-                                     function(x) arcsinh(x,
-                                                         scaling.factor,
-                                                         norm.by.scaling=TRUE)))
+                                    function(x) arcsinh(x,
+                                                        scaling.factor,
+                                                        norm.by.scaling=TRUE)))
         }
         # Arcsinh transform with NO normalization (max return value can be > 1)
         # Scaling factor is passed between underscores
@@ -47,16 +47,15 @@ transform_feature_table <- function(feature.table, transformation){
             scaling.factor <- as.numeric(arcsinh.args[2])
 
             return(dplyr::mutate_all(feature.table,
-                                     function(x) arcsinh(x,
-                                                         scaling.factor,
-                                                         norm.by.scaling=FALSE)
-                                                         )
+                                    function(x) arcsinh(x,
+                                                        scaling.factor,
+                                                        norm.by.scaling=FALSE))
                                     )
         }
 
         stop("The requested transformation is not yet supported. ",
-             "You are welcome to implement it via passing a function ",
-             "for the transformation argument.")
+            "You are welcome to implement it via passing a function ",
+            "for the transformation argument.")
     }
 
     # If not a character, try to implement the function provided
@@ -82,7 +81,7 @@ transform_feature_table <- function(feature.table, transformation){
 check_proportional <- function(feature.table, tolerance=1e-3, soft=FALSE){
     sample.sums <- rowSums(feature.table)
     rows.not.prop <- which((sample.sums < (1-tolerance)) |
-                           (sample.sums > (1+tolerance)))
+                            (sample.sums > (1+tolerance)))
     rownames.not.prop <- rownames(feature.table)[rows.not.prop]
 
     if(length(rownames.not.prop) > 0){
@@ -93,7 +92,7 @@ check_proportional <- function(feature.table, tolerance=1e-3, soft=FALSE){
                     "\nPlease make sure this is intentional...")
         } else {
             stop("The following samples do not sum to 1: ",
-                 rownames.str)
+                rownames.str)
         }
 
     }
