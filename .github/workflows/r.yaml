@@ -3,7 +3,7 @@ name: R
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "testing-actions" ]
   pull_request:
     branches: [ "main" ]
 
