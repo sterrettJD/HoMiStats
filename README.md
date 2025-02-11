@@ -3,7 +3,7 @@
 Statistics tools for host-microbiome dual transcriptomics
 
   <!-- badges: start -->
-  [![R-CMD-check](https://github.com/sterrettJD/HoMiStats/actions/workflows/r.yaml/badge.svg)](https://github.com/sterrettJD/HoMiStats/actions/workflows/r.yaml)
+  [![R-CMD-check-bioc](https://github.com/sterrettJD/HoMiStats/actions/workflows/check-bioc.yaml/badge.svg)](https://github.com/sterrettJD/HoMiStats/actions/workflows/check-bioc.yaml)
   <!-- badges: end -->
 
 
