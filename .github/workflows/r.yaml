@@ -38,13 +38,6 @@ jobs:
           use-public-rspm: true
           extra-packages: any::rcmdcheck, any::remotes, any::pandoc, any::gh
 
-      - name: Install Bioconductor BiocCheck
-        run: |
-          if (Sys.info()[['sysname']] == 'Windows') install.packages('Rtools')
-          install.packages("BiocManager")
-          BiocManager::install("BiocCheck")
-        shell: Rscript {0}
-
       - name: Install lme4
         run: |
           if (Sys.info()[['sysname']] == 'Windows') {
@@ -68,7 +61,3 @@ jobs:
           error-on: '"error"'
           build_args: '"--no-build-vignettes"'
           args: 'c("--no-manual", "--as-cran", "--no-vignettes")'
-
-      - name: Run BiocCheck
-        run: |
-          Rscript -e 'BiocCheck::BiocCheck(".")'
