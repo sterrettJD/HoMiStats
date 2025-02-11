@@ -14,7 +14,7 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-latest]
+        os: [macos-latest, ubuntu-latest, windows-latest]
         r-version: ['4.3.3']
     runs-on: ${{ matrix.os }}
 
@@ -25,10 +25,25 @@ jobs:
         with:
           r-version: ${{ matrix.r-version }}
 
+      - name: Install system dependencies
+        run: |
+          if [[ "$RUNNER_OS" == "Linux" ]]; then
+            sudo apt-get update
+            sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev
+          fi
+
       - name: Install dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
+          use-public-rspm: true
           extra-packages: any::rcmdcheck, any::remotes, any::pandoc, any::gh
+
+      - name: Install Bioconductor BiocCheck
+        run: |
+          install.packages("BiocManager")
+          BiocManager::install("BiocCheck")
+        shell: Rscript {0}
+
       - name: lme4 from source
         run: R -q -e 'install.packages(c("lme4"), type = "source")'
 
@@ -42,3 +57,7 @@ jobs:
           error-on: '"error"'
           build_args: '"--no-build-vignettes"'
           args: 'c("--no-manual", "--as-cran", "--no-vignettes")'
+
+      - name: Run BiocCheck
+        run: |
+          Rscript -e 'BiocCheck::BiocCheck(".")'
