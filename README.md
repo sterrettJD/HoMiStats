@@ -30,7 +30,7 @@ BiocManager::install("HoMiStats")
 # Package capabilities
 
 ## Statistical modules
-HoMiStats consists of two main modules:
+HoMiStats consists of three main modules:
 
 1.  Metatranscriptomics differential expression (mtxDE implemented in `run_mtxDE()`)
 
@@ -44,6 +44,7 @@ HoMiStats consists of two main modules:
 3. Targeted analysis of host-microbe crosstalk 
     - `GO_targeted_for_each_KO_within_GMM()` allows targeted differential expression analysis, where only microbial genes belonging to a specific KO are tested for associations with host genes belonging to certain GO terms. 
     - This improves power to detect crosstalk by only assessing biologically plausible interactions of interest.
-    - 
+
+
 ## Utilities
 HoMiStats contains tools for transforming metatranscriptomic data, as well as tools for filtering genes based on low expression, prevalence, or variance.
