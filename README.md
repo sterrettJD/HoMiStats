@@ -9,9 +9,16 @@ Statistics tools for host-microbiome dual transcriptomics
 
 # Installation
 
-## Bioconductor (preferred)
-**Pending Bioconductor approval** HoMiStats can be installed vi:
+## GitHub installation
+To install HoMiStats with the latest updates from GitHub:
 
+```
+devtools::install_github("sterrettJD/HoMiStats")
+```
+
+
+## Bioconductor
+**Pending Bioconductor approval (not yet functional),** HoMiStats can be installed via:
 ```
 if (!require("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
@@ -19,12 +26,6 @@ if (!require("BiocManager", quietly = TRUE))
 BiocManager::install("HoMiStats")
 ```
 
-## GitHub installation (not preferred)
-To install HoMiStats with the latest updates from GitHub:
-
-```
-devtools::install_github("sterrettJD/HoMiStats")
-```
 
 # Package capabilities
 
@@ -43,5 +44,6 @@ HoMiStats consists of two main modules:
 3. Targeted analysis of host-microbe crosstalk 
     - `GO_targeted_for_each_KO_within_GMM()` allows targeted differential expression analysis, where only microbial genes belonging to a specific KO are tested for associations with host genes belonging to certain GO terms. 
     - This improves power to detect crosstalk by only assessing biologically plausible interactions of interest.
+    - 
 ## Utilities
 HoMiStats contains tools for transforming metatranscriptomic data, as well as tools for filtering genes based on low expression, prevalence, or variance.
