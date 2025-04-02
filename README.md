@@ -13,7 +13,7 @@ Statistics tools for host-microbiome dual transcriptomics
 To install HoMiStats with the latest updates from GitHub:
 
 ```
-devtools::install_github("sterrettJD/HoMiStats")
+devtools::install_github("sterrettJD/HoMiStats", build_vignettes = TRUE)
 ```
 
 
