@@ -16,6 +16,11 @@ To install HoMiStats with the latest updates from GitHub:
 devtools::install_github("sterrettJD/HoMiStats")
 ```
 
+To install HoMiStats with vignettes: 
+```
+devtools::install_github("sterrettJD/HoMiStats", build_vignettes = TRUE)
+```
+
 
 ## Bioconductor
 **Pending Bioconductor approval (not yet functional),** HoMiStats can be installed via:
