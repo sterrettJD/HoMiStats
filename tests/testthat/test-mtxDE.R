@@ -66,6 +66,34 @@ test_that("check_for_ones works", {
     expect_no_error(check_for_ones(no.error.df))
 })
 
+test_that("check_data_mtxDE works", {
+  feature.table <- data.frame(a=c(0.1, 0.2),
+                              b=c(0.1, 0))
+
+  unmatched.dna.table <- data.frame(c=c(0.2, 0.4),
+                                    d=c(0.1, 0))
+
+  metadata <- data.frame(SampleID = paste0("sample_", seq_len(2)),
+                         phenotype = c(0,1))
+
+  row.names(feature.table) <- paste0("sample_", seq_len(2))
+  row.names(unmatched.dna.table) <- paste0("sample_", seq_len(2))
+
+  expect_error(check_data_mtxDE(feature.table = feature.table,
+                                dna.table = unmatched.dna.table,
+                                metadata = metadata,
+                                sampleID = "SampleID"),
+               "None of the colnames of `dna.table` match `feature.table`")
+
+  good.dna.table <- data.frame(a=c(0.2, 0.4),
+                               b=c(0.1, 0))
+  row.names(good.dna.table) <- paste0("sample_", seq_len(2))
+
+  expect_no_error(check_data_mtxDE(feature.table = feature.table,
+                                   dna.table = good.dna.table,
+                                   metadata = metadata,
+                                   sampleID = "SampleID"))
+})
 
 test_that("run_mtxDE works", {
     feature.table <- data.frame(a=c(0.1, 0.0, 0.0, 0.0),
