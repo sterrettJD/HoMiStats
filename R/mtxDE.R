@@ -357,7 +357,6 @@ get_random_fx <- function(form){
 #' This column is used to merge the metadata with the feature table.
 #' @return Nothing.
 #' @export
-#'
 #' @examples
 #' feature.table <- data.frame(a=c(0.1, 0.0, 0.0, 0.0),
 #'                              b=c(0.5, 0.5, 0.5, 0.4),
@@ -414,6 +413,56 @@ check_data_mtxDE <- function(feature.table, dna.table, metadata, sampleID){
   }
 }
 
+#' Filter two tables by shared columns
+#' @description This function filters two data frames
+#' to only retain shared columns.
+#' @param table1 A data frame to be filtered.
+#' @param table2 A second data frame to be filtered.
+#' @param table1_name A character string specifying the name of `table1`.
+#' @param table2_name A character string specifying the name of `table2`
+#' @return A list containing:
+#' \describe{
+#'   \item{`table1_name`}{The filtered version of `table1`,
+#'   keeping only the shared columns.}
+#'   \item{`table2_name`}{The filtered version of `table2`,
+#'   keeping only the shared columns.}
+#' }
+#' @export
+#' @examples
+#' feature.table <- data.frame(a = c(0.1, 0.2), b = c(0.3, 0.4), c = c(0.5, 0.6))
+#' dna.table <- data.frame(a = c(0.7, 0.8), b = c(0.9, 1.0))
+#' result <- filter_tables_by_shared_columns(feature.table, dna.table,
+#'                                           "feature.table", "dna.table")
+#' filtered_feature <- result$feature.table
+#' filtered_dna <- result$dna.table
+#'
+filter_tables_by_shared_columns <- function(table1, table2, table1_name,
+                                            table2_name) {
+  all.feature.vars <- intersect(colnames(table1), colnames(table2))
+
+  removed_from_table1 <- setdiff(colnames(table1), all.feature.vars)
+  removed_from_table2 <- setdiff(colnames(table2), all.feature.vars)
+
+  if (length(removed_from_table1) > 0) {
+    warning(sprintf("The following feature(s) were removed from `%s`
+                    because they do not have matching column(s) in `%s`: %s",
+                    table1_name, table2_name,
+                    paste(removed_from_table1, collapse = ", ")))
+  }
+
+  if (length(removed_from_table2) > 0) {
+    warning(sprintf("The following feature(s) were removed from `%s`
+                    because they do not have matching column(s) in `%s`: %s",
+                    table2_name, table1_name,
+                    paste(removed_from_table2, collapse = ", ")))
+  }
+
+  table1 <- table1[, all.feature.vars, drop = FALSE]  # Filter table1
+  table2 <- table2[, all.feature.vars, drop = FALSE]  # Filter table2
+
+  return(setNames(list(table1, table2), c(table1_name, table2_name)))
+}
+
 #' Prepare Data for Differential Expression Analysis (internal)
 #'
 #' @description This function prepares the data by merging the feature table
@@ -458,6 +507,7 @@ check_data_mtxDE <- function(feature.table, dna.table, metadata, sampleID){
                 by.x="row.names", by.y=sampleID)
     return(data)
 }
+
 
 #' Run a Single Regression for a Feature (internal)
 #'
