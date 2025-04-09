@@ -336,6 +336,84 @@ get_random_fx <- function(form){
     return(vars)
 }
 
+#' Check data validity for mgxDE function
+#' @description This function checks the validity of your
+#' data for mgxDE analyses. This will check that your
+#' dna and feature tables have row names that match the given
+#' sampleID metadata column. It also ensures that dna.table and
+#' feature.table share column names.
+#' @param feature.table A data frame where rows are samples and
+#' columns are features (e.g., genes).
+#' Row names should correspond to sample IDs.
+#' @param dna.table A data frame where rows are samples and
+#' columns are features (e.g., genes).
+#' Row names should correspond to sample IDs.
+#' This table should contain gene abundance data.
+#' @param metadata A data frame containing metadata for the samples,
+#' where rows are samples
+#' and columns are metadata variables (e.g., phenotype, timepoint).
+#' @param sampleID A string representing the column name in `metadata`
+#' that contains the sample IDs.
+#' This column is used to merge the metadata with the feature table.
+#' @return Nothing.
+#' @export
+#'
+#' @examples
+#' feature.table <- data.frame(a=c(0.1, 0.0, 0.0, 0.0),
+#'                              b=c(0.5, 0.5, 0.5, 0.4),
+#'                              c=c(0.4, 0.5, 0.0, 0.0),
+#'                              d=c(0.0, 0.0, 0.5, 0.6))
+#' dna.table <- data.frame(a=c(0.3, 0.1, 0.0, 0.0),
+#'                              b=c(0.2, 0.2, 0.2, 0.1),
+#'                              c=c(0.4, 0.5, 0.1, 0.0),
+#'                              d=c(0.0, 0.0, 0.5, 0.6))
+#' row.names(feature.table) <- paste0("sample_", seq_len(4))
+#' row.names(dna.table) <- paste0("sample_", seq_len(4))
+#' metadata <- data.frame(SampleID=paste0("sample_", seq_len(4)),
+#'                           phenotype=c(0,0,1,1),
+#'                           participant=c(0,1,0,1),
+#'                           timepoint=c(0,0,1,1))
+#' # This will not raise an error
+#' check_data_mtxDE(feature.table = feature.table,
+#'                  dna.table = dna.table,
+#'                  metadata = metadata,
+#'                  sampleID="SampleID")
+#' # This will raise an error
+#' feature.table <- data.frame(e=c(0.1, 0.0, 0.0, 0.0),
+#'                             f=c(0.5, 0.5, 0.5, 0.4),
+#'                             g=c(0.4, 0.5, 0.0, 0.0),
+#'                             h=c(0.0, 0.0, 0.5, 0.6))
+#'
+#' check_data_mtxDE(feature.table = feature.table,
+#'                  dna.table = dna.table,
+#'                  metadata = metadata,
+#'                  sampleID="SampleID")
+#'
+check_data_mtxDE <- function(feature.table, dna.table, metadata, sampleID){
+
+  if ((!is.null(metadata)) && (!is.null(sampleID))) {
+    if ((sampleID %in% colnames(metadata)) == FALSE) {
+      stop("sampleID column '", sampleID, "' not found in metadata.")
+    }
+    if (length(setdiff(rownames(feature.table),
+                       metadata[, sampleID])) > 0) {
+      stop("Row names of `feature.table` do not match `metadata$",
+           sampleID, "`.")
+    }
+    if (!is.null(dna.table)){
+      if (length(setdiff(rownames(dna.table),
+                         metadata[, sampleID])) > 0) {
+        stop("Row names of `dna.table` do not match `metadata$",
+             sampleID, "`.")
+      }
+      if (length(intersect(colnames(dna.table),
+                           colnames(feature.table))) < 1) {
+        stop("None of the colnames of `dna.table` match `feature.table`")
+      }
+    }
+  }
+}
+
 #' Prepare Data for Differential Expression Analysis (internal)
 #'
 #' @description This function prepares the data by merging the feature table
@@ -369,16 +447,11 @@ get_random_fx <- function(form){
     # merge the feature table and metadata based on the rownames
     metadata.vars <- c(all.vars(as.formula(formula)), sampleID)
 
-    if ((!is.null(metadata)) && (!is.null(sampleID))) {
-        if ((sampleID %in% colnames(metadata)) == FALSE) {
-            stop("sampleID column '", sampleID, "' not found in metadata.")
-        }
-        if (length(setdiff(rownames(feature.table),
-                    metadata[, sampleID])) > 0) {
-            stop("Row names of `feature.table` do not match `metadata$",
-                sampleID, "`.")
-        }
-    }
+    # check validity of data
+    check_data_mtxDE(feature.table = feature.table,
+                     dna.table = NULL,
+                     metadata = metadata,
+                     sampleID = sampleID)
 
     data <- merge(feature.table,
                 metadata[,c(metadata.vars, zibr_time_ind)],
@@ -420,7 +493,7 @@ get_random_fx <- function(form){
 #'
 .run_single_regression_mtxDE <- function(data, reg.method,
                                         col, formula,
-                                        fixed.vars=NULL, 
+                                        fixed.vars=NULL,
                                         random.effects.vars=NULL,
                                         zibr_time_ind=NULL,
                                         zero_prop_from_formula=NULL){
@@ -629,7 +702,7 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
     mod.summaries <- .run_regressions_mtxDE(data, reg.method,
                                             feature.table, formula,
                                             zero_prop_from_formula,
-                                            zibr_time_ind, 
+                                            zibr_time_ind,
                                             ncores, show_progress)
     # Calling this from HoMiCorr
     adjusted.mod.summaries <- .adjust_p_values(mod.summaries, reg.method,
