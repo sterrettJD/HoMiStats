@@ -115,6 +115,55 @@ test_that("filter_tables_by_shared_columns correctly filters columns", {
 
 })
 
+test_that(".prepare_data_mtxDE works", {
+  feature.table <- data.frame(a=c(0.1, 0.0, 0.0, 0.0),
+                              b=c(0.5, 0.5, 0.5, 0.4),
+                              c=c(0.4, 0.5, 0.0, 0.0),
+                              d=c(0.0, 0.0, 0.5, 0.6))
+  row.names(feature.table) <- paste0("sample_", seq_len(4))
+  metadata <- data.frame(SampleID=paste0("sample_", seq_len(4)),
+                         phenotype=c(0,0,1,1),
+                         participant=c(0,1,0,1),
+                         timepoint=c(0,0,1,1))
+  dna.table <- feature.table
+
+  expected_data <- data.frame(
+    Row.names=paste0("sample_", seq_len(4)),
+    a=c(0.1, 0.0, 0.0, 0.0),
+    b=c(0.5, 0.5, 0.5, 0.4),
+    c=c(0.4, 0.5, 0.0, 0.0),
+    d=c(0.0, 0.0, 0.5, 0.6),
+    phenotype=c(0,0,1,1),
+    a_mgx=c(0.1, 0.0, 0.0, 0.0),
+    b_mgx=c(0.5, 0.5, 0.5, 0.4),
+    c_mgx=c(0.4, 0.5, 0.0, 0.0),
+    d_mgx=c(0.0, 0.0, 0.5, 0.6)
+    )
+
+  data <- .prepare_data_mtxDE(feature.table, metadata, " ~ phenotype",
+                      "SampleID", NULL, dna.table)
+  data$Row.names <- as.character(data$Row.names)
+  expect_equal(data, expected_data)
+
+  # testing the case where mismatch in dna.table
+  dna.table$b <- NULL
+  expected_data2 <- expected_data
+  expected_data2$b <- NULL
+  expected_data2$b_mgx <- NULL
+  expect_warning(
+    data2 <- .prepare_data_mtxDE(feature.table, metadata, " ~ phenotype",
+                              "SampleID", NULL, dna.table))
+  data2$Row.names <- as.character(data2$Row.names)
+  expect_equal(data2, expected_data2)
+
+  # testing the case where there's no dna.table
+  expected_data2 <- expected_data[, !grepl("mgx$", colnames(expected_data))]
+  data3 <- .prepare_data_mtxDE(feature.table, metadata, " ~ phenotype",
+                              "SampleID", NULL)
+  data3$Row.names <- as.character(data3$Row.names)
+  expect_equal(data3, expected_data2)
+})
+
 test_that("run_mtxDE works", {
     feature.table <- data.frame(a=c(0.1, 0.0, 0.0, 0.0),
                                 b=c(0.5, 0.5, 0.5, 0.4),
