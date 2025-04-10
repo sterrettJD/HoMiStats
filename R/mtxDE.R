@@ -382,7 +382,7 @@ get_random_fx <- function(form){
 #'                             f=c(0.5, 0.5, 0.5, 0.4),
 #'                             g=c(0.4, 0.5, 0.0, 0.0),
 #'                             h=c(0.0, 0.0, 0.5, 0.6))
-#' \dontrun{{
+#' \dontrun{
 #' check_data_mtxDE(feature.table = feature.table,
 #'                  dna.table = dna.table,
 #'                  metadata = metadata,
