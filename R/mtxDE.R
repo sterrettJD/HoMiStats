@@ -485,7 +485,7 @@ filter_tables_by_shared_columns <- function(table1, table2, table1_name,
 #' @param zibr_time_ind A string representing the time column in `metadata` for
 #' Zero-Inflated Beta Regression (ZIBR).
 #' This is used only when the regression method involves ZIBR.
-#' #' @param dna.table A data frame where rows are samples and
+#' @param dna.table A data frame where rows are samples and
 #' columns are features (e.g., genes).
 #' Row names should correspond to sample IDs.
 #' This table should contain gene abundance data.
