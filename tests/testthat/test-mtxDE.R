@@ -95,6 +95,26 @@ test_that("check_data_mtxDE works", {
                                    sampleID = "SampleID"))
 })
 
+test_that("filter_tables_by_shared_columns correctly filters columns", {
+
+  dna.table <- data.frame(a = c(1, 2), b = c(3, 4), c = c(5, 6))
+  feature.table <- data.frame(a = c(7, 8), b = c(9, 10))  # Missing column 'c'
+  expect_warning(
+    result <- filter_tables_by_shared_columns(dna.table, feature.table,
+                                              "dna.table", "feature.table"),
+    "The following feature\\(s\\) were removed from `dna.table`"
+  )
+  filtered.dna.table <- result$dna.table
+  filtered.feature.table <- result$feature.table
+
+  expected.dna.table <- dna.table[, c("a", "b"), drop = FALSE]
+  expected.feature.table <- feature.table[, c("a", "b"), drop = FALSE]
+
+  expect_equal(filtered.dna.table, expected.dna.table)
+  expect_equal(filtered.feature.table, expected.feature.table)
+
+})
+
 test_that("run_mtxDE works", {
     feature.table <- data.frame(a=c(0.1, 0.0, 0.0, 0.0),
                                 b=c(0.5, 0.5, 0.5, 0.4),
