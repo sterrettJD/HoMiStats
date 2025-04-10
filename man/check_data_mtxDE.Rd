@@ -2,7 +2,7 @@
 % Please edit documentation in R/mtxDE.R
 \name{check_data_mtxDE}
 \alias{check_data_mtxDE}
-\title{Check data validity for mgxDE function}
+\title{Check data validity for mtxDE function}
 \usage{
 check_data_mtxDE(feature.table, dna.table, metadata, sampleID)
 }
@@ -29,40 +29,8 @@ Nothing.
 }
 \description{
 This function checks the validity of your
-data for mgxDE analyses. This will check that your
+data for mtxDE analyses. This will check that your
 dna and feature tables have row names that match the given
 sampleID metadata column. It also ensures that dna.table and
 feature.table share column names.
-}
-\examples{
-feature.table <- data.frame(a=c(0.1, 0.0, 0.0, 0.0),
-                             b=c(0.5, 0.5, 0.5, 0.4),
-                             c=c(0.4, 0.5, 0.0, 0.0),
-                             d=c(0.0, 0.0, 0.5, 0.6))
-dna.table <- data.frame(a=c(0.3, 0.1, 0.0, 0.0),
-                             b=c(0.2, 0.2, 0.2, 0.1),
-                             c=c(0.4, 0.5, 0.1, 0.0),
-                             d=c(0.0, 0.0, 0.5, 0.6))
-row.names(feature.table) <- paste0("sample_", seq_len(4))
-row.names(dna.table) <- paste0("sample_", seq_len(4))
-metadata <- data.frame(SampleID=paste0("sample_", seq_len(4)),
-                          phenotype=c(0,0,1,1),
-                          participant=c(0,1,0,1),
-                          timepoint=c(0,0,1,1))
-# This will not raise an error
-check_data_mtxDE(feature.table = feature.table,
-                 dna.table = dna.table,
-                 metadata = metadata,
-                 sampleID="SampleID")
-# This will raise an error
-feature.table <- data.frame(e=c(0.1, 0.0, 0.0, 0.0),
-                            f=c(0.5, 0.5, 0.5, 0.4),
-                            g=c(0.4, 0.5, 0.0, 0.0),
-                            h=c(0.0, 0.0, 0.5, 0.6))
-
-check_data_mtxDE(feature.table = feature.table,
-                 dna.table = dna.table,
-                 metadata = metadata,
-                 sampleID="SampleID")
-
 }
