@@ -336,9 +336,9 @@ get_random_fx <- function(form){
     return(vars)
 }
 
-#' Check data validity for mgxDE function
+#' Check data validity for mtxDE function
 #' @description This function checks the validity of your
-#' data for mgxDE analyses. This will check that your
+#' data for mtxDE analyses. This will check that your
 #' dna and feature tables have row names that match the given
 #' sampleID metadata column. It also ensures that dna.table and
 #' feature.table share column names.
@@ -382,12 +382,12 @@ get_random_fx <- function(form){
 #'                             f=c(0.5, 0.5, 0.5, 0.4),
 #'                             g=c(0.4, 0.5, 0.0, 0.0),
 #'                             h=c(0.0, 0.0, 0.5, 0.6))
-#'
+#' \dontrun{{
 #' check_data_mtxDE(feature.table = feature.table,
 #'                  dna.table = dna.table,
 #'                  metadata = metadata,
 #'                  sampleID="SampleID")
-#'
+#'}
 check_data_mtxDE <- function(feature.table, dna.table, metadata, sampleID){
 
   if ((!is.null(metadata)) && (!is.null(sampleID))) {
@@ -460,7 +460,7 @@ filter_tables_by_shared_columns <- function(table1, table2, table1_name,
   table1 <- table1[, all.feature.vars, drop = FALSE]  # Filter table1
   table2 <- table2[, all.feature.vars, drop = FALSE]  # Filter table2
 
-  return(setNames(list(table1, table2), c(table1_name, table2_name)))
+  return(list(table1_name = table1, table2_name = table2))
 }
 
 #' Prepare Data for Differential Expression Analysis (internal)
