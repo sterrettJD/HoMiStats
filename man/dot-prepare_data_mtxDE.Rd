@@ -32,8 +32,9 @@ This column is used to merge the metadata with the feature table.}
 
 \item{zibr_time_ind}{A string representing the time column in `metadata` for
 Zero-Inflated Beta Regression (ZIBR).
-This is used only when the regression method involves ZIBR.
-#' @param dna.table A data frame where rows are samples and
+This is used only when the regression method involves ZIBR.}
+
+\item{dna.table}{A data frame where rows are samples and
 columns are features (e.g., genes).
 Row names should correspond to sample IDs.
 This table should contain gene abundance data.}
