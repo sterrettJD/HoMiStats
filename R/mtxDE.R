@@ -388,7 +388,7 @@ get_random_fx <- function(form){
 #'                  metadata = metadata,
 #'                  sampleID="SampleID")
 #'}
-check_data_mtxDE <- function(feature.table, dna.table, metadata, sampleID){
+check_data_mtxDE <- function(feature.table, dna.table=NULL, metadata, sampleID){
 
   if ((!is.null(metadata)) && (!is.null(sampleID))) {
     if ((sampleID %in% colnames(metadata)) == FALSE) {
@@ -460,7 +460,7 @@ filter_tables_by_shared_columns <- function(table1, table2, table1_name,
   table1 <- table1[, all.feature.vars, drop = FALSE]  # Filter table1
   table2 <- table2[, all.feature.vars, drop = FALSE]  # Filter table2
 
-  return(list(table1_name = table1, table2_name = table2))
+  return(stats::setNames(list(table1, table2), c(table1_name, table2_name)))
 }
 
 #' Prepare Data for Differential Expression Analysis (internal)
@@ -507,7 +507,6 @@ filter_tables_by_shared_columns <- function(table1, table2, table1_name,
                 by.x="row.names", by.y=sampleID)
     return(data)
 }
-
 
 #' Run a Single Regression for a Feature (internal)
 #'
