@@ -382,7 +382,7 @@ get_random_fx <- function(form){
 #'                             f=c(0.5, 0.5, 0.5, 0.4),
 #'                             g=c(0.4, 0.5, 0.0, 0.0),
 #'                             h=c(0.0, 0.0, 0.5, 0.6))
-#' \dontrun{{
+#' \dontrun{
 #' check_data_mtxDE(feature.table = feature.table,
 #'                  dna.table = dna.table,
 #'                  metadata = metadata,
@@ -485,27 +485,42 @@ filter_tables_by_shared_columns <- function(table1, table2, table1_name,
 #' @param zibr_time_ind A string representing the time column in `metadata` for
 #' Zero-Inflated Beta Regression (ZIBR).
 #' This is used only when the regression method involves ZIBR.
+#' #' @param dna.table A data frame where rows are samples and
+#' columns are features (e.g., genes).
+#' Row names should correspond to sample IDs.
+#' This table should contain gene abundance data.
 #'
 #' @return A merged data frame containing the feature table and metadata,
 #' ready for regression analysis.
 #'
 #' @keywords internal
 #'
-.prepare_data_mtxDE <- function(feature.table, metadata,
-                                formula, sampleID, zibr_time_ind){
-    # merge the feature table and metadata based on the rownames
-    metadata.vars <- c(all.vars(as.formula(formula)), sampleID)
-
-    # check validity of data
-    check_data_mtxDE(feature.table = feature.table,
-                     dna.table = NULL,
-                     metadata = metadata,
-                     sampleID = sampleID)
-
+.prepare_data_mtxDE <- function(feature.table, metadata, formula,
+                                sampleID, zibr_time_ind, dna.table=NULL) {
+  # keep metadata columns that are in the formula
+  metadata.vars <- c(all.vars(as.formula(formula)), sampleID)
+  # check the validity of the data
+  check_data_mtxDE(feature.table, dna.table, metadata, sampleID)
+  if (!is.null(dna.table)) {
+    # filter data tables to contain only shared columns
+    filt.tables <- filter_tables_by_shared_columns(dna.table, feature.table,
+                                                   "dna.table", "feature.table")
+    dna.table <- filt.tables$dna.table
+    feature.table <- filt.tables$feature.table
+    # update dna.table col names before merge
+    colnames(dna.table) <- paste0(colnames(dna.table), "_mgx")
+    # merge feature table, dna table, and metadata based on row names
     data <- merge(feature.table,
-                metadata[,c(metadata.vars, zibr_time_ind)],
-                by.x="row.names", by.y=sampleID)
-    return(data)
+                  metadata[,c(metadata.vars, zibr_time_ind)],
+                  by.x="row.names", by.y=sampleID)
+    data <- merge(data, dna.table, by.x="Row.names", by.y="row.names")
+  } else {
+    # merge feature table with metadata based on rownames
+    data <- merge(feature.table,
+                  metadata[,c(metadata.vars, zibr_time_ind)],
+                  by.x="row.names", by.y=sampleID)
+  }
+  return(data)
 }
 
 #' Run a Single Regression for a Feature (internal)
