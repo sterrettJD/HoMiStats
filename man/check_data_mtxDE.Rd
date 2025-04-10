@@ -4,7 +4,7 @@
 \alias{check_data_mtxDE}
 \title{Check data validity for mtxDE function}
 \usage{
-check_data_mtxDE(feature.table, dna.table, metadata, sampleID)
+check_data_mtxDE(feature.table, dna.table = NULL, metadata, sampleID)
 }
 \arguments{
 \item{feature.table}{A data frame where rows are samples and
