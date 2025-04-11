@@ -12,7 +12,8 @@
   fixed.vars = NULL,
   random.effects.vars = NULL,
   zibr_time_ind = NULL,
-  zero_prop_from_formula = NULL
+  zero_prop_from_formula = NULL,
+  dna.table = NULL
 )
 }
 \arguments{
@@ -38,6 +39,11 @@ for ZIBR, or NULL if not applicable.}
 
 \item{zero_prop_from_formula}{A boolean indicating whether zeroes should
 be modeled using the provided formula (for ZIBR).}
+
+\item{dna.table}{A data frame where rows are samples and
+columns are features (e.g., genes).
+Row names should correspond to sample IDs.
+This table should contain gene abundance data.}
 }
 \value{
 A data frame containing the summary of the regression results
