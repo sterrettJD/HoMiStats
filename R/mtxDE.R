@@ -660,6 +660,10 @@ filter_tables_by_shared_columns <- function(table1, table2, table1_name,
 #' for parallel processing.
 #' @param show_progress A boolean indicating whether a progress bar
 #' should be shown during parallel computation.
+#' @param dna.table A data frame where rows are samples and
+#' columns are features (e.g., genes).
+#' Row names should correspond to sample IDs.
+#' This table should contain gene abundance data.
 #'
 #' @return A data frame containing the regression summaries for all features.
 #' The summaries include terms,
@@ -744,6 +748,10 @@ filter_tables_by_shared_columns <- function(table1, table2, table1_name,
 #' if running in parallel. Defaults to 1 (not parallelized).
 #' @param show_progress A boolean denoting if a progress bar should be shown.
 #' @return a dataframe with differential expression results
+#' @param dna.table A data frame where rows are samples and
+#' columns are features (e.g., genes).
+#' Row names should correspond to sample IDs.
+#' This table should contain gene abundance data.
 #' @export
 #' @importFrom broom.mixed tidy
 #' @importFrom broom tidy
