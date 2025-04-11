@@ -670,7 +670,8 @@ filter_tables_by_shared_columns <- function(table1, table2, table1_name,
 .run_regressions_mtxDE <- function(data, reg.method,
                                     feature.table, formula,
                                     zero_prop_from_formula,
-                                    zibr_time_ind, ncores, show_progress){
+                                    zibr_time_ind, ncores, show_progress,
+                                   dna.table=NULL){
     if(reg.method=="zibr"){
         form.as.form <- as.formula(formula)
         random.effects.vars <- get_random_fx(form.as.form)
@@ -692,12 +693,15 @@ filter_tables_by_shared_columns <- function(table1, table2, table1_name,
     # Loop through each column and run the regression
     mod.summaries <- foreach::foreach(col=colnames(feature.table),
                                         .combine=rbind,
-                                        .options.snow = doSNOWopts) %dopar% {
+                                        .options.snow = doSNOWopts,
+                                        .packages = "HoMiStats"
+                                      ) %dopar% {
     .run_single_regression_mtxDE(data, reg.method,
                                 col, formula,
                                 fixed.vars, random.effects.vars,
                                 zibr_time_ind,
-                                zero_prop_from_formula)
+                                zero_prop_from_formula,
+                                dna.table=dna.table)
     }
 
     if(show_progress){ close(pb) } # close the progress bar
@@ -798,21 +802,28 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
                         zero_prop_from_formula=TRUE,
                         zibr_time_ind=NULL,
                         ncores=1,
-                        show_progress=TRUE){
+                        show_progress=TRUE,
+                        dna.table=NULL){
     if(reg.method %in% c("zibr", "gamlss")){
         check_for_ones(feature.table) # Beta regression can't handle ones
         feature.table <- filter_undetected(feature.table) # or undetected feats
+        if(!is.null(dna.table)){
+          check_for_ones(dna.table)
+          dna.table <- filter_undetected(dna.table)
+        }
     }
     formula <- paste0(" ~ ", formula)
     data <- .prepare_data_mtxDE(feature.table, metadata,
-                                formula, sampleID, zibr_time_ind)
+                                formula, sampleID, zibr_time_ind,
+                                dna.table = dna.table)
 
     # Loop through each column and run the regression
     mod.summaries <- .run_regressions_mtxDE(data, reg.method,
                                             feature.table, formula,
                                             zero_prop_from_formula,
                                             zibr_time_ind,
-                                            ncores, show_progress)
+                                            ncores, show_progress,
+                                            dna.table)
     # Calling this from HoMiCorr
     adjusted.mod.summaries <- .adjust_p_values(mod.summaries, reg.method,
                                                 zero_prop_from_formula, padj)
