@@ -164,6 +164,39 @@ test_that(".prepare_data_mtxDE works", {
   expect_equal(data3, expected_data2)
 })
 
+test_that(".add_dna_to_formula correctly adds dna col", {
+  feature.table <- data.frame(a=c(0.1, 0.0, 0.0, 0.0),
+                              b=c(0.5, 0.5, 0.5, 0.4),
+                              c=c(0.4, 0.5, 0.0, 0.0),
+                              d=c(0.0, 0.0, 0.5, 0.6))
+  row.names(feature.table) <- paste0("sample_", seq_len(4))
+  metadata <- data.frame(SampleID=paste0("sample_", seq_len(4)),
+                         phenotype=c(0,0,1,1),
+                         participant=c(0,1,0,1),
+                         timepoint=c(0,0,1,1))
+  dna.table <- feature.table
+  formula <- as.formula(" ~ phenotype")
+  data <- .prepare_data_mtxDE(feature.table, metadata, formula,
+                              "SampleID", NULL, dna.table)
+  fixed.vars <- all.vars(formula)
+  col <- "a"
+
+  # successfully add to fixed.vars
+  expected.fixed.vars <- c(fixed.vars, "a_mgx")
+
+  result <- .add_dna_to_formula(data, col, formula, fixed.vars,
+                                reg.method = "zibr")
+  actual.fixed.vars <- result$fixed.vars
+  expect_equal(actual.fixed.vars, expected.fixed.vars)
+
+  # successfully add to formula
+  expected.formula <- as.formula(" ~ phenotype + a_mgx")
+  result <- .add_dna_to_formula(data, col, formula, fixed.vars,
+                                reg.method = "lm")
+  actual.formula <- result$formula
+  expect_equal(actual.formula, expected.formula)
+})
+
 test_that("run_mtxDE works", {
     feature.table <- data.frame(a=c(0.1, 0.0, 0.0, 0.0),
                                 b=c(0.5, 0.5, 0.5, 0.4),
