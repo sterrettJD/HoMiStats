@@ -523,6 +523,39 @@ filter_tables_by_shared_columns <- function(table1, table2, table1_name,
   return(data)
 }
 
+#' Add matching dna column to formula or fixed vars
+#'
+#' @description
+#' This function adds the matching dna feature of a `col` to a formula or
+#' fixed vars
+#'
+#' @param data A data frame containing the merged feature table and metadata,
+#' ready for regression.
+#' @param col A string representing the name of the feature (column)
+#' in `data` to be analyzed.
+#' @param formula A string representing the formula for the regression model.
+#' @param fixed.vars A vector of strings representing the fixed effect
+#' variables to include in the regression.
+#' @param reg.method A string indicating the regression method to be used.
+#' Options include "zibr", "gamlss", "lm", and "lmer".
+#'
+#' @return list of updated `formula` and `fixed.vars` with the matching dna
+#' column added to them
+#'
+#' @keywords internal
+.add_dna_to_formula <- function(data, col, formula, fixed.vars, reg.method) {
+  dna.col <- paste0(col, "_mgx")
+  if (!(dna.col %in% colnames(data))) {
+    stop("The following DNA feature was not found in metadata: ", dna.col)
+  }
+  if (reg.method == "zibr") {
+    fixed.vars <- c(fixed.vars, dna.col)
+  } else {
+    formula <- update(formula, stats::reformulate(c(".", dna.col)))
+  }
+  return(list(formula = formula, fixed.vars = fixed.vars))
+}
+
 #' Run a Single Regression for a Feature (internal)
 #'
 #' @description This function runs a single regression model for
@@ -547,6 +580,10 @@ filter_tables_by_shared_columns <- function(table1, table2, table1_name,
 #' for ZIBR, or NULL if not applicable.
 #' @param zero_prop_from_formula A boolean indicating whether zeroes should
 #' be modeled using the provided formula (for ZIBR).
+#' @param dna.table A data frame where rows are samples and
+#' columns are features (e.g., genes).
+#' Row names should correspond to sample IDs.
+#' This table should contain gene abundance data.
 #'
 #' @return A data frame containing the summary of the regression results
 #' for the specified feature.
@@ -560,7 +597,15 @@ filter_tables_by_shared_columns <- function(table1, table2, table1_name,
                                         fixed.vars=NULL,
                                         random.effects.vars=NULL,
                                         zibr_time_ind=NULL,
-                                        zero_prop_from_formula=NULL){
+                                        zero_prop_from_formula=NULL,
+                                        dna.table=NULL) {
+   if (!is.null(dna.table)) {
+    # check that dna col exists and add to formula/fixed.vars
+    updated.dna <- .add_dna_to_formula(data, col, formula,
+                                      fixed.vars, reg.method)
+    formula <- updated.dna$formula
+    fixed.vars <- updated.dna$fixed.vars
+  }
     if (reg.method == "gamlss"){
         mod <- run_single_beta_reg_gamlss(paste0(col, formula),
                                             data=data)
