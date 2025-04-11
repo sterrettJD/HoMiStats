@@ -1,0 +1,117 @@
+---
+title: "Benchmark mtxDE with paired metagenomics data"
+author: "Kat Terwelp"
+format: html
+editor: visual
+---
+
+## Benchmark mtxDE with paired metagenomics data
+
+```{r setup, include=FALSE}
+# Load required libraries
+library(dplyr)
+library(stringr)
+library(ggplot2)
+library(caret)
+```
+
+**Step One: Download Data**
+
+```{r}
+# if synth_mgx_mtx data is not already downloaded, download it
+if (!dir.exists("synth_mgx_mtx")){
+utils::download.file(url = "http://199.94.60.28/MTX_2021/synth_mgx_mtx.tar.gz", 
+              destfile = "synth_mgx_mtx.tar.gz")
+utils::untar(tarfile = "synth_mgx_mtx.tar.gz", exdir = "synth_mgx_mtx")
+}
+```
+
+**Step Two: Import metadata, feature table, and dna table**
+
+```{r}
+# Read in null df for RNA features
+null.df <- data.table::fread("synth_mgx_mtx/group-null-enc.mtx_abunds_groups.tsv",
+                             data.table=F)
+null.mgx.df <- data.table::fread("synth_mgx_mtx/group-null-enc.mgx_abunds_groups.tsv",
+                                 data.table=F)
+
+# Create metadata
+metadata <- data.frame(phenotype=t(null.df[1,]),
+                       rna_depth=t(null.df[2,]),
+                       dna_depth=t(null.mgx.df[2,]))
+metadata <- metadata[2:nrow(metadata),]
+colnames(metadata) <- c("phenotype", "rna_depth", "dna_depth")
+metadata$SampleID <- rownames(metadata)
+metadata$phenotype <- as.numeric(metadata$phenotype)
+
+# Filter the df into a feature table where the samples are rows
+null.feature.table <- null.df[3:nrow(null.df),]
+null.feature.table <- as.data.frame(t(null.feature.table))
+colnames(null.feature.table) <- null.feature.table["#",]
+null.feature.table <- null.feature.table[2:nrow(null.feature.table),]
+null.feature.table <- dplyr::mutate_all(null.feature.table, as.numeric)
+
+
+# Filter the dna df into a dna table where the samples are rows
+null.dna.table <- null.mgx.df[3:nrow(null.mgx.df),]
+null.dna.table <- as.data.frame(t(null.dna.table))
+colnames(null.dna.table) <- null.dna.table["#",]
+null.dna.table <- null.dna.table[2:nrow(null.dna.table),]
+null.dna.table<- dplyr::mutate_all(null.dna.table, as.numeric)
+```
+
+```{r}
+# make sure there's no NA values
+null.feature.table[is.na(null.feature.table)] <- 0
+null.dna.table[is.na(null.dna.table)] <- 0
+# transform into relative abundance
+null.feature.table.rel <- null.feature.table/rowSums(null.feature.table)
+null.dna.table.rel <- null.dna.table/rowSums(null.dna.table)
+
+
+```
+
+```{r}
+# run the null model if not already available
+if (!file.exists("null_res.RDS")){
+null.res <- run_mtxDE(formula="phenotype", 
+                      feature.table=null.feature.table.rel,
+                      metadata=metadata, sampleID="SampleID", reg.method = "zibr",
+                      ncores = 4,
+                      dna.table = null.dna.table.rel
+                      )
+
+saveRDS(null.res, file = "null_res.RDS")
+} else {
+  null.res <- readRDS("null_res.RDS")
+}
+```
+
+```{r}
+hist(null.res$q)
+
+null.res <- null.res %>%
+  dplyr::mutate(mgx = dplyr::if_else(stringr::str_detect(term, "_mgx$"), TRUE, FALSE),
+                significant = if_else(q < 0.05, TRUE, FALSE))
+
+null.res %>% 
+  ggplot2::ggplot(aes(x = mgx)) +
+  ggplot2::geom_bar(ggplot2::aes(fill = significant))
+
+null.res.filt <- null.res %>% 
+  dplyr::filter(term != "intercept") %>% 
+  dplyr::filter(parameter == "beta") %>% 
+  dplyr::mutate(expected_significance = mgx)
+
+null.res.filt %>% 
+  ggplot2::ggplot(aes(x = mgx)) +
+  ggplot2::geom_bar(ggplot2::aes(fill = significant))
+
+# confusion matrix
+predicted <- factor(null.res.filt$significant)
+expected <- factor(null.res.filt$expected_significance)
+
+caret::confusionMatrix(data=predicted, reference = expected)
+
+
+```
