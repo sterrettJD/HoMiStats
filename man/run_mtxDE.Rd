@@ -14,7 +14,8 @@ run_mtxDE(
   zero_prop_from_formula = TRUE,
   zibr_time_ind = NULL,
   ncores = 1,
-  show_progress = TRUE
+  show_progress = TRUE,
+  dna.table = NULL
 )
 }
 \arguments{
@@ -56,6 +57,11 @@ This argument does nothing if reg.method is not "zibr".}
 if running in parallel. Defaults to 1 (not parallelized).}
 
 \item{show_progress}{A boolean denoting if a progress bar should be shown.}
+
+\item{dna.table}{A data frame where rows are samples and
+columns are features (e.g., genes).
+Row names should correspond to sample IDs.
+This table should contain gene abundance data.}
 }
 \value{
 a dataframe with differential expression results
