@@ -175,11 +175,12 @@ test_that(".add_dna_to_formula correctly adds dna col", {
                          participant=c(0,1,0,1),
                          timepoint=c(0,0,1,1))
   dna.table <- feature.table
-  formula <- as.formula(" ~ phenotype")
+  formula <- " ~ phenotype"
   data <- .prepare_data_mtxDE(feature.table, metadata, formula,
                               "SampleID", NULL, dna.table)
-  fixed.vars <- all.vars(formula)
+  fixed.vars <- all.vars(as.formula(formula))
   col <- "a"
+  formula <- paste0(col, formula)
 
   # successfully add to fixed.vars
   expected.fixed.vars <- c(fixed.vars, "a_mgx")
@@ -188,13 +189,27 @@ test_that(".add_dna_to_formula correctly adds dna col", {
                                 reg.method = "zibr")
   actual.fixed.vars <- result$fixed.vars
   expect_equal(actual.fixed.vars, expected.fixed.vars)
+  expect_equal(result$formula, formula) # shouldn't add to formula
 
   # successfully add to formula
-  expected.formula <- as.formula(" ~ phenotype + a_mgx")
+  expected.formula <- as.formula("a ~ phenotype + a_mgx")
   result <- .add_dna_to_formula(data, col, formula, fixed.vars,
                                 reg.method = "lm")
-  actual.formula <- result$formula
+  actual.formula <- as.formula(result$formula)
   expect_equal(actual.formula, expected.formula)
+  expect_equal(result$fixed.vars, fixed.vars) # shouldn't add to fixed.vars
+
+  # has an error if feature doesn't exist
+  col <- "nonexistent_feature"
+  expect_error(
+    .add_dna_to_formula(data, col, formula, fixed.vars, reg.method = "zibr"),
+    "The following DNA feature was not found in metadata: nonexistent_feature_mgx"
+  )
+
+  # lm can run with the formula
+  mod <- lm(as.formula(actual.formula),
+            data=data)
+
 })
 
 test_that("run_mtxDE works", {
