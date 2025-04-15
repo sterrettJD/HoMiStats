@@ -440,6 +440,11 @@ filter_tables_by_shared_columns <- function(table1, table2, table1_name,
                                             table2_name) {
   all.feature.vars <- intersect(colnames(table1), colnames(table2))
 
+  if (length(all.feature.vars) == 0) {
+    stop("No shared columns between `feature.table` and `dna.table`.
+         Ensure the tables have overlapping features.")
+  }
+
   removed_from_table1 <- setdiff(colnames(table1), all.feature.vars)
   removed_from_table2 <- setdiff(colnames(table2), all.feature.vars)
 
@@ -551,7 +556,7 @@ filter_tables_by_shared_columns <- function(table1, table2, table1_name,
   if (reg.method == "zibr") {
     fixed.vars <- c(fixed.vars, dna.col)
   } else {
-    formula <- update(formula, stats::reformulate(c(".", dna.col)))
+    formula <- paste0(formula, " + ", dna.col)
   }
   return(list(formula = formula, fixed.vars = fixed.vars))
 }
@@ -680,6 +685,8 @@ filter_tables_by_shared_columns <- function(table1, table2, table1_name,
         form.as.form <- as.formula(formula)
         random.effects.vars <- get_random_fx(form.as.form)
         fixed.vars <- setdiff(all.vars(form.as.form), random.effects.vars)
+    } else {
+      fixed.vars <- NULL
     }
     # Setup cluster for parallel running
     cl <- parallel::makeCluster(ncores)
@@ -831,7 +838,7 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
                                             zero_prop_from_formula,
                                             zibr_time_ind,
                                             ncores, show_progress,
-                                            dna.table)
+                                            dna.table=dna.table)
     # Calling this from HoMiCorr
     adjusted.mod.summaries <- .adjust_p_values(mod.summaries, reg.method,
                                                 zero_prop_from_formula, padj)
