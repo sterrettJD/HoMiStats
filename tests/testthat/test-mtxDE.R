@@ -206,9 +206,11 @@ test_that(".add_dna_to_formula correctly adds dna col", {
     "The following DNA feature was not found in metadata: nonexistent_feature_mgx"
   )
 
-  # lm can run with the formula
-  mod <- lm(as.formula(actual.formula),
-            data=data)
+  expect_no_error(
+      # lm can run with the formula
+      mod <- lm(as.formula(actual.formula),
+                data=data)
+  )
 
 })
 
