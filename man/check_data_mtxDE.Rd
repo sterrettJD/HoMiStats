@@ -55,14 +55,14 @@ check_data_mtxDE(feature.table = feature.table,
                  metadata = metadata,
                  sampleID="SampleID")
 # This will raise an error
-feature.table <- data.frame(e=c(0.1, 0.0, 0.0, 0.0),
-                            f=c(0.5, 0.5, 0.5, 0.4),
-                            g=c(0.4, 0.5, 0.0, 0.0),
-                            h=c(0.0, 0.0, 0.5, 0.6))
-\dontrun{
-check_data_mtxDE(feature.table = feature.table,
-                 dna.table = dna.table,
-                 metadata = metadata,
-                 sampleID="SampleID")
-}
+# feature.table <- data.frame(e=c(0.1, 0.0, 0.0, 0.0),
+#                             f=c(0.5, 0.5, 0.5, 0.4),
+#                             g=c(0.4, 0.5, 0.0, 0.0),
+#                             h=c(0.0, 0.0, 0.5, 0.6))
+
+# check_data_mtxDE(feature.table = feature.table,
+#                  dna.table = dna.table,
+#                  metadata = metadata,
+#                  sampleID="SampleID")
+
 }

@@ -29,8 +29,11 @@ This function filters two data frames
 to only retain shared columns.
 }
 \examples{
-feature.table <- data.frame(a = c(0.1, 0.2), b = c(0.3, 0.4), c = c(0.5, 0.6))
-dna.table <- data.frame(a = c(0.7, 0.8), b = c(0.9, 1.0))
+feature.table <- data.frame(a = c(0.1, 0.2),
+                            b = c(0.3, 0.4),
+                            c = c(0.5, 0.6))
+dna.table <- data.frame(a = c(0.7, 0.8),
+                        b = c(0.9, 1.0))
 result <- filter_tables_by_shared_columns(feature.table, dna.table,
                                           "feature.table", "dna.table")
 filtered_feature <- result$feature.table
