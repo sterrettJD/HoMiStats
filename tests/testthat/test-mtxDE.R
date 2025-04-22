@@ -434,3 +434,50 @@ test_that("run_mtxDE warns about undetected features", {
                    "Undetected features",
                    perl=TRUE)
 })
+
+
+test_that("run_mtxDE works with DNA", {
+    feature.table <- data.frame(a=c(0.1, 0.0, 0.0, 0.0),
+                                b=c(0.5, 0.5, 0.5, 0.4),
+                                c=c(0.4, 0.5, 0.0, 0.0),
+                                d=c(0.0, 0.0, 0.5, 0.6))
+    dna.table <- data.frame(a=c(0.1, 0.0, 0.0, 0.0),
+                            b=c(0.5, 0.5, 0.5, 0.4),
+                            c=c(0.4, 0.5, 0.0, 0.0),
+                            d=c(0.0, 0.0, 0.5, 0.6))
+    row.names(feature.table) <- paste0("sample_", seq_len(4))
+    row.names(dna.table) <- paste0("sample_", seq_len(4))
+    metadata <- data.frame(SampleID=paste0("sample_", seq_len(4)),
+                           phenotype=c(0,0,1,1),
+                           participant=c(0,1,0,1),
+                           timepoint=c(0,0,0,0))
+
+
+    # lm based
+    expect_no_error(res <- run_mtxDE("phenotype",
+                             feature.table,
+                             metadata,
+                             dna.table=dna.table,
+                             reg.method="lm",
+                             sampleID="SampleID",
+                             ncores=2,
+                             show_progress=FALSE))
+
+    expect_equal(nrow(dplyr::filter(res, term=="a_mgx")), 1)
+    expect_true(res[res$term=="d_mgx", "q"] < 0.05)
+    expect_true(res[res$term=="d_mgx", "phenotype"] > 0.05)
+
+    # gamlss based
+    expect_no_error(res <- run_mtxDE("phenotype",
+                                     feature.table,
+                                     metadata,
+                                     dna.table=dna.table,
+                                     reg.method="gamlss",
+                                     sampleID="SampleID",
+                                     ncores=2,
+                                     show_progress=FALSE))
+
+    expect_equal(nrow(dplyr::filter(res, term=="a_mgx")), 1)
+    expect_true(res[res$term=="d_mgx", "q"] < 0.05)
+    expect_true(res[res$term=="d_mgx", "phenotype"] > 0.05)
+})
