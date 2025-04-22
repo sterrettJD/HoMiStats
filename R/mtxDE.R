@@ -378,16 +378,16 @@ get_random_fx <- function(form){
 #'                  metadata = metadata,
 #'                  sampleID="SampleID")
 #' # This will raise an error
-#' feature.table <- data.frame(e=c(0.1, 0.0, 0.0, 0.0),
-#'                             f=c(0.5, 0.5, 0.5, 0.4),
-#'                             g=c(0.4, 0.5, 0.0, 0.0),
-#'                             h=c(0.0, 0.0, 0.5, 0.6))
-#' \dontrun{
-#' check_data_mtxDE(feature.table = feature.table,
-#'                  dna.table = dna.table,
-#'                  metadata = metadata,
-#'                  sampleID="SampleID")
-#'}
+#' # feature.table <- data.frame(e=c(0.1, 0.0, 0.0, 0.0),
+#' #                             f=c(0.5, 0.5, 0.5, 0.4),
+#' #                             g=c(0.4, 0.5, 0.0, 0.0),
+#' #                             h=c(0.0, 0.0, 0.5, 0.6))
+#'
+#' # check_data_mtxDE(feature.table = feature.table,
+#' #                  dna.table = dna.table,
+#' #                  metadata = metadata,
+#' #                  sampleID="SampleID")
+#'
 check_data_mtxDE <- function(feature.table, dna.table=NULL, metadata, sampleID){
 
   if ((!is.null(metadata)) && (!is.null(sampleID))) {
@@ -429,8 +429,11 @@ check_data_mtxDE <- function(feature.table, dna.table=NULL, metadata, sampleID){
 #' }
 #' @export
 #' @examples
-#' feature.table <- data.frame(a = c(0.1, 0.2), b = c(0.3, 0.4), c = c(0.5, 0.6))
-#' dna.table <- data.frame(a = c(0.7, 0.8), b = c(0.9, 1.0))
+#' feature.table <- data.frame(a = c(0.1, 0.2),
+#'                             b = c(0.3, 0.4),
+#'                             c = c(0.5, 0.6))
+#' dna.table <- data.frame(a = c(0.7, 0.8),
+#'                         b = c(0.9, 1.0))
 #' result <- filter_tables_by_shared_columns(feature.table, dna.table,
 #'                                           "feature.table", "dna.table")
 #' filtered_feature <- result$feature.table
@@ -707,18 +710,24 @@ filter_tables_by_shared_columns <- function(table1, table2, table1_name,
                                         .options.snow = doSNOWopts,
                                         .packages = "HoMiStats"
                                       ) %dopar% {
-    .run_single_regression_mtxDE(data, reg.method,
-                                col, formula,
-                                fixed.vars, random.effects.vars,
-                                zibr_time_ind,
-                                zero_prop_from_formula,
-                                dna.table=dna.table)
+        # Create a local copy of dna.table for each worker
+        local_dna_table <- if (!is.null(dna.table)) {
+            dna.table[, col, drop = FALSE]
+        } else {
+            NULL
+        }
+
+        .run_single_regression_mtxDE(data, reg.method,
+                                    col, formula,
+                                    fixed.vars, random.effects.vars,
+                                    zibr_time_ind,
+                                    zero_prop_from_formula,
+                                    dna.table=local_dna_table)
     }
 
     if(show_progress){ close(pb) } # close the progress bar
     parallel::stopCluster(cl) # close the cluster for parallel computation
-    mod.summaries <- as.data.frame(mod.summaries)
-    return(mod.summaries)
+    return(as.data.frame(mod.summaries))
 }
 
 
