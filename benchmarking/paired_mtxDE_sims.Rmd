@@ -1,0 +1,117 @@
+---
+title: "paired_mtxDE_sims"
+author: "John Sterrett"
+date: "2025-04-17"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+```
+
+# Simulate normal data
+```{r}
+set.seed(42)
+
+simulate_norm_run_lm <- function(n=1000, var_explain_by_x=1){
+    x <- rnorm(n=n)
+    y_noise <-  (1-var_explain_by_x) * rnorm(n=n)
+    y <- (var_explain_by_x * x) + y_noise
+
+    df <- data.frame(x=x,y=y)
+    
+    return(broom::tidy(lm(y ~ x, df)))
+}
+
+# set parameters
+N <- 1E5
+vars_explained <- seq(-2,2,0.1)
+results <- data.frame(matrix(nrow=0, ncol=6))
+colnames(results) <- c("term", "estimate", "std.error", 
+                       "statistic", "p.value", "true_effect")
+
+# try simulating with different variance explained
+for (var in vars_explained){
+    new_res <- simulate_norm_run_lm(n=N, var_explain_by_x=var)
+    new_res$true_effect <- var
+    results <- rbind(results, new_res)
+}
+
+results %>%
+    filter(term=="x") %>%
+    ggplot(mapping=aes(x=true_effect, y=estimate)) +
+    geom_point()
+
+```
+
+
+```{r}
+x <- rnbinom(n=1000, size=5, mu=100)
+hist(x)
+zero_indexes <- rbinom(n=1000, size=1, prob=0.2)
+x[which(zero_indexes==1)] <- 0
+hist(x)
+
+simulate_zero_inflated_rnbinom <- function(n=1000, size=5, mu=100, zero_prob=0.2, var_explain_by_x=1){
+    x <- rnbinom(n=n, size=size, mu=mu)
+    
+    y_base <- (1-var_explain_by_x) * rnbinom(n=n, size=size, mu=mu)
+    # add effect of x
+    y <- (var_explain_by_x * x) + y_base
+    # zero inflate our data
+    y[which(rbinom(n, size=1, prob=zero_prob)==1)] <- 0
+    
+    df <- data.frame(x=x,y=y)
+    return(df)
+}
+
+
+simulate_zi_rnbinom_run_lm <- function(n=1000, size=5, mu=100, 
+                                       zero_prob=0.2,
+                                       var_explain_by_x=1){
+    df <- simulate_zero_inflated_rnbinom(n, size, mu, zero_prob, var_explain_by_x)
+    return(broom::tidy(lm(y ~ x, df)))
+}
+
+df <- simulate_zero_inflated_rnbinom(var_explain_by_x=0.4)
+ggplot(df, mapping=aes(x=x, y=y)) +
+    geom_point() +
+    geom_smooth(method="lm")
+
+
+
+# set parameters
+N <- 200
+vars_explained <- seq(-2,2,0.1)
+results <- data.frame(matrix(nrow=0, ncol=6))
+colnames(results) <- c("term", "estimate", "std.error", 
+                       "statistic", "p.value", "true_effect")
+
+# try simulating with different variance explained
+for (var in vars_explained){
+    new_res <- simulate_rnbinom_run_lm(n=N, 
+                                       size=1,
+                                       var_explain_by_x=var)
+    new_res$true_effect <- var
+    results <- rbind(results, new_res)
+}
+
+results %>%
+    filter(term=="x") %>%
+    ggplot(mapping=aes(x=true_effect, y=estimate)) +
+    geom_point()
+
+```
+
+# MGX-MTX
+```{r}
+# simulate MGX ~ neg binomial with zero inflation
+
+# simulate MTX ~ MGX * noise (multiply to keep zeros zero)
+
+# simulate MTX ~ MGX * noise * treatment_effect
+
+
+```

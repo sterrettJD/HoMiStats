@@ -66,6 +66,153 @@ test_that("check_for_ones works", {
     expect_no_error(check_for_ones(no.error.df))
 })
 
+test_that("check_data_mtxDE works", {
+  feature.table <- data.frame(a=c(0.1, 0.2),
+                              b=c(0.1, 0))
+
+  unmatched.dna.table <- data.frame(c=c(0.2, 0.4),
+                                    d=c(0.1, 0))
+
+  metadata <- data.frame(SampleID = paste0("sample_", seq_len(2)),
+                         phenotype = c(0,1))
+
+  row.names(feature.table) <- paste0("sample_", seq_len(2))
+  row.names(unmatched.dna.table) <- paste0("sample_", seq_len(2))
+
+  expect_error(check_data_mtxDE(feature.table = feature.table,
+                                dna.table = unmatched.dna.table,
+                                metadata = metadata,
+                                sampleID = "SampleID"),
+               "None of the colnames of `dna.table` match `feature.table`")
+
+  good.dna.table <- data.frame(a=c(0.2, 0.4),
+                               b=c(0.1, 0))
+  row.names(good.dna.table) <- paste0("sample_", seq_len(2))
+
+  expect_no_error(check_data_mtxDE(feature.table = feature.table,
+                                   dna.table = good.dna.table,
+                                   metadata = metadata,
+                                   sampleID = "SampleID"))
+})
+
+test_that("filter_tables_by_shared_columns correctly filters columns", {
+
+  dna.table <- data.frame(a = c(1, 2), b = c(3, 4), c = c(5, 6))
+  feature.table <- data.frame(a = c(7, 8), b = c(9, 10))  # Missing column 'c'
+  expect_warning(
+    result <- filter_tables_by_shared_columns(dna.table, feature.table,
+                                              "dna.table", "feature.table"),
+    "The following feature\\(s\\) were removed from `dna.table`"
+  )
+  filtered.dna.table <- result$dna.table
+  filtered.feature.table <- result$feature.table
+
+  expected.dna.table <- dna.table[, c("a", "b"), drop = FALSE]
+  expected.feature.table <- feature.table[, c("a", "b"), drop = FALSE]
+
+  expect_equal(filtered.dna.table, expected.dna.table)
+  expect_equal(filtered.feature.table, expected.feature.table)
+
+})
+
+test_that(".prepare_data_mtxDE works", {
+  feature.table <- data.frame(a=c(0.1, 0.0, 0.0, 0.0),
+                              b=c(0.5, 0.5, 0.5, 0.4),
+                              c=c(0.4, 0.5, 0.0, 0.0),
+                              d=c(0.0, 0.0, 0.5, 0.6))
+  row.names(feature.table) <- paste0("sample_", seq_len(4))
+  metadata <- data.frame(SampleID=paste0("sample_", seq_len(4)),
+                         phenotype=c(0,0,1,1),
+                         participant=c(0,1,0,1),
+                         timepoint=c(0,0,1,1))
+  dna.table <- feature.table
+
+  expected_data <- data.frame(
+    Row.names=paste0("sample_", seq_len(4)),
+    a=c(0.1, 0.0, 0.0, 0.0),
+    b=c(0.5, 0.5, 0.5, 0.4),
+    c=c(0.4, 0.5, 0.0, 0.0),
+    d=c(0.0, 0.0, 0.5, 0.6),
+    phenotype=c(0,0,1,1),
+    a_mgx=c(0.1, 0.0, 0.0, 0.0),
+    b_mgx=c(0.5, 0.5, 0.5, 0.4),
+    c_mgx=c(0.4, 0.5, 0.0, 0.0),
+    d_mgx=c(0.0, 0.0, 0.5, 0.6)
+    )
+
+  data <- .prepare_data_mtxDE(feature.table, metadata, " ~ phenotype",
+                      "SampleID", NULL, dna.table)
+  data$Row.names <- as.character(data$Row.names)
+  expect_equal(data, expected_data)
+
+  # testing the case where mismatch in dna.table
+  dna.table$b <- NULL
+  expected_data2 <- expected_data
+  expected_data2$b <- NULL
+  expected_data2$b_mgx <- NULL
+  expect_warning(
+    data2 <- .prepare_data_mtxDE(feature.table, metadata, " ~ phenotype",
+                              "SampleID", NULL, dna.table))
+  data2$Row.names <- as.character(data2$Row.names)
+  expect_equal(data2, expected_data2)
+
+  # testing the case where there's no dna.table
+  expected_data2 <- expected_data[, !grepl("mgx$", colnames(expected_data))]
+  data3 <- .prepare_data_mtxDE(feature.table, metadata, " ~ phenotype",
+                              "SampleID", NULL)
+  data3$Row.names <- as.character(data3$Row.names)
+  expect_equal(data3, expected_data2)
+})
+
+test_that(".add_dna_to_formula correctly adds dna col", {
+  feature.table <- data.frame(a=c(0.1, 0.0, 0.0, 0.0),
+                              b=c(0.5, 0.5, 0.5, 0.4),
+                              c=c(0.4, 0.5, 0.0, 0.0),
+                              d=c(0.0, 0.0, 0.5, 0.6))
+  row.names(feature.table) <- paste0("sample_", seq_len(4))
+  metadata <- data.frame(SampleID=paste0("sample_", seq_len(4)),
+                         phenotype=c(0,0,1,1),
+                         participant=c(0,1,0,1),
+                         timepoint=c(0,0,1,1))
+  dna.table <- feature.table
+  formula <- " ~ phenotype"
+  data <- .prepare_data_mtxDE(feature.table, metadata, formula,
+                              "SampleID", NULL, dna.table)
+  fixed.vars <- all.vars(as.formula(formula))
+  col <- "a"
+  formula <- paste0(col, formula)
+
+  # successfully add to fixed.vars
+  expected.fixed.vars <- c(fixed.vars, "a_mgx")
+
+  result <- .add_dna_to_formula(data, col, formula, fixed.vars,
+                                reg.method = "zibr")
+  actual.fixed.vars <- result$fixed.vars
+  expect_equal(actual.fixed.vars, expected.fixed.vars)
+  expect_equal(result$formula, formula) # shouldn't add to formula
+
+  # successfully add to formula
+  expected.formula <- as.formula("a ~ phenotype + a_mgx")
+  result <- .add_dna_to_formula(data, col, formula, fixed.vars,
+                                reg.method = "lm")
+  actual.formula <- as.formula(result$formula)
+  expect_equal(actual.formula, expected.formula)
+  expect_equal(result$fixed.vars, fixed.vars) # shouldn't add to fixed.vars
+
+  # has an error if feature doesn't exist
+  col <- "nonexistent_feature"
+  expect_error(
+    .add_dna_to_formula(data, col, formula, fixed.vars, reg.method = "zibr"),
+    "The following DNA feature was not found in metadata: nonexistent_feature_mgx"
+  )
+
+  expect_no_error(
+      # lm can run with the formula
+      mod <- lm(as.formula(actual.formula),
+                data=data)
+  )
+
+})
 
 test_that("run_mtxDE works", {
     feature.table <- data.frame(a=c(0.1, 0.0, 0.0, 0.0),
@@ -286,4 +433,69 @@ test_that("run_mtxDE warns about undetected features", {
                              show_progress=FALSE),
                    "Undetected features",
                    perl=TRUE)
+})
+
+
+test_that("run_mtxDE works with DNA", {
+    set.seed(1234)
+    N <- 100
+    a.dna <- runif(N, max=1-(1E-4))
+    b.dna <- runif(N, max=1-(1E-4))
+    c.dna <- runif(N, max=1-(1E-4))
+    a <- runif(N, max=1-(1E-4))
+    b <- runif(N, max=1-(1E-4))
+    c <- 0.8*c.dna + 0.2*rnorm(N, sd=0.001)
+
+    feature.table <- data.frame(a=a,
+                                b=b,
+                                c=c)
+    dna.table <- data.frame(a=a.dna,
+                            b=b.dna,
+                            c=c.dna)
+    row.names(feature.table) <- paste0("sample_", seq_len(N))
+    row.names(dna.table) <- paste0("sample_", seq_len(N))
+    metadata <- data.frame(SampleID=paste0("sample_", seq_len(N)),
+                           phenotype=rbinom(N, 1, 0.5))
+
+
+    # lm based
+    expect_no_error(res <- run_mtxDE("phenotype",
+                             feature.table,
+                             metadata,
+                             dna.table=dna.table,
+                             reg.method="lm",
+                             sampleID="SampleID",
+                             ncores=2,
+                             show_progress=FALSE))
+
+    expect_equal(nrow(
+        dplyr::filter(res,
+                      term %in% c("a_mgx", "b_mgx", "c_mgx", "phenotype"))),
+        6)
+    # a and b have no effects
+    expect_true(res[res$term=="a_mgx", "q"] > 0.05)
+    expect_true(res[res$term=="phenotype" & res$feature=="a", "q"] > 0.05)
+    # c has a true effect of mgx
+    expect_true(res[res$term=="c_mgx", "q"] < 0.05)
+
+    # gamlss based results
+    res <- HoMiStats::run_mtxDE("phenotype",
+                                feature.table,
+                                metadata,
+                                dna.table=dna.table,
+                                reg.method="gamlss",
+                                sampleID="SampleID",
+                                ncores=2,
+                                show_progress=FALSE)
+    expect_no_error(res)
+    expect_equal(nrow(
+        dplyr::filter(res,
+                      term %in% c("a_mgx", "b_mgx", "c_mgx", "phenotype"))),
+        6)
+
+    # a and b have no effects
+    expect_true(res[res$term=="a_mgx", "q"] > 0.05)
+    expect_true(res[res$term=="phenotype" & res$feature=="a", "q"] > 0.05)
+    # c has a true effect of mgx
+    expect_true(res[res$term=="c_mgx", "q"] < 0.05)
 })

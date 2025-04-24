@@ -12,7 +12,8 @@
   zero_prop_from_formula,
   zibr_time_ind,
   ncores,
-  show_progress
+  show_progress,
+  dna.table = NULL
 )
 }
 \arguments{
@@ -39,6 +40,11 @@ for parallel processing.}
 
 \item{show_progress}{A boolean indicating whether a progress bar
 should be shown during parallel computation.}
+
+\item{dna.table}{A data frame where rows are samples and
+columns are features (e.g., genes).
+Row names should correspond to sample IDs.
+This table should contain gene abundance data.}
 }
 \value{
 A data frame containing the regression summaries for all features.

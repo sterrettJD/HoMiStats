@@ -4,7 +4,14 @@
 \alias{.prepare_data_mtxDE}
 \title{Prepare Data for Differential Expression Analysis (internal)}
 \usage{
-.prepare_data_mtxDE(feature.table, metadata, formula, sampleID, zibr_time_ind)
+.prepare_data_mtxDE(
+  feature.table,
+  metadata,
+  formula,
+  sampleID,
+  zibr_time_ind,
+  dna.table = NULL
+)
 }
 \arguments{
 \item{feature.table}{A data frame where rows are samples and
@@ -26,6 +33,11 @@ This column is used to merge the metadata with the feature table.}
 \item{zibr_time_ind}{A string representing the time column in `metadata` for
 Zero-Inflated Beta Regression (ZIBR).
 This is used only when the regression method involves ZIBR.}
+
+\item{dna.table}{A data frame where rows are samples and
+columns are features (e.g., genes).
+Row names should correspond to sample IDs.
+This table should contain gene abundance data.}
 }
 \value{
 A merged data frame containing the feature table and metadata,

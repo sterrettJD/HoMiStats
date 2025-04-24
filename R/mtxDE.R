@@ -249,8 +249,10 @@ run_single_lmer <- function(formula, data){
 #' Check for 1 in feature.table
 #' @description The zero-inflated beta regression can't handle values of 1.
 #' This checks for them and raises an error if they exist.
-#' @param feature.table A dataframe, where rows are samples,
+#' @param feature.table A dataframe (presumably metatranscriptome relative
+#' expression levels), where rows are samples,
 #' and columns are genes/features. Row names should be sample IDs.
+#' Data values should be relative abundances between 0 and 1.
 #' @return Nothing
 #' @export
 #' @examples
@@ -276,8 +278,10 @@ check_for_ones <- function(feature.table){
 #' @description The beta regression methods don't deal well
 #' with features that are entirely undetected.
 #' This filters them from the feature table.
-#' @param feature.table A dataframe, where rows are samples,
+#' @param feature.table A dataframe (presumably metatranscriptome relative
+#' expression levels), where rows are samples,
 #' and columns are genes/features. Row names should be sample IDs.
+#' Data values should be relative abundances between 0 and 1.
 #' @return A dataframe, with undetected features removed
 #' (where rows are samples, and columns are genes/features).
 #' @export
@@ -336,6 +340,142 @@ get_random_fx <- function(form){
     return(vars)
 }
 
+#' Check data validity for mtxDE function
+#' @description This function checks the validity of your
+#' data for mtxDE analyses. This will check that your
+#' dna and feature tables have row names that match the given
+#' sampleID metadata column. It also ensures that dna.table and
+#' feature.table share column names.
+#' @param feature.table A dataframe (presumably metatranscriptome relative
+#' expression levels), where rows are samples,
+#' and columns are genes/features. Row names should be sample IDs.
+#' Data values should be relative abundances between 0 and 1.
+#' @param dna.table A data frame where rows are samples and
+#' columns are features (e.g., genes).
+#' Row names should correspond to sample IDs.
+#' This table should contain gene abundance data.
+#' @param metadata A data frame containing metadata for the samples,
+#' where rows are samples
+#' and columns are metadata variables (e.g., phenotype, timepoint).
+#' @param sampleID A string representing the column name in `metadata`
+#' that contains the sample IDs.
+#' This column is used to merge the metadata with the feature table.
+#' @return Nothing.
+#' @export
+#' @examples
+#' feature.table <- data.frame(a=c(0.1, 0.0, 0.0, 0.0),
+#'                              b=c(0.5, 0.5, 0.5, 0.4),
+#'                              c=c(0.4, 0.5, 0.0, 0.0),
+#'                              d=c(0.0, 0.0, 0.5, 0.6))
+#' dna.table <- data.frame(a=c(0.3, 0.1, 0.0, 0.0),
+#'                              b=c(0.2, 0.2, 0.2, 0.1),
+#'                              c=c(0.4, 0.5, 0.1, 0.0),
+#'                              d=c(0.0, 0.0, 0.5, 0.6))
+#' row.names(feature.table) <- paste0("sample_", seq_len(4))
+#' row.names(dna.table) <- paste0("sample_", seq_len(4))
+#' metadata <- data.frame(SampleID=paste0("sample_", seq_len(4)),
+#'                           phenotype=c(0,0,1,1),
+#'                           participant=c(0,1,0,1),
+#'                           timepoint=c(0,0,1,1))
+#' # This will not raise an error
+#' check_data_mtxDE(feature.table = feature.table,
+#'                  dna.table = dna.table,
+#'                  metadata = metadata,
+#'                  sampleID="SampleID")
+#' # This will raise an error
+#' # feature.table <- data.frame(e=c(0.1, 0.0, 0.0, 0.0),
+#' #                             f=c(0.5, 0.5, 0.5, 0.4),
+#' #                             g=c(0.4, 0.5, 0.0, 0.0),
+#' #                             h=c(0.0, 0.0, 0.5, 0.6))
+#'
+#' # check_data_mtxDE(feature.table = feature.table,
+#' #                  dna.table = dna.table,
+#' #                  metadata = metadata,
+#' #                  sampleID="SampleID")
+#'
+check_data_mtxDE <- function(feature.table, dna.table=NULL, metadata, sampleID){
+
+  if ((!is.null(metadata)) && (!is.null(sampleID))) {
+    if ((sampleID %in% colnames(metadata)) == FALSE) {
+      stop("sampleID column '", sampleID, "' not found in metadata.")
+    }
+    if (length(setdiff(rownames(feature.table),
+                       metadata[, sampleID])) > 0) {
+      stop("Row names of `feature.table` do not match `metadata$",
+           sampleID, "`.")
+    }
+    if (!is.null(dna.table)){
+      if (length(setdiff(rownames(dna.table),
+                         metadata[, sampleID])) > 0) {
+        stop("Row names of `dna.table` do not match `metadata$",
+             sampleID, "`.")
+      }
+      if (length(intersect(colnames(dna.table),
+                           colnames(feature.table))) < 1) {
+        stop("None of the colnames of `dna.table` match `feature.table`")
+      }
+    }
+  }
+}
+
+#' Filter two tables by shared columns
+#' @description This function filters two data frames
+#' to only retain shared columns.
+#' @param table1 A data frame to be filtered.
+#' @param table2 A second data frame to be filtered.
+#' @param table1_name A character string specifying the name of `table1`.
+#' @param table2_name A character string specifying the name of `table2`
+#' @return A list containing:
+#' \describe{
+#'   \item{`table1_name`}{The filtered version of `table1`,
+#'   keeping only the shared columns.}
+#'   \item{`table2_name`}{The filtered version of `table2`,
+#'   keeping only the shared columns.}
+#' }
+#' @export
+#' @examples
+#' feature.table <- data.frame(a = c(0.1, 0.2),
+#'                             b = c(0.3, 0.4),
+#'                             c = c(0.5, 0.6))
+#' dna.table <- data.frame(a = c(0.7, 0.8),
+#'                         b = c(0.9, 1.0))
+#' result <- filter_tables_by_shared_columns(feature.table, dna.table,
+#'                                           "feature.table", "dna.table")
+#' filtered_feature <- result$feature.table
+#' filtered_dna <- result$dna.table
+#'
+filter_tables_by_shared_columns <- function(table1, table2, table1_name,
+                                            table2_name) {
+  all.feature.vars <- intersect(colnames(table1), colnames(table2))
+
+  if (length(all.feature.vars) == 0) {
+    stop("No shared columns between `feature.table` and `dna.table`.
+         Ensure the tables have overlapping features.")
+  }
+
+  removed_from_table1 <- setdiff(colnames(table1), all.feature.vars)
+  removed_from_table2 <- setdiff(colnames(table2), all.feature.vars)
+
+  if (length(removed_from_table1) > 0) {
+    warning(sprintf("The following feature(s) were removed from `%s`
+                    because they do not have matching column(s) in `%s`: %s",
+                    table1_name, table2_name,
+                    paste(removed_from_table1, collapse = ", ")))
+  }
+
+  if (length(removed_from_table2) > 0) {
+    warning(sprintf("The following feature(s) were removed from `%s`
+                    because they do not have matching column(s) in `%s`: %s",
+                    table2_name, table1_name,
+                    paste(removed_from_table2, collapse = ", ")))
+  }
+
+  table1 <- table1[, all.feature.vars, drop = FALSE]  # Filter table1
+  table2 <- table2[, all.feature.vars, drop = FALSE]  # Filter table2
+
+  return(stats::setNames(list(table1, table2), c(table1_name, table2_name)))
+}
+
 #' Prepare Data for Differential Expression Analysis (internal)
 #'
 #' @description This function prepares the data by merging the feature table
@@ -343,9 +483,10 @@ get_random_fx <- function(form){
 #' It ensures that the sample IDs in the feature table match the
 #' sample IDs in the metadata and validates the input for any inconsistencies.
 #'
-#' @param feature.table A data frame where rows are samples and
-#' columns are features (e.g., genes).
-#' Row names should correspond to sample IDs.
+#' @param feature.table A dataframe (presumably metatranscriptome relative
+#' expression levels), where rows are samples,
+#' and columns are genes/features. Row names should be sample IDs.
+#' Data values should be relative abundances between 0 and 1.
 #' @param metadata A data frame containing metadata for the samples,
 #' where rows are samples
 #' and columns are metadata variables (e.g., phenotype, timepoint).
@@ -358,32 +499,77 @@ get_random_fx <- function(form){
 #' @param zibr_time_ind A string representing the time column in `metadata` for
 #' Zero-Inflated Beta Regression (ZIBR).
 #' This is used only when the regression method involves ZIBR.
+#' @param dna.table A data frame where rows are samples and
+#' columns are features (e.g., genes).
+#' Row names should correspond to sample IDs.
+#' This table should contain gene abundance data.
 #'
 #' @return A merged data frame containing the feature table and metadata,
 #' ready for regression analysis.
 #'
 #' @keywords internal
 #'
-.prepare_data_mtxDE <- function(feature.table, metadata,
-                                formula, sampleID, zibr_time_ind){
-    # merge the feature table and metadata based on the rownames
-    metadata.vars <- c(all.vars(as.formula(formula)), sampleID)
-
-    if ((!is.null(metadata)) && (!is.null(sampleID))) {
-        if ((sampleID %in% colnames(metadata)) == FALSE) {
-            stop("sampleID column '", sampleID, "' not found in metadata.")
-        }
-        if (length(setdiff(rownames(feature.table),
-                    metadata[, sampleID])) > 0) {
-            stop("Row names of `feature.table` do not match `metadata$",
-                sampleID, "`.")
-        }
-    }
-
+.prepare_data_mtxDE <- function(feature.table, metadata, formula,
+                                sampleID, zibr_time_ind, dna.table=NULL) {
+  # keep metadata columns that are in the formula
+  metadata.vars <- c(all.vars(as.formula(formula)), sampleID)
+  # check the validity of the data
+  check_data_mtxDE(feature.table, dna.table, metadata, sampleID)
+  if (!is.null(dna.table)) {
+    # filter data tables to contain only shared columns
+    filt.tables <- filter_tables_by_shared_columns(dna.table, feature.table,
+                                                   "dna.table", "feature.table")
+    dna.table <- filt.tables$dna.table
+    feature.table <- filt.tables$feature.table
+    # update dna.table col names before merge
+    colnames(dna.table) <- paste0(colnames(dna.table), "_mgx")
+    # merge feature table, dna table, and metadata based on row names
     data <- merge(feature.table,
-                metadata[,c(metadata.vars, zibr_time_ind)],
-                by.x="row.names", by.y=sampleID)
-    return(data)
+                  metadata[,c(metadata.vars, zibr_time_ind)],
+                  by.x="row.names", by.y=sampleID)
+    data <- merge(data, dna.table, by.x="Row.names", by.y="row.names")
+  } else {
+    # merge feature table with metadata based on rownames
+    data <- merge(feature.table,
+                  metadata[,c(metadata.vars, zibr_time_ind)],
+                  by.x="row.names", by.y=sampleID)
+  }
+  return(data)
+}
+
+#' Add matching dna column to formula or fixed vars
+#'
+#' @description
+#' This function adds the matching dna feature of a `col` to a formula or
+#' fixed vars
+#'
+#' @param data A data frame containing the merged feature table and metadata,
+#' ready for regression.
+#' @param col A string representing the name of the feature (column)
+#' in `data` to be analyzed.
+#' @param formula A string representing the formula for the regression model.
+#' @param fixed.vars A vector of strings representing the fixed effect
+#' variables to include in the regression.
+#' @param reg.method A string indicating the regression method to be used.
+#' Options include "zibr", "gamlss", "lm", and "lmer".
+#'
+#' @return list of updated `formula` and `fixed.vars` with the matching dna
+#' column added to them
+#'
+#' @keywords internal
+.add_dna_to_formula <- function(data, col,
+                                formula=NULL, fixed.vars=NULL,
+                                reg.method) {
+  dna.col <- paste0(col, "_mgx")
+  if (!(dna.col %in% colnames(data))) {
+    stop("The following DNA feature was not found in metadata: ", dna.col)
+  }
+  if (reg.method == "zibr") {
+    fixed.vars <- c(fixed.vars, dna.col)
+  } else {
+    formula <- paste0(formula, " + ", dna.col)
+  }
+  return(list(formula = formula, fixed.vars = fixed.vars))
 }
 
 #' Run a Single Regression for a Feature (internal)
@@ -410,6 +596,10 @@ get_random_fx <- function(form){
 #' for ZIBR, or NULL if not applicable.
 #' @param zero_prop_from_formula A boolean indicating whether zeroes should
 #' be modeled using the provided formula (for ZIBR).
+#' @param dna.table A data frame where rows are samples and
+#' columns are features (e.g., genes).
+#' Row names should correspond to sample IDs.
+#' This table should contain gene abundance data.
 #'
 #' @return A data frame containing the summary of the regression results
 #' for the specified feature.
@@ -420,10 +610,18 @@ get_random_fx <- function(form){
 #'
 .run_single_regression_mtxDE <- function(data, reg.method,
                                         col, formula,
-                                        fixed.vars=NULL, 
+                                        fixed.vars=NULL,
                                         random.effects.vars=NULL,
                                         zibr_time_ind=NULL,
-                                        zero_prop_from_formula=NULL){
+                                        zero_prop_from_formula=NULL,
+                                        dna.table=NULL) {
+   if (!is.null(dna.table)) {
+    # check that dna col exists and add to formula/fixed.vars
+    updated.dna <- .add_dna_to_formula(data, col, formula,
+                                      fixed.vars, reg.method)
+    formula <- updated.dna$formula
+    fixed.vars <- updated.dna$fixed.vars
+  }
     if (reg.method == "gamlss"){
         mod <- run_single_beta_reg_gamlss(paste0(col, formula),
                                             data=data)
@@ -467,8 +665,10 @@ get_random_fx <- function(form){
 #' @param reg.method A string indicating the regression method to be used.
 #' Options include
 #' "zibr", "gamlss", "lm", and "lmer".
-#' @param feature.table A data frame where rows represent samples and
-#' columns represent features.
+#' @param feature.table A dataframe (presumably metatranscriptome relative
+#' expression levels), where rows are samples,
+#' and columns are genes/features. Row names should be sample IDs.
+#' Data values should be relative abundances between 0 and 1.
 #' @param formula A string representing the formula for the regression model.
 #' @param zero_prop_from_formula A boolean indicating whether zeroes
 #' should be modeled using the provided formula (for ZIBR).
@@ -478,6 +678,10 @@ get_random_fx <- function(form){
 #' for parallel processing.
 #' @param show_progress A boolean indicating whether a progress bar
 #' should be shown during parallel computation.
+#' @param dna.table A data frame where rows are samples and
+#' columns are features (e.g., genes).
+#' Row names should correspond to sample IDs.
+#' This table should contain gene abundance data.
 #'
 #' @return A data frame containing the regression summaries for all features.
 #' The summaries include terms,
@@ -488,11 +692,14 @@ get_random_fx <- function(form){
 .run_regressions_mtxDE <- function(data, reg.method,
                                     feature.table, formula,
                                     zero_prop_from_formula,
-                                    zibr_time_ind, ncores, show_progress){
+                                    zibr_time_ind, ncores, show_progress,
+                                   dna.table=NULL){
     if(reg.method=="zibr"){
         form.as.form <- as.formula(formula)
         random.effects.vars <- get_random_fx(form.as.form)
         fixed.vars <- setdiff(all.vars(form.as.form), random.effects.vars)
+    } else {
+      fixed.vars <- NULL
     }
     # Setup cluster for parallel running
     cl <- parallel::makeCluster(ncores)
@@ -510,18 +717,27 @@ get_random_fx <- function(form){
     # Loop through each column and run the regression
     mod.summaries <- foreach::foreach(col=colnames(feature.table),
                                         .combine=rbind,
-                                        .options.snow = doSNOWopts) %dopar% {
-    .run_single_regression_mtxDE(data, reg.method,
-                                col, formula,
-                                fixed.vars, random.effects.vars,
-                                zibr_time_ind,
-                                zero_prop_from_formula)
+                                        .options.snow = doSNOWopts,
+                                        .packages = "HoMiStats"
+                                      ) %dopar% {
+        # Create a local copy of dna.table for each worker
+        local_dna_table <- if (!is.null(dna.table)) {
+            dna.table[, col, drop = FALSE]
+        } else {
+            NULL
+        }
+
+        .run_single_regression_mtxDE(data, reg.method,
+                                    col, formula,
+                                    fixed.vars, random.effects.vars,
+                                    zibr_time_ind,
+                                    zero_prop_from_formula,
+                                    dna.table=local_dna_table)
     }
 
     if(show_progress){ close(pb) } # close the progress bar
     parallel::stopCluster(cl) # close the cluster for parallel computation
-    mod.summaries <- as.data.frame(mod.summaries)
-    return(mod.summaries)
+    return(as.data.frame(mod.summaries))
 }
 
 
@@ -532,9 +748,10 @@ get_random_fx <- function(form){
 #' for each feature.
 #' All variables in this formula should be of a numeric type
 #' (factors should be dummy coded, such that the reference value is 0).
-#' @param feature.table A dataframe, where rows are samples,
-#' and columns are genes/features.
-#' Row names should be sample IDs.
+#' @param feature.table A dataframe (presumably metatranscriptome relative
+#' expression levels), where rows are samples,
+#' and columns are genes/features. Row names should be sample IDs.
+#' Data values should be relative abundances between 0 and 1.
 #' @param metadata The metadata dataframe,
 #' where rows are samples and columns are features
 #' @param sampleID A string denoting name of the column in metadata
@@ -558,6 +775,10 @@ get_random_fx <- function(form){
 #' if running in parallel. Defaults to 1 (not parallelized).
 #' @param show_progress A boolean denoting if a progress bar should be shown.
 #' @return a dataframe with differential expression results
+#' @param dna.table A data frame where rows are samples and
+#' columns are features (e.g., genes).
+#' Row names should correspond to sample IDs.
+#' This table should contain gene abundance data.
 #' @export
 #' @importFrom broom.mixed tidy
 #' @importFrom broom tidy
@@ -616,21 +837,28 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
                         zero_prop_from_formula=TRUE,
                         zibr_time_ind=NULL,
                         ncores=1,
-                        show_progress=TRUE){
+                        show_progress=TRUE,
+                        dna.table=NULL){
     if(reg.method %in% c("zibr", "gamlss")){
         check_for_ones(feature.table) # Beta regression can't handle ones
         feature.table <- filter_undetected(feature.table) # or undetected feats
+        if(!is.null(dna.table)){
+          check_for_ones(dna.table)
+          dna.table <- filter_undetected(dna.table)
+        }
     }
     formula <- paste0(" ~ ", formula)
     data <- .prepare_data_mtxDE(feature.table, metadata,
-                                formula, sampleID, zibr_time_ind)
+                                formula, sampleID, zibr_time_ind,
+                                dna.table = dna.table)
 
     # Loop through each column and run the regression
     mod.summaries <- .run_regressions_mtxDE(data, reg.method,
                                             feature.table, formula,
                                             zero_prop_from_formula,
-                                            zibr_time_ind, 
-                                            ncores, show_progress)
+                                            zibr_time_ind,
+                                            ncores, show_progress,
+                                            dna.table=dna.table)
     # Calling this from HoMiCorr
     adjusted.mod.summaries <- .adjust_p_values(mod.summaries, reg.method,
                                                 zero_prop_from_formula, padj)
