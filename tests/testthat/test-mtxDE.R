@@ -437,17 +437,25 @@ test_that("run_mtxDE warns about undetected features", {
 
 
 test_that("run_mtxDE works with DNA", {
-    feature.table <- data.frame(a=c(0.1, 0.0, 0.0, 0.0),
-                                b=c(0.5, 0.5, 0.5, 0.4),
-                                c=c(0.4, 0.5, 0.0, 0.0),
-                                d=c(0.0, 0.0, 0.5, 0.6))
-    dna.table <- feature.table
-    row.names(feature.table) <- paste0("sample_", seq_len(4))
-    row.names(dna.table) <- paste0("sample_", seq_len(4))
-    metadata <- data.frame(SampleID=paste0("sample_", seq_len(4)),
-                           phenotype=c(0,0,1,1),
-                           participant=c(0,1,0,1),
-                           timepoint=c(0,0,0,0))
+    set.seed(1234)
+    N <- 100
+    a.dna <- runif(N, max=1-(1E-4))
+    b.dna <- runif(N, max=1-(1E-4))
+    c.dna <- runif(N, max=1-(1E-4))
+    a <- runif(N, max=1-(1E-4))
+    b <- runif(N, max=1-(1E-4))
+    c <- 0.8*c.dna + 0.2*rnorm(N, sd=0.001)
+
+    feature.table <- data.frame(a=a,
+                                b=b,
+                                c=c)
+    dna.table <- data.frame(a=a.dna,
+                            b=b.dna,
+                            c=c.dna)
+    row.names(feature.table) <- paste0("sample_", seq_len(N))
+    row.names(dna.table) <- paste0("sample_", seq_len(N))
+    metadata <- data.frame(SampleID=paste0("sample_", seq_len(N)),
+                           phenotype=rbinom(N, 1, 0.5))
 
 
     # lm based
@@ -460,26 +468,17 @@ test_that("run_mtxDE works with DNA", {
                              ncores=2,
                              show_progress=FALSE))
 
-    expect_equal(nrow(dplyr::filter(res, term=="a_mgx")), 1)
-    expect_true(res[res$term=="d_mgx", "q"] < 0.05)
-    expect_true(res[res$term=="phenotype" & res$feature=="d", "q"] > 0.05)
+    expect_equal(nrow(
+        dplyr::filter(res,
+                      term %in% c("a_mgx", "b_mgx", "c_mgx", "phenotype"))),
+        6)
+    # a and b have no effects
+    expect_true(res[res$term=="a_mgx", "q"] > 0.05)
+    expect_true(res[res$term=="phenotype" & res$feature=="a", "q"] > 0.05)
+    # c has a true effect of mgx
+    expect_true(res[res$term=="c_mgx", "q"] < 0.05)
 
     # gamlss based results
-    set.seed(1234)
-    N <- 25
-    a <- runif(N, max=1-(1E-4))
-    b <- runif(N, max=1-(1E-4))
-    feature.table <- data.frame(a=a,
-                                b=b)
-    dna.table <- data.frame(a=a,
-                            b=b)
-    row.names(feature.table) <- paste0("sample_", seq_len(N))
-    row.names(dna.table) <- paste0("sample_", seq_len(N))
-    metadata <- data.frame(SampleID=paste0("sample_", seq_len(N)),
-                           phenotype=rbinom(N, 1, 0.5))
-
-
-    # gamlss based
     res <- HoMiStats::run_mtxDE("phenotype",
                                 feature.table,
                                 metadata,
@@ -490,12 +489,13 @@ test_that("run_mtxDE works with DNA", {
                                 show_progress=FALSE)
     expect_no_error(res)
     expect_equal(nrow(
-                dplyr::filter(res,
-                              term %in% c("a_mgx", "phenotype", "b_mgx"))),
-                 4)
-    # mgx should be very predictive, but phenotype shouldn't have an effect
-    expect_true(res[res$term=="a_mgx", "q"] < 0.05)
-    expect_true(res[res$term=="b_mgx", "q"] < 0.05)
-    expect_true(all(res[res$term=="phenotype", "q"] > 0.05))
+        dplyr::filter(res,
+                      term %in% c("a_mgx", "b_mgx", "c_mgx", "phenotype"))),
+        6)
 
+    # a and b have no effects
+    expect_true(res[res$term=="a_mgx", "q"] > 0.05)
+    expect_true(res[res$term=="phenotype" & res$feature=="a", "q"] > 0.05)
+    # c has a true effect of mgx
+    expect_true(res[res$term=="c_mgx", "q"] < 0.05)
 })
