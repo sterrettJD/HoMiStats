@@ -441,10 +441,7 @@ test_that("run_mtxDE works with DNA", {
                                 b=c(0.5, 0.5, 0.5, 0.4),
                                 c=c(0.4, 0.5, 0.0, 0.0),
                                 d=c(0.0, 0.0, 0.5, 0.6))
-    dna.table <- data.frame(a=c(0.1, 0.0, 0.0, 0.0),
-                            b=c(0.5, 0.5, 0.5, 0.4),
-                            c=c(0.4, 0.5, 0.0, 0.0),
-                            d=c(0.0, 0.0, 0.5, 0.6))
+    dna.table <- feature.table
     row.names(feature.table) <- paste0("sample_", seq_len(4))
     row.names(dna.table) <- paste0("sample_", seq_len(4))
     metadata <- data.frame(SampleID=paste0("sample_", seq_len(4)),
@@ -465,19 +462,40 @@ test_that("run_mtxDE works with DNA", {
 
     expect_equal(nrow(dplyr::filter(res, term=="a_mgx")), 1)
     expect_true(res[res$term=="d_mgx", "q"] < 0.05)
-    expect_true(res[res$term=="d_mgx", "phenotype"] > 0.05)
+    expect_true(res[res$term=="phenotype" & res$feature=="d", "q"] > 0.05)
+
+    # gamlss based results
+    set.seed(1234)
+    N <- 25
+    a <- runif(N, max=1-(1E-4))
+    b <- runif(N, max=1-(1E-4))
+    feature.table <- data.frame(a=a,
+                                b=b)
+    dna.table <- data.frame(a=a,
+                            b=b)
+    row.names(feature.table) <- paste0("sample_", seq_len(N))
+    row.names(dna.table) <- paste0("sample_", seq_len(N))
+    metadata <- data.frame(SampleID=paste0("sample_", seq_len(N)),
+                           phenotype=rbinom(N, 1, 0.5))
+
 
     # gamlss based
-    expect_no_error(res <- run_mtxDE("phenotype",
-                                     feature.table,
-                                     metadata,
-                                     dna.table=dna.table,
-                                     reg.method="gamlss",
-                                     sampleID="SampleID",
-                                     ncores=2,
-                                     show_progress=FALSE))
+    res <- HoMiStats::run_mtxDE("phenotype",
+                                feature.table,
+                                metadata,
+                                dna.table=dna.table,
+                                reg.method="gamlss",
+                                sampleID="SampleID",
+                                ncores=2,
+                                show_progress=FALSE)
+    expect_no_error(res)
+    expect_equal(nrow(
+                dplyr::filter(res,
+                              term %in% c("a_mgx", "phenotype", "b_mgx"))),
+                 4)
+    # mgx should be very predictive, but phenotype shouldn't have an effect
+    expect_true(res[res$term=="a_mgx", "q"] < 0.05)
+    expect_true(res[res$term=="b_mgx", "q"] < 0.05)
+    expect_true(all(res[res$term=="phenotype", "q"] > 0.05))
 
-    expect_equal(nrow(dplyr::filter(res, term=="a_mgx")), 1)
-    expect_true(res[res$term=="d_mgx", "q"] < 0.05)
-    expect_true(res[res$term=="d_mgx", "phenotype"] > 0.05)
 })
