@@ -249,8 +249,10 @@ run_single_lmer <- function(formula, data){
 #' Check for 1 in feature.table
 #' @description The zero-inflated beta regression can't handle values of 1.
 #' This checks for them and raises an error if they exist.
-#' @param feature.table A dataframe, where rows are samples,
+#' @param feature.table A dataframe (presumably metatranscriptome relative
+#' expression levels), where rows are samples,
 #' and columns are genes/features. Row names should be sample IDs.
+#' Data values should be relative abundances between 0 and 1.
 #' @return Nothing
 #' @export
 #' @examples
@@ -276,8 +278,10 @@ check_for_ones <- function(feature.table){
 #' @description The beta regression methods don't deal well
 #' with features that are entirely undetected.
 #' This filters them from the feature table.
-#' @param feature.table A dataframe, where rows are samples,
+#' @param feature.table A dataframe (presumably metatranscriptome relative
+#' expression levels), where rows are samples,
 #' and columns are genes/features. Row names should be sample IDs.
+#' Data values should be relative abundances between 0 and 1.
 #' @return A dataframe, with undetected features removed
 #' (where rows are samples, and columns are genes/features).
 #' @export
@@ -342,9 +346,10 @@ get_random_fx <- function(form){
 #' dna and feature tables have row names that match the given
 #' sampleID metadata column. It also ensures that dna.table and
 #' feature.table share column names.
-#' @param feature.table A data frame where rows are samples and
-#' columns are features (e.g., genes).
-#' Row names should correspond to sample IDs.
+#' @param feature.table A dataframe (presumably metatranscriptome relative
+#' expression levels), where rows are samples,
+#' and columns are genes/features. Row names should be sample IDs.
+#' Data values should be relative abundances between 0 and 1.
 #' @param dna.table A data frame where rows are samples and
 #' columns are features (e.g., genes).
 #' Row names should correspond to sample IDs.
@@ -478,9 +483,10 @@ filter_tables_by_shared_columns <- function(table1, table2, table1_name,
 #' It ensures that the sample IDs in the feature table match the
 #' sample IDs in the metadata and validates the input for any inconsistencies.
 #'
-#' @param feature.table A data frame where rows are samples and
-#' columns are features (e.g., genes).
-#' Row names should correspond to sample IDs.
+#' @param feature.table A dataframe (presumably metatranscriptome relative
+#' expression levels), where rows are samples,
+#' and columns are genes/features. Row names should be sample IDs.
+#' Data values should be relative abundances between 0 and 1.
 #' @param metadata A data frame containing metadata for the samples,
 #' where rows are samples
 #' and columns are metadata variables (e.g., phenotype, timepoint).
@@ -551,7 +557,9 @@ filter_tables_by_shared_columns <- function(table1, table2, table1_name,
 #' column added to them
 #'
 #' @keywords internal
-.add_dna_to_formula <- function(data, col, formula, fixed.vars, reg.method) {
+.add_dna_to_formula <- function(data, col,
+                                formula=NULL, fixed.vars=NULL,
+                                reg.method) {
   dna.col <- paste0(col, "_mgx")
   if (!(dna.col %in% colnames(data))) {
     stop("The following DNA feature was not found in metadata: ", dna.col)
@@ -657,8 +665,10 @@ filter_tables_by_shared_columns <- function(table1, table2, table1_name,
 #' @param reg.method A string indicating the regression method to be used.
 #' Options include
 #' "zibr", "gamlss", "lm", and "lmer".
-#' @param feature.table A data frame where rows represent samples and
-#' columns represent features.
+#' @param feature.table A dataframe (presumably metatranscriptome relative
+#' expression levels), where rows are samples,
+#' and columns are genes/features. Row names should be sample IDs.
+#' Data values should be relative abundances between 0 and 1.
 #' @param formula A string representing the formula for the regression model.
 #' @param zero_prop_from_formula A boolean indicating whether zeroes
 #' should be modeled using the provided formula (for ZIBR).
@@ -738,9 +748,10 @@ filter_tables_by_shared_columns <- function(table1, table2, table1_name,
 #' for each feature.
 #' All variables in this formula should be of a numeric type
 #' (factors should be dummy coded, such that the reference value is 0).
-#' @param feature.table A dataframe, where rows are samples,
-#' and columns are genes/features.
-#' Row names should be sample IDs.
+#' @param feature.table A dataframe (presumably metatranscriptome relative
+#' expression levels), where rows are samples,
+#' and columns are genes/features. Row names should be sample IDs.
+#' Data values should be relative abundances between 0 and 1.
 #' @param metadata The metadata dataframe,
 #' where rows are samples and columns are features
 #' @param sampleID A string denoting name of the column in metadata
