@@ -24,8 +24,10 @@ and metadata, prepared for regression.}
 Options include
 "zibr", "gamlss", "lm", and "lmer".}
 
-\item{feature.table}{A data frame where rows represent samples and
-columns represent features.}
+\item{feature.table}{A dataframe (presumably metatranscriptome relative
+expression levels), where rows are samples,
+and columns are genes/features. Row names should be sample IDs.
+Data values should be relative abundances between 0 and 1.}
 
 \item{formula}{A string representing the formula for the regression model.}
 

@@ -24,9 +24,10 @@ for each feature.
 All variables in this formula should be of a numeric type
 (factors should be dummy coded, such that the reference value is 0).}
 
-\item{feature.table}{A dataframe, where rows are samples,
-and columns are genes/features.
-Row names should be sample IDs.}
+\item{feature.table}{A dataframe (presumably metatranscriptome relative
+expression levels), where rows are samples,
+and columns are genes/features. Row names should be sample IDs.
+Data values should be relative abundances between 0 and 1.}
 
 \item{metadata}{The metadata dataframe,
 where rows are samples and columns are features}
