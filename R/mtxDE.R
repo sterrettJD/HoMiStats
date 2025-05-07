@@ -340,6 +340,66 @@ get_random_fx <- function(form){
     return(vars)
 }
 
+#' Add percent host column to metadata
+#'
+#' @param metadata A data frame containing metadata for the samples,
+#' where rows are samples
+#' @param sampleID A string representing the column name in `metadata`
+#' that contains the sample IDs.
+#' This column is used to merge the metadata with the report file table.
+#' @param report A dataframe that contains the percent host
+#' column `host_col` and the `sampleID` column.
+#' @param host_col A string representing the column name in `report`
+#' that contains the percent host per sample.
+#' This column will be added to the `metadata`.
+#'
+#' @returns A dataframe containing the metadata sample information with the
+#' host percent column appended at the end.
+#' @export
+#'
+#' @examples
+#' metadata <- data.frame(SampleID=paste0("sample_", seq_len(4)),
+#'                           phenotype=c(0,0,1,1),
+#'                           participant=c(0,1,0,1),
+#'                           timepoint=c(0,0,1,1))
+#' report <- data.frame(SampleID=paste0("sample_", seq_len(4)),
+#'                      percent_host=c(0.9, 0.8, 0.5, 0.9))
+#' new_metadata <- add_perc_host_metadata(metadata, "SampleID",
+#'                                        report, "percent_host")
+#'
+add_perc_host_metadata <- function(metadata, sampleID,
+                                   report, host_col="Percent host") {
+  # check that sampleID is in both report and metadata
+  # check that host column is only in the report
+  if ((!is.null(metadata)) && (!is.null(sampleID))) {
+    if ((sampleID %in% colnames(metadata)) == FALSE) {
+      stop("sampleID column '", sampleID, "' not found in metadata.")
+    }
+  }
+  if ((!is.null(metadata)) && (!is.null(host_col))) {
+    if ((host_col %in% colnames(metadata)) == TRUE) {
+      stop("Percent host column '", host_col, "' already found in metadata.")
+    }
+  }
+  if ((!is.null(report)) && (!is.null(sampleID))) {
+    if ((sampleID %in% colnames(report)) == FALSE) {
+      stop("sampleID column '", sampleID, "' not found in read report.")
+    }
+  }
+  if ((!is.null(report)) && (!is.null(host_col))) {
+    if ((host_col %in% colnames(report)) == FALSE) {
+      stop("Percent host column '", host_col, "' not found in read report.")
+    }
+  }
+  # select only the sampleID and host column in report
+  report <- report %>% dplyr::select(sampleID, host_col)
+
+  # left join percent host based on sampleID to metadata file
+  new_metadata <- dplyr::left_join(metadata, report, by = sampleID)
+
+  return(new_metadata)
+}
+
 #' Check data validity for mtxDE function
 #' @description This function checks the validity of your
 #' data for mtxDE analyses. This will check that your

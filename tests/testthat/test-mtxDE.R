@@ -115,6 +115,26 @@ test_that("filter_tables_by_shared_columns correctly filters columns", {
 
 })
 
+test_that("add_perc_host_metadata correctly adds percent host column", {
+  metadata <- data.frame(SampleID=paste0("sample_", seq_len(4)),
+                         phenotype=c(0,0,1,1),
+                         participant=c(0,1,0,1),
+                         timepoint=c(0,0,1,1))
+  report <- data.frame(SampleID=paste0("sample_", seq_len(4)),
+                         percent_host=c(0.9, 0.8, 0.5, 0.9))
+
+  new_metadata <- add_perc_host_metadata(metadata, "SampleID",
+                                        report, "percent_host")
+
+  expected_metadata <- data.frame(SampleID=paste0("sample_", seq_len(4)),
+                                  phenotype=c(0,0,1,1),
+                                  participant=c(0,1,0,1),
+                                  timepoint=c(0,0,1,1),
+                                  percent_host=c(0.9, 0.8, 0.5, 0.9))
+
+  expect_equal(new_metadata, expected_metadata)
+})
+
 test_that(".prepare_data_mtxDE works", {
   feature.table <- data.frame(a=c(0.1, 0.0, 0.0, 0.0),
                               b=c(0.5, 0.5, 0.5, 0.4),
