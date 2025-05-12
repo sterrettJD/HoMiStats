@@ -871,6 +871,10 @@ filter_tables_by_shared_columns <- function(table1, table2, table1_name,
 #' columns are features (e.g., genes).
 #' Row names should correspond to sample IDs.
 #' This table should contain gene abundance data.
+#' @param host_col A string representing the name of the percent host column
+#' within the `data` data.frame.
+#' @param report A dataframe that contains the percent host
+#' column `host_col` and the `sampleID` column.
 #' @export
 #' @importFrom broom.mixed tidy
 #' @importFrom broom tidy

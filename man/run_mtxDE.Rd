@@ -15,7 +15,9 @@ run_mtxDE(
   zibr_time_ind = NULL,
   ncores = 1,
   show_progress = TRUE,
-  dna.table = NULL
+  dna.table = NULL,
+  host_col = NULL,
+  report = NULL
 )
 }
 \arguments{
@@ -63,6 +65,12 @@ if running in parallel. Defaults to 1 (not parallelized).}
 columns are features (e.g., genes).
 Row names should correspond to sample IDs.
 This table should contain gene abundance data.}
+
+\item{host_col}{A string representing the name of the percent host column
+within the `data` data.frame.}
+
+\item{report}{A dataframe that contains the percent host
+column `host_col` and the `sampleID` column.}
 }
 \value{
 a dataframe with differential expression results
