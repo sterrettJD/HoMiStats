@@ -234,32 +234,30 @@ test_that(".add_dna_to_formula correctly adds dna col", {
 
 })
 
-test_that(".add_host_to_formula works", {
-  data <-data.frame(
-    Row.names=paste0("sample_", seq_len(4)),
-    a=c(0.1, 0.0, 0.0, 0.0),
-    b=c(0.5, 0.5, 0.5, 0.4),
-    phenotype=c(0,0,1,1),
-    a_mgx=c(0.1, 0.0, 0.0, 0.0),
-    b_mgx=c(0.5, 0.5, 0.5, 0.4),
-    percent_host=c(0.5, 0.6, 0.8, 0.9)
-  )
+test_that(".add_host_to_formula_metadata works", {
+  metadata <- data.frame(SampleID=paste0("sample_", seq_len(4)),
+                         phenotype=c(0,0,1,1),
+                         participant=c(0,1,0,1),
+                         timepoint=c(0,0,1,1))
+  report <- data.frame(SampleID=paste0("sample_", seq_len(4)),
+                       percent_host=c(0.9, 0.8, 0.5, 0.9))
+  expected_metadata <- data.frame(SampleID=paste0("sample_", seq_len(4)),
+                                  phenotype=c(0,0,1,1),
+                                  participant=c(0,1,0,1),
+                                  timepoint=c(0,0,1,1),
+                                  percent_host=c(0.9, 0.8, 0.5, 0.9))
+
   formula <- " ~ phenotype"
   expected_formula <- " ~ phenotype + percent_host"
-  expected_fixed.vars <- c("phenotype", "percent_host")
 
-  result <- .add_host_to_formula(data = data,
-                                 host_col = "percent_host",
+  result <- .add_host_to_formula_metadata(metadata = metadata,
                                  formula = formula,
-                                 fixed.vars = c("phenotype"),
-                                 reg.method = "zibr")
-  result2 <- .add_host_to_formula(data = data,
-                                  host_col = "percent_host",
-                                  formula = formula,
-                                  fixed.vars = c("phenotype"),
-                                  reg.method = "lm")
-  expect_equal(result$fixed.vars, expected_fixed.vars)
-  expect_equal(result2$formula, expected_formula)
+                                 sampleID = "SampleID",
+                                 report = report,
+                                 host_col = "percent_host")
+
+  expect_equal(result$metadata, expected_metadata)
+  expect_equal(result$formula, expected_formula)
 })
 
 test_that("run_mtxDE works", {
