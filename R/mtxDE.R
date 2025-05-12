@@ -563,7 +563,6 @@ filter_tables_by_shared_columns <- function(table1, table2, table1_name,
 #' columns are features (e.g., genes).
 #' Row names should correspond to sample IDs.
 #' This table should contain gene abundance data.
-#'
 #' @return A merged data frame containing the feature table and metadata,
 #' ready for regression analysis.
 #'
@@ -631,6 +630,37 @@ filter_tables_by_shared_columns <- function(table1, table2, table1_name,
   }
   return(list(formula = formula, fixed.vars = fixed.vars))
 }
+
+#' Add percent host column to formula
+#'
+#' @param data A data frame containing the merged feature table and metadata,
+#' ready for regression.
+#' @param host_col A string representing the name of the percent host column
+#' within the `data` data.frame.
+#' @param formula  A string representing the formula for the regression model.
+#' @param fixed.vars A vector of strings representing the fixed effect
+#' variables to include in the regression.
+#' @param reg.method A string indicating the regression method to be used.
+#' Options include "zibr", "gamlss", "lm", and "lmer".
+#'
+#'
+#' @returns list of updated `formula` and `fixed.vars` with the matching dna
+#' column added to them
+#'
+#' @keywords internal
+.add_host_to_formula <- function(data, host_col, formula=NULL, fixed.vars=NULL,
+                 reg.method) {
+  if (!(host_col %in% colnames(data))) {
+    stop("The given percent host column not found in data: ", host_col)
+  }
+  if (reg.method == "zibr") {
+    fixed.vars <- c(fixed.vars, host_col)
+  } else {
+    formula <- paste0(formula, " + ", host_col)
+  }
+  return(list(formula = formula, fixed.vars = fixed.vars))
+}
+
 
 #' Run a Single Regression for a Feature (internal)
 #'
