@@ -545,3 +545,69 @@ test_that("run_mtxDE works with DNA", {
     # c has a true effect of mgx
     expect_true(res[res$term=="c_mgx", "q"] < 0.05)
 })
+
+test_that("run_mtxDE works with %host covariate", {
+  set.seed(1234)
+  N <- 100
+  a <- runif(N, max=1-(1E-4))
+  b <- runif(N, max=1-(1E-4))
+  c <- runif(N, max=1-(1E-4))
+  percent_host <- 0.8*c + 0.2*rnorm(N, sd=0.001)
+
+  feature.table <- data.frame(a=a,
+                              b=b,
+                              c=c)
+  report <- data.frame(SampleID=paste0("sample_", seq_len(N)),
+                       percent_host=percent_host)
+  row.names(feature.table) <- paste0("sample_", seq_len(N))
+  metadata <- data.frame(SampleID=paste0("sample_", seq_len(N)),
+                         phenotype=rbinom(N, 1, 0.5))
+
+  # lm based
+  expect_no_error(res <- run_mtxDE("phenotype",
+                                   feature.table,
+                                   metadata,
+                                   reg.method="lm",
+                                   sampleID="SampleID",
+                                   host_col = "percent_host",
+                                   report = report,
+                                   ncores=2,
+                                   show_progress=FALSE))
+
+  expect_equal(nrow(
+    dplyr::filter(res,
+                  term %in% c("percent_host", "phenotype"))),
+    6)
+  # a and b have no effects
+  expect_true(res[res$term=="phenotype" & res$feature=="b", "q"] > 0.05)
+  expect_true(res[res$term=="phenotype" & res$feature=="a", "q"] > 0.05)
+  expect_true(res[res$term=="percent_host" & res$feature=="b", "q"] > 0.05)
+  expect_true(res[res$term=="percent_host" & res$feature=="a", "q"] > 0.05)
+  # c is impacted by percent host
+  expect_true(res[res$term=="percent_host" & res$feature=="c", "q"] < 0.05)
+
+  # gamlss based
+  expect_no_error(res <- run_mtxDE("phenotype",
+                                   feature.table,
+                                   metadata,
+                                   reg.method="gamlss",
+                                   sampleID="SampleID",
+                                   host_col = "percent_host",
+                                   report = report,
+                                   ncores=2,
+                                   show_progress=FALSE))
+
+  expect_equal(nrow(
+    dplyr::filter(res,
+                  term %in% c("percent_host", "phenotype"))),
+    6)
+  # a and b have no effects
+  expect_true(res[res$term=="phenotype" & res$feature=="b", "q"] > 0.05)
+  expect_true(res[res$term=="phenotype" & res$feature=="a", "q"] > 0.05)
+  expect_true(res[res$term=="percent_host" & res$feature=="b", "q"] > 0.05)
+  expect_true(res[res$term=="percent_host" & res$feature=="a", "q"] > 0.05)
+  # c is impacted by percent host
+  expect_true(res[res$term=="percent_host" & res$feature=="c", "q"] < 0.05)
+
+
+})
