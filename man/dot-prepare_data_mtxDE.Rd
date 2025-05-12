@@ -14,9 +14,10 @@
 )
 }
 \arguments{
-\item{feature.table}{A data frame where rows are samples and
-columns are features (e.g., genes).
-Row names should correspond to sample IDs.}
+\item{feature.table}{A dataframe (presumably metatranscriptome relative
+expression levels), where rows are samples,
+and columns are genes/features. Row names should be sample IDs.
+Data values should be relative abundances between 0 and 1.}
 
 \item{metadata}{A data frame containing metadata for the samples,
 where rows are samples

@@ -7,8 +7,10 @@
 filter_undetected(feature.table)
 }
 \arguments{
-\item{feature.table}{A dataframe, where rows are samples,
-and columns are genes/features. Row names should be sample IDs.}
+\item{feature.table}{A dataframe (presumably metatranscriptome relative
+expression levels), where rows are samples,
+and columns are genes/features. Row names should be sample IDs.
+Data values should be relative abundances between 0 and 1.}
 }
 \value{
 A dataframe, with undetected features removed

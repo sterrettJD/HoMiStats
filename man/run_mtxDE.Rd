@@ -15,7 +15,9 @@ run_mtxDE(
   zibr_time_ind = NULL,
   ncores = 1,
   show_progress = TRUE,
-  dna.table = NULL
+  dna.table = NULL,
+  host_col = NULL,
+  report = NULL
 )
 }
 \arguments{
@@ -24,9 +26,10 @@ for each feature.
 All variables in this formula should be of a numeric type
 (factors should be dummy coded, such that the reference value is 0).}
 
-\item{feature.table}{A dataframe, where rows are samples,
-and columns are genes/features.
-Row names should be sample IDs.}
+\item{feature.table}{A dataframe (presumably metatranscriptome relative
+expression levels), where rows are samples,
+and columns are genes/features. Row names should be sample IDs.
+Data values should be relative abundances between 0 and 1.}
 
 \item{metadata}{The metadata dataframe,
 where rows are samples and columns are features}
@@ -62,6 +65,12 @@ if running in parallel. Defaults to 1 (not parallelized).}
 columns are features (e.g., genes).
 Row names should correspond to sample IDs.
 This table should contain gene abundance data.}
+
+\item{host_col}{A string representing the name of the percent host column
+within the `data` data.frame.}
+
+\item{report}{A dataframe that contains the percent host
+column `host_col` and the `sampleID` column.}
 }
 \value{
 a dataframe with differential expression results

@@ -340,6 +340,66 @@ get_random_fx <- function(form){
     return(vars)
 }
 
+#' Add percent host column to metadata
+#'
+#' @param metadata A data frame containing metadata for the samples,
+#' where rows are samples
+#' @param sampleID A string representing the column name in `metadata`
+#' that contains the sample IDs.
+#' This column is used to merge the metadata with the report file table.
+#' @param report A dataframe that contains the percent host
+#' column `host_col` and the `sampleID` column.
+#' @param host_col A string representing the column name in `report`
+#' that contains the percent host per sample.
+#' This column will be added to the `metadata`.
+#'
+#' @returns A dataframe containing the metadata sample information with the
+#' host percent column appended at the end.
+#' @export
+#'
+#' @examples
+#' metadata <- data.frame(SampleID=paste0("sample_", seq_len(4)),
+#'                           phenotype=c(0,0,1,1),
+#'                           participant=c(0,1,0,1),
+#'                           timepoint=c(0,0,1,1))
+#' report <- data.frame(SampleID=paste0("sample_", seq_len(4)),
+#'                      percent_host=c(0.9, 0.8, 0.5, 0.9))
+#' new_metadata <- add_perc_host_metadata(metadata, "SampleID",
+#'                                        report, "percent_host")
+#'
+add_perc_host_metadata <- function(metadata, sampleID,
+                                   report, host_col="Percent host") {
+  # check that sampleID is in both report and metadata
+  # check that host column is only in the report
+  if ((!is.null(metadata)) && (!is.null(sampleID))) {
+    if ((sampleID %in% colnames(metadata)) == FALSE) {
+      stop("sampleID column '", sampleID, "' not found in metadata.")
+    }
+  }
+  if ((!is.null(metadata)) && (!is.null(host_col))) {
+    if ((host_col %in% colnames(metadata)) == TRUE) {
+      stop("Percent host column '", host_col, "' already found in metadata.")
+    }
+  }
+  if ((!is.null(report)) && (!is.null(sampleID))) {
+    if ((sampleID %in% colnames(report)) == FALSE) {
+      stop("sampleID column '", sampleID, "' not found in read report.")
+    }
+  }
+  if ((!is.null(report)) && (!is.null(host_col))) {
+    if ((host_col %in% colnames(report)) == FALSE) {
+      stop("Percent host column '", host_col, "' not found in read report.")
+    }
+  }
+  # select only the sampleID and host column in report
+  report <- report %>% dplyr::select(all_of(sampleID), all_of(host_col))
+
+  # left join percent host based on sampleID to metadata file
+  new_metadata <- dplyr::left_join(metadata, report, by = sampleID)
+
+  return(new_metadata)
+}
+
 #' Check data validity for mtxDE function
 #' @description This function checks the validity of your
 #' data for mtxDE analyses. This will check that your
@@ -503,7 +563,6 @@ filter_tables_by_shared_columns <- function(table1, table2, table1_name,
 #' columns are features (e.g., genes).
 #' Row names should correspond to sample IDs.
 #' This table should contain gene abundance data.
-#'
 #' @return A merged data frame containing the feature table and metadata,
 #' ready for regression analysis.
 #'
@@ -571,6 +630,39 @@ filter_tables_by_shared_columns <- function(table1, table2, table1_name,
   }
   return(list(formula = formula, fixed.vars = fixed.vars))
 }
+
+#' Add percent host column to formula
+#'
+#' @param metadata A data frame containing the merged feature table and metadata,
+#' ready for regression.
+#' @param formula  A string representing the formula for the regression model.
+#' @param host_col A string representing the name of the percent host column
+#' within the `data` data.frame.
+#' @param report A dataframe that contains the percent host
+#' column `host_col` and the `sampleID` column.
+#' @param sampleID A string representing the column name in `metadata`
+#' that contains the sample IDs.
+#' @returns list of updated `formula` and `fixed.vars` with the
+#' `host_col`added to them
+#'
+#' @keywords internal
+.add_host_to_formula_metadata <- function(metadata, formula, sampleID,
+                                          report=NULL, host_col=NULL) {
+  if (!is.null(host_col)) {
+    if (host_col %in% all.vars(as.formula(formula)) == FALSE) {
+      formula <- paste0(formula, " + ", host_col)
+    }
+    if (!is.null(report)) {
+      if ((host_col %in% colnames(metadata)) == FALSE) {
+        # add host_col to metadata, assuming sampleID col in report
+        metadata <- add_perc_host_metadata(metadata, sampleID,
+                                           report, host_col)
+      }
+    }
+  }
+  return(list(formula = formula, metadata = metadata))
+}
+
 
 #' Run a Single Regression for a Feature (internal)
 #'
@@ -779,6 +871,10 @@ filter_tables_by_shared_columns <- function(table1, table2, table1_name,
 #' columns are features (e.g., genes).
 #' Row names should correspond to sample IDs.
 #' This table should contain gene abundance data.
+#' @param host_col A string representing the name of the percent host column
+#' within the `data` data.frame.
+#' @param report A dataframe that contains the percent host
+#' column `host_col` and the `sampleID` column.
 #' @export
 #' @importFrom broom.mixed tidy
 #' @importFrom broom tidy
@@ -838,7 +934,9 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
                         zibr_time_ind=NULL,
                         ncores=1,
                         show_progress=TRUE,
-                        dna.table=NULL){
+                        dna.table=NULL,
+                        host_col=NULL,
+                        report=NULL){
     if(reg.method %in% c("zibr", "gamlss")){
         check_for_ones(feature.table) # Beta regression can't handle ones
         feature.table <- filter_undetected(feature.table) # or undetected feats
@@ -848,6 +946,12 @@ run_mtxDE <- function(formula, feature.table, metadata, sampleID,
         }
     }
     formula <- paste0(" ~ ", formula)
+    if (!is.null(host_col)) {
+      add_host <- .add_host_to_formula_metadata(metadata, formula,
+                                                sampleID, report, host_col)
+      metadata <- add_host$metadata
+      formula <- add_host$formula
+    }
     data <- .prepare_data_mtxDE(feature.table, metadata,
                                 formula, sampleID, zibr_time_ind,
                                 dna.table = dna.table)

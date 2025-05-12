@@ -115,6 +115,26 @@ test_that("filter_tables_by_shared_columns correctly filters columns", {
 
 })
 
+test_that("add_perc_host_metadata correctly adds percent host column", {
+  metadata <- data.frame(SampleID=paste0("sample_", seq_len(4)),
+                         phenotype=c(0,0,1,1),
+                         participant=c(0,1,0,1),
+                         timepoint=c(0,0,1,1))
+  report <- data.frame(SampleID=paste0("sample_", seq_len(4)),
+                         percent_host=c(0.9, 0.8, 0.5, 0.9))
+
+  new_metadata <- add_perc_host_metadata(metadata, "SampleID",
+                                        report, "percent_host")
+
+  expected_metadata <- data.frame(SampleID=paste0("sample_", seq_len(4)),
+                                  phenotype=c(0,0,1,1),
+                                  participant=c(0,1,0,1),
+                                  timepoint=c(0,0,1,1),
+                                  percent_host=c(0.9, 0.8, 0.5, 0.9))
+
+  expect_equal(new_metadata, expected_metadata)
+})
+
 test_that(".prepare_data_mtxDE works", {
   feature.table <- data.frame(a=c(0.1, 0.0, 0.0, 0.0),
                               b=c(0.5, 0.5, 0.5, 0.4),
@@ -212,6 +232,32 @@ test_that(".add_dna_to_formula correctly adds dna col", {
                 data=data)
   )
 
+})
+
+test_that(".add_host_to_formula_metadata works", {
+  metadata <- data.frame(SampleID=paste0("sample_", seq_len(4)),
+                         phenotype=c(0,0,1,1),
+                         participant=c(0,1,0,1),
+                         timepoint=c(0,0,1,1))
+  report <- data.frame(SampleID=paste0("sample_", seq_len(4)),
+                       percent_host=c(0.9, 0.8, 0.5, 0.9))
+  expected_metadata <- data.frame(SampleID=paste0("sample_", seq_len(4)),
+                                  phenotype=c(0,0,1,1),
+                                  participant=c(0,1,0,1),
+                                  timepoint=c(0,0,1,1),
+                                  percent_host=c(0.9, 0.8, 0.5, 0.9))
+
+  formula <- " ~ phenotype"
+  expected_formula <- " ~ phenotype + percent_host"
+
+  result <- .add_host_to_formula_metadata(metadata = metadata,
+                                 formula = formula,
+                                 sampleID = "SampleID",
+                                 report = report,
+                                 host_col = "percent_host")
+
+  expect_equal(result$metadata, expected_metadata)
+  expect_equal(result$formula, expected_formula)
 })
 
 test_that("run_mtxDE works", {
@@ -498,4 +544,70 @@ test_that("run_mtxDE works with DNA", {
     expect_true(res[res$term=="phenotype" & res$feature=="a", "q"] > 0.05)
     # c has a true effect of mgx
     expect_true(res[res$term=="c_mgx", "q"] < 0.05)
+})
+
+test_that("run_mtxDE works with %host covariate", {
+  set.seed(1234)
+  N <- 100
+  a <- runif(N, max=1-(1E-4))
+  b <- runif(N, max=1-(1E-4))
+  c <- runif(N, max=1-(1E-4))
+  percent_host <- 0.8*c + 0.2*rnorm(N, sd=0.001)
+
+  feature.table <- data.frame(a=a,
+                              b=b,
+                              c=c)
+  report <- data.frame(SampleID=paste0("sample_", seq_len(N)),
+                       percent_host=percent_host)
+  row.names(feature.table) <- paste0("sample_", seq_len(N))
+  metadata <- data.frame(SampleID=paste0("sample_", seq_len(N)),
+                         phenotype=rbinom(N, 1, 0.5))
+
+  # lm based
+  expect_no_error(res <- run_mtxDE("phenotype",
+                                   feature.table,
+                                   metadata,
+                                   reg.method="lm",
+                                   sampleID="SampleID",
+                                   host_col = "percent_host",
+                                   report = report,
+                                   ncores=2,
+                                   show_progress=FALSE))
+
+  expect_equal(nrow(
+    dplyr::filter(res,
+                  term %in% c("percent_host", "phenotype"))),
+    6)
+  # a and b have no effects
+  expect_true(res[res$term=="phenotype" & res$feature=="b", "q"] > 0.05)
+  expect_true(res[res$term=="phenotype" & res$feature=="a", "q"] > 0.05)
+  expect_true(res[res$term=="percent_host" & res$feature=="b", "q"] > 0.05)
+  expect_true(res[res$term=="percent_host" & res$feature=="a", "q"] > 0.05)
+  # c is impacted by percent host
+  expect_true(res[res$term=="percent_host" & res$feature=="c", "q"] < 0.05)
+
+  # gamlss based
+  expect_no_error(res <- run_mtxDE("phenotype",
+                                   feature.table,
+                                   metadata,
+                                   reg.method="gamlss",
+                                   sampleID="SampleID",
+                                   host_col = "percent_host",
+                                   report = report,
+                                   ncores=2,
+                                   show_progress=FALSE))
+
+  expect_equal(nrow(
+    dplyr::filter(res,
+                  term %in% c("percent_host", "phenotype"))),
+    6)
+  # a and b have no effects
+  expect_true(res[res$term=="phenotype" & res$feature=="b", "q"] > 0.05)
+  expect_true(res[res$term=="phenotype" & res$feature=="a", "q"] > 0.05)
+  expect_true(res[res$term=="percent_host" & res$feature=="b", "q"] > 0.05)
+  expect_true(res[res$term=="percent_host" & res$feature=="a", "q"] > 0.05)
+  # c is impacted by percent host
+  expect_true(res[res$term=="percent_host" & res$feature=="c", "q"] < 0.05)
+
+
 })

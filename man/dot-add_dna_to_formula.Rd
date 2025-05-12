@@ -4,7 +4,7 @@
 \alias{.add_dna_to_formula}
 \title{Add matching dna column to formula or fixed vars}
 \usage{
-.add_dna_to_formula(data, col, formula, fixed.vars, reg.method)
+.add_dna_to_formula(data, col, formula = NULL, fixed.vars = NULL, reg.method)
 }
 \arguments{
 \item{data}{A data frame containing the merged feature table and metadata,
